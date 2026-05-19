@@ -1,0 +1,88 @@
+{
+  "id": 1001,
+  "stage": "Group F · Matchday 2",
+  "kickoff": "2026-06-18T19:00:00Z",
+  "venue": { "name": "MetLife Stadium", "city": "New York/NJ", "capacity": 82500 },
+  "status": "live",
+  "minute": 67,
+  "referee": "Anthony Taylor (ENG)",
+  "attendance": 78421,
+  "teams": {
+    "home": {
+      "id": 21,
+      "name": "Norway",
+      "shortName": "NOR",
+      "flag": "no",
+      "manager": "Ståle Solbakken",
+      "formation": "4-3-3"
+    },
+    "away": {
+      "id": 22,
+      "name": "Spain",
+      "shortName": "ESP",
+      "flag": "es",
+      "manager": "Luis de la Fuente",
+      "formation": "4-3-3"
+    }
+  },
+  "score": { "home": 2, "away": 1, "ht": { "home": 1, "away": 1 } },
+  "goals": [
+    { "minute": 14, "team": "home", "scorer": "Erling Haaland", "assist": "Martin Ødegaard", "xg": 0.71 },
+    { "minute": 38, "team": "away", "scorer": "Lamine Yamal", "assist": "Pedri", "xg": 0.34 },
+    { "minute": 61, "team": "home", "scorer": "Martin Ødegaard", "assist": "Antonio Nusa", "xg": 0.18 }
+  ],
+  "stats": {
+    "possession":    { "home": 38,   "away": 62 },
+    "shots":         { "home": 9,    "away": 16 },
+    "shotsOnTarget": { "home": 5,    "away": 6 },
+    "xg":            { "home": 1.42, "away": 1.61 },
+    "passes":        { "home": 312,  "away": 587 },
+    "passAccuracy":  { "home": 81,   "away": 91 },
+    "corners":       { "home": 2,    "away": 8 },
+    "fouls":         { "home": 11,   "away": 7 },
+    "yellowCards":   { "home": 2,    "away": 1 },
+    "redCards":      { "home": 0,    "away": 0 },
+    "offsides":      { "home": 1,    "away": 3 }
+  },
+  "xgTimeline": [
+    { "minute": 0,  "home": 0.00, "away": 0.00 },
+    { "minute": 5,  "home": 0.05, "away": 0.02 },
+    { "minute": 10, "home": 0.08, "away": 0.04 },
+    { "minute": 14, "home": 0.79, "away": 0.05 },
+    { "minute": 20, "home": 0.82, "away": 0.18 },
+    { "minute": 25, "home": 0.84, "away": 0.21 },
+    { "minute": 30, "home": 0.88, "away": 0.31 },
+    { "minute": 35, "home": 0.91, "away": 0.42 },
+    { "minute": 38, "home": 0.91, "away": 0.76 },
+    { "minute": 45, "home": 1.02, "away": 0.88 },
+    { "minute": 50, "home": 1.08, "away": 0.97 },
+    { "minute": 55, "home": 1.18, "away": 1.12 },
+    { "minute": 61, "home": 1.36, "away": 1.28 },
+    { "minute": 65, "home": 1.40, "away": 1.48 },
+    { "minute": 67, "home": 1.42, "away": 1.61 }
+  ],
+  "shots": [
+    { "minute": 14, "team": "home", "player": "Haaland",  "xg": 0.71, "outcome": "goal" },
+    { "minute": 22, "team": "away", "player": "Yamal",    "xg": 0.13, "outcome": "saved" },
+    { "minute": 31, "team": "away", "player": "Pedri",    "xg": 0.10, "outcome": "off-target" },
+    { "minute": 38, "team": "away", "player": "Yamal",    "xg": 0.34, "outcome": "goal" },
+    { "minute": 44, "team": "home", "player": "Bobb",     "xg": 0.11, "outcome": "blocked" },
+    { "minute": 49, "team": "away", "player": "Morata",   "xg": 0.09, "outcome": "saved" },
+    { "minute": 55, "team": "away", "player": "Williams", "xg": 0.15, "outcome": "off-target" },
+    { "minute": 61, "team": "home", "player": "Ødegaard", "xg": 0.18, "outcome": "goal" },
+    { "minute": 65, "team": "away", "player": "Yamal",    "xg": 0.20, "outcome": "saved" }
+  ],
+  "aiPrediction": {
+    "model": "wcf-baseline-v0.1",
+    "asOfMinute": 67,
+    "probabilities": { "home": 0.60, "draw": 0.25, "away": 0.15 },
+    "expectedFinalScore": { "home": 2.3, "away": 1.4 },
+    "btts": 0.78,
+    "over25": 0.71,
+    "topFactors": [
+      "Norge leder 2-1 med 23 min igjen",
+      "Haaland gjenværende xG-forventning: 0.42",
+      "Spania historisk svake mot direkte motangrep ved sent tap"
+    ]
+  }
+}

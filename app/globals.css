@@ -1,0 +1,83 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --pitch-50: 240 6% 96%;
+    --pitch-100: 240 5% 88%;
+    --pitch-200: 240 5% 75%;
+    --pitch-300: 240 5% 60%;
+    --pitch-400: 240 5% 45%;
+    --pitch-500: 240 5% 32%;
+    --pitch-600: 240 6% 22%;
+    --pitch-700: 240 7% 15%;
+    --pitch-800: 240 8% 10%;
+    --pitch-900: 240 9% 7%;
+    --pitch-950: 240 10% 4%;
+
+    --accent-300: 142 92% 70%;
+    --accent-400: 142 88% 55%;
+    --accent-500: 142 84% 44%;
+    --accent-600: 142 80% 36%;
+
+    --data-300: 198 95% 72%;
+    --data-400: 198 90% 60%;
+    --data-500: 198 88% 48%;
+
+    --win: 142 84% 44%;
+    --draw: 45 93% 58%;
+    --loss: 0 84% 60%;
+  }
+
+  * {
+    border-color: hsl(var(--pitch-700) / 0.6);
+  }
+
+  body {
+    font-feature-settings: "ss01", "cv11", "tnum";
+  }
+
+  .stat-num {
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+@layer components {
+  .card-panel {
+    @apply rounded-xl bg-pitch-800/60 backdrop-blur-sm border border-pitch-700/60;
+    box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.02) inset;
+  }
+
+  .stat-pill {
+    @apply inline-flex items-center gap-1 rounded-md bg-pitch-700/60 px-2 py-0.5 text-xs font-mono text-pitch-100 stat-num;
+  }
+
+  .accent-glow {
+    box-shadow:
+      0 0 0 1px hsl(var(--accent-500) / 0.4),
+      0 0 24px -4px hsl(var(--accent-500) / 0.35);
+  }
+
+  .live-dot {
+    @apply h-2 w-2 rounded-full bg-loss animate-pulse-dot;
+    box-shadow: 0 0 8px 1px hsl(var(--loss) / 0.6);
+  }
+}
+
+@layer utilities {
+  .scrollbar-thin::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  .scrollbar-thin::-webkit-scrollbar-thumb {
+    background: hsl(var(--pitch-600));
+    border-radius: 6px;
+  }
+  .grid-lines {
+    background-image:
+      linear-gradient(hsl(var(--pitch-700) / 0.3) 1px, transparent 1px),
+      linear-gradient(90deg, hsl(var(--pitch-700) / 0.3) 1px, transparent 1px);
+    background-size: 32px 32px;
+  }
+}

@@ -1,0 +1,113 @@
+{
+  "date": "2026-06-18",
+  "matches": [
+    {
+      "id": 1001,
+      "stage": "Group F · MD2",
+      "kickoff": "2026-06-18T19:00:00Z",
+      "venue": { "name": "MetLife Stadium", "city": "New York/NJ" },
+      "status": "live",
+      "minute": 67,
+      "home": { "id": 21, "name": "Norway", "shortName": "NOR", "flag": "no" },
+      "away": { "id": 22, "name": "Spain", "shortName": "ESP", "flag": "es" },
+      "score": { "home": 2, "away": 1 },
+      "xg": { "home": 1.42, "away": 1.61 },
+      "possession": { "home": 38, "away": 62 }
+    },
+    {
+      "id": 1002,
+      "stage": "Group A · MD2",
+      "kickoff": "2026-06-18T16:00:00Z",
+      "venue": { "name": "Estadio Azteca", "city": "Mexico City" },
+      "status": "live",
+      "minute": 38,
+      "home": { "id": 1, "name": "Mexico", "shortName": "MEX", "flag": "mx" },
+      "away": { "id": 4, "name": "Argentina", "shortName": "ARG", "flag": "ar" },
+      "score": { "home": 0, "away": 1 },
+      "xg": { "home": 0.41, "away": 0.92 },
+      "possession": { "home": 44, "away": 56 }
+    },
+    {
+      "id": 1003,
+      "stage": "Group D · MD2",
+      "kickoff": "2026-06-18T22:00:00Z",
+      "venue": { "name": "SoFi Stadium", "city": "Los Angeles" },
+      "status": "scheduled",
+      "home": { "id": 14, "name": "France", "shortName": "FRA", "flag": "fr" },
+      "away": { "id": 13, "name": "Brazil", "shortName": "BRA", "flag": "br" }
+    },
+    {
+      "id": 1004,
+      "stage": "Group B · MD2",
+      "kickoff": "2026-06-18T13:00:00Z",
+      "venue": { "name": "BC Place", "city": "Vancouver" },
+      "status": "finished",
+      "minute": 90,
+      "home": { "id": 6, "name": "Germany", "shortName": "GER", "flag": "de" },
+      "away": { "id": 7, "name": "Japan", "shortName": "JPN", "flag": "jp" },
+      "score": { "home": 3, "away": 2 },
+      "xg": { "home": 2.31, "away": 1.74 },
+      "possession": { "home": 58, "away": 42 }
+    },
+    {
+      "id": 1005,
+      "stage": "Group E · MD2 vs Group G · MD2",
+      "kickoff": "2026-06-18T20:30:00Z",
+      "venue": { "name": "AT&T Stadium", "city": "Dallas" },
+      "status": "scheduled",
+      "home": { "id": 18, "name": "Portugal", "shortName": "POR", "flag": "pt" },
+      "away": { "id": 26, "name": "Netherlands", "shortName": "NED", "flag": "nl" }
+    },
+    {
+      "id": 1006,
+      "stage": "Group K vs Group C · friendly",
+      "kickoff": "2026-06-18T10:00:00Z",
+      "venue": { "name": "Hard Rock Stadium", "city": "Miami" },
+      "status": "finished",
+      "minute": 90,
+      "home": { "id": 42, "name": "Croatia", "shortName": "CRO", "flag": "hr" },
+      "away": { "id": 12, "name": "Morocco", "shortName": "MAR", "flag": "ma" },
+      "score": { "home": 1, "away": 1 },
+      "xg": { "home": 0.88, "away": 1.21 },
+      "possession": { "home": 51, "away": 49 }
+    }
+  ],
+  "topStats": [
+    {
+      "label": "Highest xG today",
+      "value": "2.31",
+      "context": "Germany vs Japan",
+      "trend": "up"
+    },
+    {
+      "label": "Most shots on target",
+      "value": "9",
+      "context": "Argentina vs Mexico",
+      "trend": "up"
+    },
+    {
+      "label": "Top scorer (matchday)",
+      "value": "Haaland",
+      "context": "1 goal · 0.71 xG",
+      "trend": "flat"
+    },
+    {
+      "label": "Possession king",
+      "value": "67%",
+      "context": "Spain vs Norway",
+      "trend": "up"
+    },
+    {
+      "label": "Biggest upset chance",
+      "value": "32%",
+      "context": "Morocco draw vs Croatia",
+      "trend": "up"
+    },
+    {
+      "label": "Cards shown",
+      "value": "14",
+      "context": "Across 4 matches",
+      "trend": "flat"
+    }
+  ]
+}
