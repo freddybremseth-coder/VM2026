@@ -1,5 +1,6 @@
-import { GitBranch, Trophy, MapPin } from "lucide-react";
+import { GitBranch, Trophy, MapPin, Cpu } from "lucide-react";
 import { TeamFlag } from "@/components/shared/TeamFlag";
+import { BracketSimulator } from "@/components/bracket/BracketSimulator";
 import { GROUPS, teamsByGroup, venueById, type WCTeam } from "@/lib/wc26-data";
 import { fixturesByRound } from "@/lib/wc26-fixtures";
 import { formatKickoff } from "@/lib/utils";
@@ -35,7 +36,18 @@ export default function BracketPage() {
 
       <section>
         <h2 className="text-xs uppercase tracking-widest font-semibold text-pitch-200 mb-3 flex items-center gap-2">
-          <Trophy size={12} /> Knockout bracket
+          <Cpu size={12} className="text-accent-400" /> Interactive simulator
+        </h2>
+        <p className="text-xs text-pitch-400 mb-3 max-w-3xl">
+          Click any team to advance them, or pick an auto-fill mode below.
+          Seeded by FIFA rank until real group standings finalise on 27 June.
+        </p>
+        <BracketSimulator />
+      </section>
+
+      <section>
+        <h2 className="text-xs uppercase tracking-widest font-semibold text-pitch-200 mb-3 flex items-center gap-2">
+          <Trophy size={12} /> Real knockout schedule
         </h2>
         <KnockoutTree />
       </section>
