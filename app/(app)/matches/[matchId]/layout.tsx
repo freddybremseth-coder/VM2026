@@ -13,8 +13,10 @@ import {
 import { TeamFlag } from "@/components/shared/TeamFlag";
 import { MatchHeader } from "@/components/match/MatchHeader";
 import { MatchTabs } from "@/components/match/MatchTabs";
+import { AIMatchPreview } from "@/components/match/AIMatchPreview";
 import { DataSourceBanner } from "@/components/shared/DataSourceBanner";
 import { getMatchDetail, getFixtureView } from "@/lib/match-data";
+import { buildPreview } from "@/lib/ai-preview";
 import { formatKickoff, formatDateLabel } from "@/lib/utils";
 
 export default function MatchLayout({
@@ -45,6 +47,8 @@ export default function MatchLayout({
   // Real fixture from the official schedule — render a lighter header
   const fixture = getFixtureView(params.matchId);
   if (!fixture) notFound();
+
+  const preview = buildPreview(Number(params.matchId));
 
   return (
     <div className="px-6 py-6 max-w-[1600px] mx-auto space-y-5">
@@ -133,7 +137,9 @@ export default function MatchLayout({
         </Link>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+      {preview && <AIMatchPreview preview={preview} />}
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
         <PrematchCard
           icon={<Users size={14} className="text-accent-400" />}
           title="Expected starting XI"
@@ -143,11 +149,6 @@ export default function MatchLayout({
           icon={<Activity size={14} className="text-data-400" />}
           title="Last 5 matches"
           status="Coming next"
-        />
-        <PrematchCard
-          icon={<Sparkles size={14} className="text-accent-400" />}
-          title="AI match preview"
-          status="ChatGenius will draft a 3-line scouting brief at kickoff"
         />
         <PrematchCard
           icon={<Trophy size={14} className="text-draw" />}
