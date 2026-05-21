@@ -1,13 +1,15 @@
 /**
  * WC26 × ChatGenius hybrid logo.
  *
- * The mark fuses a chat-bubble silhouette (homage to ChatGenius) with a
- * stylised football pentagon centre. Gradient runs cyan → indigo → magenta on
- * a dark navy field, matching the ChatGenius brand palette.
+ * The mark fuses a chat-bubble silhouette (homage to ChatGenius) with a single
+ * football-panel pentagon containing the "26" wordmark. Gradient runs cyan →
+ * indigo → magenta on a dark navy field, matching the ChatGenius brand palette.
  *
- * - `<AppLogo />`        — square mark only, sized via the `size` prop (default 32).
- * - `<AppLogoWordmark/>` — mark + "WC26" wordmark side-by-side for headers.
- * - `<ChatGeniusBadge/>` — small attribution shown in the sidebar footer.
+ * Exports:
+ * - `<AppLogo />`         — square mark only, sized via the `size` prop (default 32).
+ * - `<AppLogoWordmark />` — mark + "WC26" wordmark side-by-side for headers.
+ * - `<ChatGeniusBadge />` — small "Powered by ChatGenius" attribution.
+ * - `<CreditsBadge />`    — "Built by Freddy Bremseth" attribution with links.
  */
 
 interface AppLogoProps {
@@ -16,8 +18,6 @@ interface AppLogoProps {
 }
 
 export function AppLogo({ size = 32, className }: AppLogoProps) {
-  const gradId = "wc26-grad";
-  const innerGradId = "wc26-inner";
   return (
     <svg
       width={size}
@@ -29,45 +29,46 @@ export function AppLogo({ size = 32, className }: AppLogoProps) {
       aria-label="WC26 logo"
     >
       <defs>
-        <linearGradient id={gradId} x1="6" y1="6" x2="58" y2="58" gradientUnits="userSpaceOnUse">
-          <stop offset="0%" stopColor="#ff5cc8" />
-          <stop offset="50%" stopColor="#6c5ce7" />
+        <linearGradient id="wc26-fill" x1="4" y1="4" x2="60" y2="60" gradientUnits="userSpaceOnUse">
+          <stop offset="0%"  stopColor="#ff5cc8" />
+          <stop offset="55%" stopColor="#7c5cff" />
           <stop offset="100%" stopColor="#22d3ee" />
         </linearGradient>
-        <linearGradient id={innerGradId} x1="16" y1="16" x2="48" y2="48" gradientUnits="userSpaceOnUse">
-          <stop offset="0%" stopColor="#0b1530" />
-          <stop offset="100%" stopColor="#1a234a" />
+        <linearGradient id="wc26-rim" x1="4" y1="4" x2="60" y2="60" gradientUnits="userSpaceOnUse">
+          <stop offset="0%"  stopColor="#ff8edd" />
+          <stop offset="100%" stopColor="#4cf5ff" />
         </linearGradient>
       </defs>
 
-      {/* Outer chat-bubble silhouette */}
+      {/* Chat bubble — single shape, rounded with a small tail */}
       <path
-        d="M14 8h36a8 8 0 0 1 8 8v24a8 8 0 0 1 -8 8H30l-12 10v-10h-4a8 8 0 0 1 -8 -8V16a8 8 0 0 1 8 -8Z"
-        fill={`url(#${gradId})`}
+        d="M14 8h36a8 8 0 0 1 8 8v28a8 8 0 0 1 -8 8H28l-10 8v-8h-4a8 8 0 0 1 -8 -8V16a8 8 0 0 1 8 -8Z"
+        fill="url(#wc26-fill)"
+      />
+      <path
+        d="M14 8h36a8 8 0 0 1 8 8v28a8 8 0 0 1 -8 8H28l-10 8v-8h-4a8 8 0 0 1 -8 -8V16a8 8 0 0 1 8 -8Z"
+        fill="none"
+        stroke="url(#wc26-rim)"
+        strokeOpacity="0.5"
+        strokeWidth="0.8"
       />
 
-      {/* Inner darker chat-bubble (gives the bubble a thick outline feel) */}
+      {/* Football panel — single pentagon, off-white so it pops against the gradient */}
       <path
-        d="M16 12h32a6 6 0 0 1 6 6v22a6 6 0 0 1 -6 6H29l-7 6v-6h-6a6 6 0 0 1 -6 -6V18a6 6 0 0 1 6 -6Z"
-        fill={`url(#${innerGradId})`}
+        d="M32 14 L46.7 24.7 L41.1 41.9 L22.9 41.9 L17.3 24.7 Z"
+        fill="#f8fbff"
+        opacity="0.95"
       />
 
-      {/* Football pentagon (central panel of a classic ball) */}
-      <path
-        d="M32 18 L40.5 24.2 L37.2 34.4 L26.8 34.4 L23.5 24.2 Z"
-        fill={`url(#${gradId})`}
-        opacity="0.9"
-      />
-
-      {/* "26" mark below the pentagon */}
+      {/* "26" mark — bold mono inside the pentagon */}
       <text
         x="32"
-        y="46"
+        y="36"
         textAnchor="middle"
         fontFamily="ui-monospace, 'JetBrains Mono', monospace"
-        fontSize="10"
+        fontSize="13"
         fontWeight="800"
-        fill="#e2f4ff"
+        fill="#0b1530"
         letterSpacing="0.5"
       >
         26
@@ -123,9 +124,7 @@ export function ChatGeniusBadge() {
 }
 
 /**
- * Inline reproduction of the ChatGenius bot/chat-bubble mark (the original
- * lives as a PNG asset elsewhere — this SVG version embeds cleanly anywhere
- * and matches the brand palette).
+ * Inline reproduction of the ChatGenius bot/chat-bubble mark.
  */
 function ChatGeniusMark({ size = 24 }: { size?: number }) {
   return (
@@ -166,5 +165,35 @@ function ChatGeniusMark({ size = 24 }: { size?: number }) {
         fill="none"
       />
     </svg>
+  );
+}
+
+/**
+ * Author attribution. Small, footer-style. Shown next to the ChatGenius badge.
+ */
+export function CreditsBadge() {
+  return (
+    <div className="text-[10px] leading-tight text-pitch-500">
+      <div className="uppercase tracking-widest text-[9px] mb-0.5">Built by</div>
+      <div className="font-semibold text-pitch-300">Freddy Bremseth</div>
+      <div className="flex flex-col mt-1 gap-0.5">
+        <a
+          href="https://freddybremseth.com"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="hover:text-accent-300 transition-colors"
+        >
+          freddybremseth.com
+        </a>
+        <a
+          href="https://chatgenius.pro"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="hover:text-accent-300 transition-colors"
+        >
+          chatgenius.pro
+        </a>
+      </div>
+    </div>
   );
 }

@@ -12,7 +12,7 @@ import {
   GitBranch,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { AppLogo, ChatGeniusBadge } from "./Logo";
+import { AppLogo, ChatGeniusBadge, CreditsBadge } from "./Logo";
 
 const NAV = [
   { href: "/", label: "Dashboard", icon: LayoutDashboard },
@@ -78,6 +78,9 @@ export function Sidebar() {
         </div>
         <div className="px-2">
           <ChatGeniusBadge />
+        </div>
+        <div className="px-2 pt-2 border-t border-pitch-800/60">
+          <CreditsBadge />
         </div>
       </div>
     </aside>
