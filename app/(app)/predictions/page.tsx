@@ -1,9 +1,9 @@
 import Link from "next/link";
-import { Target, LogIn, Lock, Calendar } from "lucide-react";
+import { Target, LogIn, Lock, Calendar, Sparkles } from "lucide-react";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { PredictionForm } from "@/components/prediction/PredictionForm";
-import { TeamFlag } from "@/components/shared/TeamFlag";
-import { formatKickoff, formatDateLabel } from "@/lib/utils";
+import { GuestPredictionForm } from "@/components/prediction/GuestPredictionForm";
+import { formatDateLabel } from "@/lib/utils";
 import { nextFixtures, type Fixture } from "@/lib/wc26-fixtures";
 import { teamById, venueById } from "@/lib/wc26-data";
 
@@ -76,7 +76,7 @@ export default async function PredictionsPage() {
         </p>
       </header>
 
-      {!user && <SignInPrompt />}
+      {!user && <GuestBanner />}
 
       <section className="space-y-3">
         <h2 className="text-xs uppercase tracking-widest font-semibold text-pitch-200">
@@ -135,14 +135,24 @@ function DaySection({
           {fixtures.length} {fixtures.length === 1 ? "match" : "matches"}
         </span>
       </div>
-      <div className={user ? "grid grid-cols-1 md:grid-cols-2 gap-3" : "grid grid-cols-1 md:grid-cols-2 gap-3 opacity-50 pointer-events-none"}>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
         {fixtures.map((f) => {
           const home = teamById(f.homeId!);
           const away = teamById(f.awayId!);
           const venue = venueById(f.venueId);
           if (!home || !away) return null;
           if (!user) {
-            return <PreviewCard key={f.id} fixture={f} />;
+            return (
+              <GuestPredictionForm
+                key={f.id}
+                matchId={f.id}
+                stageLabel={stageLabel(f)}
+                kickoff={f.kickoff}
+                venueLabel={venue?.city ?? "TBD"}
+                home={home}
+                away={away}
+              />
+            );
           }
           return (
             <PredictionForm
@@ -162,26 +172,34 @@ function DaySection({
   );
 }
 
-function SignInPrompt() {
+/**
+ * Guest-tipping banner. Replaces the old "Sign in first" prompt — the user
+ * can now tip 3 matches before being asked to sign up, so the messaging is
+ * "you can try, but to keep going you'll need an account".
+ */
+function GuestBanner() {
   return (
     <div className="card-panel p-5 ring-1 ring-accent-500/20 flex items-center justify-between gap-4">
       <div className="flex items-center gap-3">
         <div className="h-10 w-10 rounded-md bg-accent-500/15 flex items-center justify-center">
-          <LogIn size={18} className="text-accent-400" />
+          <Sparkles size={18} className="text-accent-400" />
         </div>
         <div>
-          <div className="text-sm font-semibold">Sign in to save tips</div>
+          <div className="text-sm font-semibold">
+            Try 3 free predictions — no account needed
+          </div>
           <div className="text-xs text-pitch-400 mt-0.5">
-            Your tips are stored in your account and earn points when matches end.
+            Your guest tips are stored on this device. Sign up after to keep
+            tipping, join mini-leagues and rescue your tips on other devices.
           </div>
         </div>
       </div>
       <div className="flex items-center gap-2 shrink-0">
         <Link
           href="/login"
-          className="rounded-md bg-accent-500 hover:bg-accent-400 text-pitch-950 text-xs font-semibold px-3 py-1.5"
+          className="rounded-md bg-accent-500 hover:bg-accent-400 text-pitch-950 text-xs font-semibold px-3 py-1.5 flex items-center gap-1.5"
         >
-          Sign in
+          <LogIn size={12} /> Sign in
         </Link>
         <Link
           href="/register"
@@ -189,30 +207,6 @@ function SignInPrompt() {
         >
           Register
         </Link>
-      </div>
-    </div>
-  );
-}
-
-function PreviewCard({ fixture }: { fixture: Fixture }) {
-  const home = fixture.homeId ? teamById(fixture.homeId) : undefined;
-  const away = fixture.awayId ? teamById(fixture.awayId) : undefined;
-  if (!home || !away) return null;
-  return (
-    <div className="card-panel p-4">
-      <div className="text-[11px] uppercase tracking-widest text-pitch-400 mb-3">
-        {stageLabel(fixture)} · {formatKickoff(fixture.kickoff)}
-      </div>
-      <div className="flex items-center justify-between gap-2">
-        <div className="flex items-center gap-2">
-          <TeamFlag code={home.flag} size="md" />
-          <span className="text-sm font-semibold">{home.shortName}</span>
-        </div>
-        <span className="font-mono text-pitch-500 text-sm">VS</span>
-        <div className="flex items-center gap-2">
-          <span className="text-sm font-semibold">{away.shortName}</span>
-          <TeamFlag code={away.flag} size="md" />
-        </div>
       </div>
     </div>
   );

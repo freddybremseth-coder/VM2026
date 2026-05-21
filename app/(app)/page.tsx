@@ -1,5 +1,14 @@
 import Link from "next/link";
-import { Calendar, Clock, MapPin, Sparkles } from "lucide-react";
+import {
+  Calendar,
+  Clock,
+  MapPin,
+  Sparkles,
+  Trophy,
+  Target,
+  Flag,
+  ArrowRight,
+} from "lucide-react";
 import { TeamFlag } from "@/components/shared/TeamFlag";
 import { teamById, venueById, TOURNAMENT } from "@/lib/wc26-data";
 import { FIXTURES, nextFixtures, fixturesOn } from "@/lib/wc26-fixtures";
@@ -38,6 +47,8 @@ export default function DashboardPage() {
         <CountBadges />
       </header>
 
+      <HeroCTAs />
+
       {todayFixtures.length > 0 && (
         <FixturesSection
           title="Today"
@@ -58,6 +69,89 @@ export default function DashboardPage() {
 
       <KeyFacts />
     </div>
+  );
+}
+
+/**
+ * Three big CTAs immediately under the hero — the app's value props before
+ * any data scrolling: create a private league, place a tip, follow Norway.
+ * These are the actions we want first-time visitors to take, not "browse stats".
+ */
+function HeroCTAs() {
+  return (
+    <section className="grid grid-cols-1 md:grid-cols-3 gap-3">
+      <HeroCard
+        href="/leagues"
+        icon={<Trophy size={18} className="text-pitch-950" />}
+        kicker="Mini-league"
+        title="Lag VM-liga"
+        body="Inviter venner med en lenke. Privat leaderboard, ukentlig oppsummering."
+        tone="accent"
+      />
+      <HeroCard
+        href="/predictions"
+        icon={<Target size={18} className="text-pitch-950" />}
+        kicker="Predictions"
+        title="Tipp åpningskampen"
+        body="3 free guest tips før du må logge inn. Mexico–RSA først ut."
+        tone="data"
+      />
+      <HeroCard
+        href="/norge"
+        icon={<Flag size={18} className="text-pitch-950" />}
+        kicker="Følg laget ditt"
+        title="Norge i Gruppe I"
+        body="Neste kamp, gruppestilling, Haaland-tracker og scenario."
+        tone="draw"
+      />
+    </section>
+  );
+}
+
+function HeroCard({
+  href,
+  icon,
+  kicker,
+  title,
+  body,
+  tone,
+}: {
+  href: string;
+  icon: React.ReactNode;
+  kicker: string;
+  title: string;
+  body: string;
+  tone: "accent" | "data" | "draw";
+}) {
+  const toneClass = {
+    accent: "bg-accent-500/15 hover:bg-accent-500/25 ring-accent-500/30 [&_.dot]:bg-accent-500",
+    data:   "bg-data-500/15 hover:bg-data-500/25 ring-data-500/30 [&_.dot]:bg-data-500",
+    draw:   "bg-draw/15 hover:bg-draw/25 ring-draw/30 [&_.dot]:bg-draw",
+  }[tone];
+  return (
+    <Link
+      href={href}
+      className={`card-panel ring-1 p-5 transition-colors group flex flex-col gap-3 ${toneClass}`}
+    >
+      <div className="flex items-center justify-between">
+        <div className="dot h-9 w-9 rounded-md flex items-center justify-center">
+          {icon}
+        </div>
+        <ArrowRight
+          size={14}
+          className="text-pitch-400 group-hover:text-pitch-100 group-hover:translate-x-1 transition-all"
+        />
+      </div>
+      <div>
+        <div className="text-[10px] uppercase tracking-widest text-pitch-400 font-semibold">
+          {kicker}
+        </div>
+        <div className="text-lg font-bold tracking-tight mt-0.5">{title}</div>
+        <div className="text-xs text-pitch-300 mt-1.5 leading-relaxed">
+          {body}
+        </div>
+      </div>
+    </Link>
   );
 }
 

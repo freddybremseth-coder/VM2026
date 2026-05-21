@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Users } from "lucide-react";
 import { TeamFlag } from "@/components/shared/TeamFlag";
+import { DataSourceBanner } from "@/components/shared/DataSourceBanner";
 import { TEAMS, GROUPS } from "@/lib/wc26-data";
 
 export default function TeamsPage() {
@@ -18,6 +19,10 @@ export default function TeamsPage() {
           Grouped by their first-round group. Click any team to see squad details.
         </p>
       </header>
+
+      <div className="mb-5">
+        <DataSourceBanner caveat="Squad status (Official / Preliminary / Pending) reflects what each federation has published as of the last verification date." />
+      </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
         {GROUPS.map((g) => (

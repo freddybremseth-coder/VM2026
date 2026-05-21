@@ -10,12 +10,14 @@ import {
   Target,
   Trophy,
   GitBranch,
+  Flag,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { AppLogo, ChatGeniusBadge, CreditsBadge } from "./Logo";
 
 const NAV = [
   { href: "/", label: "Dashboard", icon: LayoutDashboard },
+  { href: "/norge", label: "Følg Norge", icon: Flag },
   { href: "/matches", label: "Matches", icon: Calendar },
   { href: "/teams", label: "Teams", icon: Users },
   { href: "/players", label: "Players", icon: User },

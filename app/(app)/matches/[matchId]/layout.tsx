@@ -1,9 +1,19 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, MapPin, UserCircle2 } from "lucide-react";
+import {
+  ArrowLeft,
+  MapPin,
+  UserCircle2,
+  Target,
+  Users,
+  Activity,
+  Sparkles,
+  Trophy,
+} from "lucide-react";
 import { TeamFlag } from "@/components/shared/TeamFlag";
 import { MatchHeader } from "@/components/match/MatchHeader";
 import { MatchTabs } from "@/components/match/MatchTabs";
+import { DataSourceBanner } from "@/components/shared/DataSourceBanner";
 import { getMatchDetail, getFixtureView } from "@/lib/match-data";
 import { formatKickoff, formatDateLabel } from "@/lib/utils";
 
@@ -102,19 +112,73 @@ export default function MatchLayout({
         </div>
       </div>
 
-      <div className="card-panel p-8 text-center">
-        <div className="text-sm font-semibold text-pitch-200">
-          Match data available at kickoff
+      {/* Tipp denne — primary CTA, prominent before kickoff */}
+      <div className="card-panel p-5 ring-1 ring-accent-500/30 flex items-center justify-between gap-4 bg-gradient-to-r from-accent-500/10 via-transparent to-transparent">
+        <div className="flex items-center gap-3 min-w-0">
+          <div className="h-11 w-11 rounded-md bg-accent-500/15 flex items-center justify-center shrink-0">
+            <Target size={20} className="text-accent-400" />
+          </div>
+          <div className="min-w-0">
+            <div className="text-sm font-semibold">Tipp denne kampen</div>
+            <div className="text-xs text-pitch-400 mt-0.5">
+              3 pts for exact score · 1 pt for correct outcome · locks at kickoff
+            </div>
+          </div>
         </div>
-        <div className="text-xs text-pitch-500 mt-1">
-          xG timeline, shots, possession and tactics will populate live once the
-          match starts. In the meantime you can{" "}
-          <Link href="/predictions" className="text-accent-300 hover:text-accent-200 underline underline-offset-2">
-            submit a prediction
-          </Link>
-          .
-        </div>
+        <Link
+          href="/predictions"
+          className="rounded-md bg-accent-500 hover:bg-accent-400 text-pitch-950 text-xs font-semibold px-4 py-2 transition-colors flex items-center gap-1.5 shrink-0"
+        >
+          Tipp nå
+        </Link>
       </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+        <PrematchCard
+          icon={<Users size={14} className="text-accent-400" />}
+          title="Expected starting XI"
+          status="Available 30 min before kickoff"
+        />
+        <PrematchCard
+          icon={<Activity size={14} className="text-data-400" />}
+          title="Last 5 matches"
+          status="Coming next"
+        />
+        <PrematchCard
+          icon={<Sparkles size={14} className="text-accent-400" />}
+          title="AI match preview"
+          status="ChatGenius will draft a 3-line scouting brief at kickoff"
+        />
+        <PrematchCard
+          icon={<Trophy size={14} className="text-draw" />}
+          title="Head-to-head history"
+          status="Coming next"
+        />
+      </div>
+
+      <DataSourceBanner
+        caveat="xG timeline, shots, possession and tactics populate live once the match starts."
+      />
+    </div>
+  );
+}
+
+function PrematchCard({
+  icon,
+  title,
+  status,
+}: {
+  icon: React.ReactNode;
+  title: string;
+  status: string;
+}) {
+  return (
+    <div className="card-panel p-4">
+      <div className="flex items-center gap-2 text-[10px] uppercase tracking-widest text-pitch-300 font-semibold mb-2">
+        {icon}
+        {title}
+      </div>
+      <div className="text-xs text-pitch-500">{status}</div>
     </div>
   );
 }
