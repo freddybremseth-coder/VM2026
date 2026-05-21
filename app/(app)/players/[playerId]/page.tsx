@@ -48,9 +48,9 @@ export default function PlayerProfilePage({
         </div>
 
         <div className="mt-5 pt-4 border-t border-pitch-700/60 grid grid-cols-3 gap-4">
-          <Stat label="Age" value={player.age} />
-          <Stat label="Caps" value={player.caps} />
-          <Stat label="Goals" value={player.goals} />
+          <Stat label="Age" value={player.age ?? "—"} />
+          <Stat label="Caps" value={player.caps ?? "—"} />
+          <Stat label="Goals" value={player.goals ?? "—"} />
         </div>
       </div>
 
