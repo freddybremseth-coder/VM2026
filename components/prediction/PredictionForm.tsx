@@ -118,6 +118,10 @@ function ScoreInput({ name, defaultValue }: { name: string; defaultValue: number
       min={0}
       max={20}
       defaultValue={defaultValue}
+      // Select the existing value on focus so typing replaces it (otherwise
+      // typing "2" into a field showing "0" produces "20").
+      onFocus={(e) => e.currentTarget.select()}
+      onClick={(e) => e.currentTarget.select()}
       className="w-14 h-12 text-center font-mono text-xl font-bold stat-num bg-pitch-900 border border-pitch-700 rounded-md focus:outline-none focus:ring-2 focus:ring-accent-500/50 focus:border-accent-500/50 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
       required
     />

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Target, LogIn, Lock } from "lucide-react";
+import { Target, LogIn, Lock, Calendar } from "lucide-react";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { PredictionForm } from "@/components/prediction/PredictionForm";
 import { TeamFlag } from "@/components/shared/TeamFlag";
@@ -22,14 +22,28 @@ function stageLabel(f: Fixture): string {
     : STAGE_LABEL_KO[f.stage.round];
 }
 
+function dayKey(iso: string): string {
+  return iso.slice(0, 10);
+}
+
 export default async function PredictionsPage() {
   const supabase = createSupabaseServerClient();
   const { data: { user } } = await supabase.auth.getUser();
 
   const now = new Date();
-  const open = nextFixtures(now.toISOString(), 12).filter(
-    (f) => f.homeId && f.awayId, // only fixtures with known pairings (group stage)
+  // No limit — give every future fixture with a known pairing.
+  const open = nextFixtures(now.toISOString(), 200).filter(
+    (f) => f.homeId && f.awayId,
   );
+
+  // Group fixtures by date so the page stays scannable when there are 50+ of them.
+  const byDay = new Map<string, Fixture[]>();
+  for (const f of open) {
+    const k = dayKey(f.kickoff);
+    if (!byDay.has(k)) byDay.set(k, []);
+    byDay.get(k)!.push(f);
+  }
+  const days = Array.from(byDay.entries()).sort(([a], [b]) => a.localeCompare(b));
 
   let existingByMatch = new Map<number, { home_score: number; away_score: number }>();
   if (user && open.length > 0) {
@@ -66,38 +80,23 @@ export default async function PredictionsPage() {
 
       <section className="space-y-3">
         <h2 className="text-xs uppercase tracking-widest font-semibold text-pitch-200">
-          Open · next {open.length} {open.length === 1 ? "match" : "matches"}
+          Open · {open.length} {open.length === 1 ? "match" : "matches"} ahead
         </h2>
         {open.length === 0 ? (
           <div className="card-panel p-6 text-center text-sm text-pitch-500">
             No matches open for tips right now.
           </div>
-        ) : !user ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 opacity-50 pointer-events-none">
-            {open.map((f) => (
-              <PreviewCard key={f.id} fixture={f} />
-            ))}
-          </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            {open.map((f) => {
-              const home = teamById(f.homeId!);
-              const away = teamById(f.awayId!);
-              const venue = venueById(f.venueId);
-              if (!home || !away) return null;
-              return (
-                <PredictionForm
-                  key={f.id}
-                  matchId={f.id}
-                  stageLabel={stageLabel(f)}
-                  kickoff={f.kickoff}
-                  venueLabel={venue?.city ?? "TBD"}
-                  home={home}
-                  away={away}
-                  existing={existingByMatch.get(f.id)}
-                />
-              );
-            })}
+          <div className="space-y-6">
+            {days.map(([day, fixtures]) => (
+              <DaySection
+                key={day}
+                day={day}
+                fixtures={fixtures}
+                user={user}
+                existingByMatch={existingByMatch}
+              />
+            ))}
           </div>
         )}
       </section>
@@ -105,11 +104,60 @@ export default async function PredictionsPage() {
       <section className="card-panel p-4 flex items-start gap-3">
         <Lock size={14} className="text-pitch-500 shrink-0 mt-0.5" />
         <p className="text-xs text-pitch-400 leading-relaxed">
-          Knockout fixtures appear here once the group-stage standings determine
-          the pairings (from 28 June). You'll be able to tip every match through
-          to the final.
+          Knockout fixtures will fill in as group-stage standings determine the
+          pairings (from 28 June). You can then tip every match through to the
+          final on 19 July.
         </p>
       </section>
+    </div>
+  );
+}
+
+function DaySection({
+  day,
+  fixtures,
+  user,
+  existingByMatch,
+}: {
+  day: string;
+  fixtures: Fixture[];
+  user: { id: string } | null;
+  existingByMatch: Map<number, { home_score: number; away_score: number }>;
+}) {
+  return (
+    <div>
+      <div className="sticky top-[57px] z-10 bg-pitch-950/85 backdrop-blur py-2 mb-3 flex items-center gap-2 border-b border-pitch-800/60">
+        <Calendar size={12} className="text-accent-400" />
+        <h3 className="text-xs uppercase tracking-widest font-semibold text-accent-300 font-mono">
+          {formatDateLabel(day + "T12:00:00Z")}
+        </h3>
+        <span className="text-[10px] font-mono text-pitch-500">
+          {fixtures.length} {fixtures.length === 1 ? "match" : "matches"}
+        </span>
+      </div>
+      <div className={user ? "grid grid-cols-1 md:grid-cols-2 gap-3" : "grid grid-cols-1 md:grid-cols-2 gap-3 opacity-50 pointer-events-none"}>
+        {fixtures.map((f) => {
+          const home = teamById(f.homeId!);
+          const away = teamById(f.awayId!);
+          const venue = venueById(f.venueId);
+          if (!home || !away) return null;
+          if (!user) {
+            return <PreviewCard key={f.id} fixture={f} />;
+          }
+          return (
+            <PredictionForm
+              key={f.id}
+              matchId={f.id}
+              stageLabel={stageLabel(f)}
+              kickoff={f.kickoff}
+              venueLabel={venue?.city ?? "TBD"}
+              home={home}
+              away={away}
+              existing={existingByMatch.get(f.id)}
+            />
+          );
+        })}
+      </div>
     </div>
   );
 }
