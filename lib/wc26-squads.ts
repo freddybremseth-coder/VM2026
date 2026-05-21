@@ -323,11 +323,12 @@ const HAITI: Player[] = [
 ];
 
 import { EXTRA_SQUADS } from "./wc26-squads-extra";
+import { WAVE3_SQUADS } from "./wc26-squads-wave3";
 
-// Wave-1 squads defined inline above. Wave-2 squads (Switzerland, Scotland,
-// Croatia, Belgium, Japan, Sweden, Tunisia, Curaçao, Côte d'Ivoire, NZ,
-// Austria, Portugal, DR Congo, Mexico, and the updated official France) live
-// in `wc26-squads-extra.ts` and override the wave-1 entries when both exist.
+// Wave-1 squads defined inline above. Wave-2 (extra) covers SUI/SCO/CRO/BEL/
+// JPN/SWE/TUN/CUW/CIV/NZL/AUT/POR/COD + MEX + the official France override.
+// Wave-3 covers the rest of the squads announced through oddsnet.com:
+// IRN, IRQ, EGY, QAT, CZE, TUR, PAR (preliminary) and CPV, JOR (official).
 const SQUADS_BY_TEAM: Record<number, Player[]> = {
   3: SOUTH_KOREA,
   4: ARGENTINA,
@@ -339,6 +340,7 @@ const SQUADS_BY_TEAM: Record<number, Player[]> = {
   50: BOSNIA,
   51: HAITI,
   ...EXTRA_SQUADS,
+  ...WAVE3_SQUADS,
 };
 
 export function getSquad(teamId: number): Player[] {
