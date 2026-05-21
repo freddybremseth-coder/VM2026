@@ -3,6 +3,7 @@ import { Target, LogIn, Lock, Calendar, Sparkles } from "lucide-react";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { PredictionForm } from "@/components/prediction/PredictionForm";
 import { GuestPredictionForm } from "@/components/prediction/GuestPredictionForm";
+import { GuestMigrationPrompt } from "@/components/prediction/GuestMigrationPrompt";
 import { formatDateLabel } from "@/lib/utils";
 import { nextFixtures, type Fixture } from "@/lib/wc26-fixtures";
 import { teamById, venueById } from "@/lib/wc26-data";
@@ -77,6 +78,7 @@ export default async function PredictionsPage() {
       </header>
 
       {!user && <GuestBanner />}
+      {user && <GuestMigrationPrompt />}
 
       <section className="space-y-3">
         <h2 className="text-xs uppercase tracking-widest font-semibold text-pitch-200">
