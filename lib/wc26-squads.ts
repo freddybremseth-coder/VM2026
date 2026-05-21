@@ -95,31 +95,40 @@ const SPAIN: Player[] = [
 ];
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Brazil · Group D · preliminary
+// Brazil · Group C · OFFICIAL (announced 18 May 2026 by Carlo Ancelotti)
+// Source: DAZN, Sky Sports squad announcement coverage.
 // ─────────────────────────────────────────────────────────────────────────────
 const BRAZIL: Player[] = [
-  { id: 1301, teamId: 13, number: 1,  name: "Alisson",        position: "GK", club: "Liverpool",       age: 33, caps: 68, goals: 0,  startX: 50, startY: 92 },
-  { id: 1302, teamId: 13, number: 12, name: "Bento",          position: "GK", club: "Al-Nassr",        age: 26, caps: 8,  goals: 0 },
-  { id: 1303, teamId: 13, number: 23, name: "Ederson",        position: "GK", club: "Manchester City", age: 32, caps: 27, goals: 0 },
-  { id: 1304, teamId: 13, number: 2,  name: "Danilo",         position: "RB", club: "Flamengo",        age: 34, caps: 60, goals: 1,  startX: 82, startY: 75, isCaptain: true },
-  { id: 1305, teamId: 13, number: 3,  name: "Marquinhos",     position: "CB", club: "PSG",             age: 31, caps: 89, goals: 7,  startX: 38, startY: 80 },
-  { id: 1306, teamId: 13, number: 4,  name: "Gabriel",        position: "CB", club: "Arsenal",         age: 28, caps: 17, goals: 1,  startX: 62, startY: 80 },
-  { id: 1307, teamId: 13, number: 6,  name: "Wendell",        position: "LB", club: "Porto",           age: 32, caps: 9,  goals: 0,  startX: 18, startY: 75 },
-  { id: 1308, teamId: 13, number: 13, name: "Vanderson",      position: "RB", club: "Monaco",          age: 24, caps: 8,  goals: 0 },
-  { id: 1309, teamId: 13, number: 14, name: "Éder Militão",   position: "CB", club: "Real Madrid",     age: 28, caps: 35, goals: 2 },
-  { id: 1310, teamId: 13, number: 5,  name: "Bruno Guimarães",position: "DM", club: "Newcastle",       age: 28, caps: 33, goals: 3,  startX: 50, startY: 60 },
-  { id: 1311, teamId: 13, number: 8,  name: "Lucas Paquetá",  position: "AM", club: "West Ham",        age: 28, caps: 49, goals: 11, startX: 32, startY: 50 },
-  { id: 1312, teamId: 13, number: 10, name: "Rodrygo",        position: "AM", club: "Real Madrid",     age: 25, caps: 37, goals: 9,  startX: 68, startY: 50 },
-  { id: 1313, teamId: 13, number: 15, name: "Joelinton",      position: "CM", club: "Newcastle",       age: 29, caps: 21, goals: 1 },
-  { id: 1314, teamId: 13, number: 16, name: "Andreas Pereira",position: "AM", club: "Palmeiras",       age: 30, caps: 8,  goals: 1 },
-  { id: 1315, teamId: 13, number: 18, name: "Gerson",         position: "CM", club: "Zenit",           age: 28, caps: 9,  goals: 0 },
-  { id: 1316, teamId: 13, number: 7,  name: "Vinícius Jr.",   position: "LW", club: "Real Madrid",     age: 25, caps: 41, goals: 6,  startX: 22, startY: 28 },
-  { id: 1317, teamId: 13, number: 9,  name: "Raphinha",       position: "RW", club: "Barcelona",       age: 29, caps: 32, goals: 11, startX: 78, startY: 28 },
-  { id: 1318, teamId: 13, number: 11, name: "Estêvão",        position: "RW", club: "Chelsea",         age: 18, caps: 5,  goals: 1 },
-  { id: 1319, teamId: 13, number: 17, name: "João Pedro",     position: "ST", club: "Chelsea",         age: 24, caps: 8,  goals: 1,  startX: 50, startY: 18 },
-  { id: 1320, teamId: 13, number: 19, name: "Endrick",        position: "ST", club: "Real Madrid",     age: 19, caps: 14, goals: 3 },
-  { id: 1321, teamId: 13, number: 20, name: "Savinho",        position: "RW", club: "Manchester City", age: 21, caps: 6,  goals: 0 },
-  { id: 1322, teamId: 13, number: 21, name: "Matheus Cunha",  position: "ST", club: "Manchester United", age: 26, caps: 6,  goals: 1 },
+  // Goalkeepers
+  { id: 1301, teamId: 13, number: 1,  name: "Alisson",          position: "GK", club: "Liverpool",         age: 33, caps: 68, goals: 0,  startX: 50, startY: 92 },
+  { id: 1302, teamId: 13, number: 12, name: "Ederson",          position: "GK", club: "Fenerbahçe",        age: 32, caps: 27, goals: 0 },
+  { id: 1303, teamId: 13, number: 23, name: "Weverton",         position: "GK", club: "Grêmio",            age: 37, caps: 9,  goals: 0 },
+  // Defenders
+  { id: 1304, teamId: 13, number: 2,  name: "Danilo",           position: "RB", club: "Flamengo",          age: 34, caps: 60, goals: 1,  startX: 82, startY: 75, isCaptain: true },
+  { id: 1305, teamId: 13, number: 3,  name: "Marquinhos",       position: "CB", club: "PSG",               age: 31, caps: 89, goals: 7,  startX: 38, startY: 80 },
+  { id: 1306, teamId: 13, number: 4,  name: "Gabriel Magalhães",position: "CB", club: "Arsenal",           age: 28, caps: 17, goals: 1,  startX: 62, startY: 80 },
+  { id: 1307, teamId: 13, number: 5,  name: "Bremer",           position: "CB", club: "Juventus",          age: 28, caps: 11, goals: 0 },
+  { id: 1308, teamId: 13, number: 6,  name: "Alex Sandro",      position: "LB", club: "Flamengo",          age: 35, caps: 38, goals: 2,  startX: 18, startY: 75 },
+  { id: 1309, teamId: 13, number: 13, name: "Léo Pereira",      position: "CB", club: "Flamengo",          age: 30, caps: 6,  goals: 0 },
+  { id: 1310, teamId: 13, number: 14, name: "Roger Ibañez",     position: "CB", club: "Al-Ahli",           age: 27, caps: 13, goals: 0 },
+  { id: 1311, teamId: 13, number: 16, name: "Douglas Santos",   position: "LB", club: "Zenit",             age: 32, caps: 5,  goals: 0 },
+  { id: 1312, teamId: 13, number: 22, name: "Wesley",           position: "RB", club: "Roma",              age: 22, caps: 4,  goals: 0 },
+  // Midfielders
+  { id: 1313, teamId: 13, number: 8,  name: "Bruno Guimarães",  position: "DM", club: "Newcastle",         age: 28, caps: 33, goals: 3,  startX: 50, startY: 60 },
+  { id: 1314, teamId: 13, number: 18, name: "Casemiro",         position: "DM", club: "Manchester United", age: 34, caps: 76, goals: 7 },
+  { id: 1315, teamId: 13, number: 17, name: "Lucas Paquetá",    position: "AM", club: "Flamengo",          age: 28, caps: 49, goals: 11, startX: 32, startY: 50 },
+  { id: 1316, teamId: 13, number: 15, name: "Fabinho",          position: "DM", club: "Al-Ittihad",        age: 32, caps: 31, goals: 0 },
+  { id: 1317, teamId: 13, number: 25, name: "Danilo (Botafogo)",position: "CM", club: "Botafogo",          age: 24, caps: 4,  goals: 0,  startX: 68, startY: 55 },
+  // Forwards
+  { id: 1318, teamId: 13, number: 7,  name: "Vinícius Jr.",     position: "LW", club: "Real Madrid",       age: 25, caps: 41, goals: 6,  startX: 22, startY: 28 },
+  { id: 1319, teamId: 13, number: 9,  name: "Matheus Cunha",    position: "ST", club: "Manchester United", age: 26, caps: 11, goals: 1,  startX: 50, startY: 18 },
+  { id: 1320, teamId: 13, number: 10, name: "Neymar",           position: "AM", club: "Santos",            age: 34, caps: 130,goals: 79, startX: 50, startY: 35 },
+  { id: 1321, teamId: 13, number: 11, name: "Raphinha",         position: "RW", club: "Barcelona",         age: 29, caps: 32, goals: 11, startX: 78, startY: 28 },
+  { id: 1322, teamId: 13, number: 19, name: "Endrick",          position: "ST", club: "Lyon",              age: 19, caps: 14, goals: 3 },
+  { id: 1323, teamId: 13, number: 20, name: "Gabriel Martinelli",position: "LW",club: "Arsenal",           age: 25, caps: 13, goals: 2 },
+  { id: 1324, teamId: 13, number: 21, name: "Igor Thiago",      position: "ST", club: "Brentford",         age: 24, caps: 3,  goals: 1 },
+  { id: 1325, teamId: 13, number: 24, name: "Rayan",            position: "RW", club: "Bournemouth",       age: 19, caps: 2,  goals: 0 },
+  { id: 1326, teamId: 13, number: 26, name: "Luiz Henrique",    position: "RW", club: "Zenit",             age: 25, caps: 5,  goals: 0 },
 ];
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -209,13 +218,112 @@ const FRANCE: Player[] = [
 // ─────────────────────────────────────────────────────────────────────────────
 // Aggregate
 // ─────────────────────────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────────────────────
+// Bosnia & Herzegovina · Group B · OFFICIAL (announced 11 May 2026)
+// ─────────────────────────────────────────────────────────────────────────────
+const BOSNIA: Player[] = [
+  { id: 5001, teamId: 50, number: 1,  name: "Nikola Vasilj",        position: "GK", club: "St. Pauli",            age: 30, caps: 14, goals: 0,  startX: 50, startY: 92 },
+  { id: 5002, teamId: 50, number: 12, name: "Martin Zlomislić",     position: "GK", club: "Rijeka",               age: 25, caps: 2,  goals: 0 },
+  { id: 5003, teamId: 50, number: 23, name: "Osman Hadžikić",       position: "GK", club: "Slaven Belupo",        age: 30, caps: 1,  goals: 0 },
+  { id: 5004, teamId: 50, number: 3,  name: "Sead Kolašinac",       position: "LB", club: "Atalanta",             age: 32, caps: 64, goals: 1,  startX: 18, startY: 75 },
+  { id: 5005, teamId: 50, number: 2,  name: "Amar Dedić",           position: "RB", club: "Benfica",              age: 23, caps: 18, goals: 0,  startX: 82, startY: 75 },
+  { id: 5006, teamId: 50, number: 5,  name: "Nihad Mujakić",        position: "CB", club: "Gaziantep",            age: 27, caps: 12, goals: 0,  startX: 62, startY: 80 },
+  { id: 5007, teamId: 50, number: 4,  name: "Nikola Katić",         position: "CB", club: "Schalke 04",           age: 29, caps: 18, goals: 1,  startX: 38, startY: 80 },
+  { id: 5008, teamId: 50, number: 14, name: "Tarik Muharemović",    position: "CB", club: "Sassuolo",             age: 22, caps: 8,  goals: 0 },
+  { id: 5009, teamId: 50, number: 17, name: "Stjepan Radeljić",     position: "CB", club: "Rijeka",               age: 26, caps: 5,  goals: 0 },
+  { id: 5010, teamId: 50, number: 21, name: "Dennis Hadžikadunić",  position: "CB", club: "Sampdoria",            age: 27, caps: 9,  goals: 0 },
+  { id: 5011, teamId: 50, number: 22, name: "Nidal Čelik",          position: "LB", club: "Lens",                 age: 23, caps: 4,  goals: 0 },
+  { id: 5012, teamId: 50, number: 8,  name: "Amir Hadžiahmetović",  position: "DM", club: "Hull City",            age: 28, caps: 26, goals: 1,  startX: 50, startY: 60 },
+  { id: 5013, teamId: 50, number: 6,  name: "Ivan Šunjić",          position: "CM", club: "Pafos",                age: 29, caps: 28, goals: 0,  startX: 35, startY: 55 },
+  { id: 5014, teamId: 50, number: 15, name: "Ivan Bašić",           position: "CM", club: "Astana",               age: 27, caps: 6,  goals: 1 },
+  { id: 5015, teamId: 50, number: 18, name: "Dženis Burnić",        position: "CM", club: "Karlsruher SC",        age: 27, caps: 8,  goals: 0 },
+  { id: 5016, teamId: 50, number: 16, name: "Ermin Mahmić",         position: "CM", club: "Slovan Liberec",       age: 24, caps: 3,  goals: 0 },
+  { id: 5017, teamId: 50, number: 20, name: "Benjamin Tahirović",   position: "CM", club: "Brøndby",              age: 22, caps: 11, goals: 0 },
+  { id: 5018, teamId: 50, number: 24, name: "Amar Memić",           position: "CM", club: "Viktoria Plzeň",       age: 22, caps: 2,  goals: 0 },
+  { id: 5019, teamId: 50, number: 25, name: "Armin Gigović",        position: "CM", club: "Young Boys",           age: 23, caps: 6,  goals: 0 },
+  { id: 5020, teamId: 50, number: 26, name: "Kerim Alajbegović",    position: "AM", club: "RB Salzburg",          age: 20, caps: 2,  goals: 0,  startX: 65, startY: 50 },
+  { id: 5021, teamId: 50, number: 19, name: "Esmir Bajraktarević",  position: "LW", club: "PSV Eindhoven",        age: 20, caps: 9,  goals: 1,  startX: 22, startY: 30 },
+  { id: 5022, teamId: 50, number: 7,  name: "Ermedin Demirović",    position: "ST", club: "VfB Stuttgart",        age: 28, caps: 32, goals: 7,  startX: 50, startY: 18 },
+  { id: 5023, teamId: 50, number: 11, name: "Jovo Lukić",           position: "ST", club: "Universitatea Cluj",   age: 27, caps: 4,  goals: 1 },
+  { id: 5024, teamId: 50, number: 13, name: "Samed Baždar",         position: "ST", club: "Jagiellonia Białystok",age: 22, caps: 7,  goals: 1 },
+  { id: 5025, teamId: 50, number: 9,  name: "Haris Tabaković",      position: "ST", club: "Mönchengladbach",      age: 31, caps: 11, goals: 3,  startX: 78, startY: 30 },
+  { id: 5026, teamId: 50, number: 10, name: "Edin Džeko",           position: "ST", club: "Schalke 04",           age: 40, caps: 148,goals: 73, isCaptain: true },
+];
+
+// ─────────────────────────────────────────────────────────────────────────────
+// South Korea · Group A · OFFICIAL (announced 16 May 2026)
+// ─────────────────────────────────────────────────────────────────────────────
+const SOUTH_KOREA: Player[] = [
+  { id: 301, teamId: 3, number: 21, name: "Jo Hyeon-woo",     position: "GK", club: "Ulsan",                  age: 34, caps: 38, goals: 0,  startX: 50, startY: 92 },
+  { id: 302, teamId: 3, number: 1,  name: "Kim Seung-gyu",    position: "GK", club: "FC Tokyo",               age: 35, caps: 102,goals: 0 },
+  { id: 303, teamId: 3, number: 23, name: "Song Bum-keun",    position: "GK", club: "Jeonbuk",                age: 28, caps: 5,  goals: 0 },
+  { id: 304, teamId: 3, number: 13, name: "Kim Moon-hwan",    position: "RB", club: "Daejeon",                age: 30, caps: 35, goals: 1,  startX: 82, startY: 75 },
+  { id: 305, teamId: 3, number: 3,  name: "Kim Min-jae",      position: "CB", club: "Bayern Munich",          age: 29, caps: 77, goals: 4,  startX: 62, startY: 80 },
+  { id: 306, teamId: 3, number: 4,  name: "Kim Tae-hyon",     position: "CB", club: "Kashima Antlers",        age: 28, caps: 6,  goals: 0,  startX: 38, startY: 80 },
+  { id: 307, teamId: 3, number: 2,  name: "Park Jin-seob",    position: "LB", club: "Zhejiang",               age: 25, caps: 11, goals: 0,  startX: 18, startY: 75 },
+  { id: 308, teamId: 3, number: 5,  name: "Seol Young-woo",   position: "RB", club: "Red Star Belgrade",      age: 27, caps: 14, goals: 0 },
+  { id: 309, teamId: 3, number: 22, name: "Jens Castrop",     position: "CB", club: "Mönchengladbach",        age: 23, caps: 2,  goals: 0 },
+  { id: 310, teamId: 3, number: 26, name: "Lee Ki-hyuk",      position: "LB", club: "Gangwon",                age: 24, caps: 3,  goals: 0 },
+  { id: 311, teamId: 3, number: 24, name: "Lee Tae-seok",     position: "CB", club: "Austria Wien",           age: 23, caps: 1,  goals: 0 },
+  { id: 312, teamId: 3, number: 19, name: "Lee Han-beom",     position: "CB", club: "Midtjylland",            age: 23, caps: 4,  goals: 0 },
+  { id: 313, teamId: 3, number: 6,  name: "Cho Yu-min",       position: "CB", club: "Sharjah",                age: 30, caps: 26, goals: 1 },
+  { id: 314, teamId: 3, number: 16, name: "Kim Jin-gyu",      position: "CM", club: "Jeonbuk",                age: 28, caps: 7,  goals: 0 },
+  { id: 315, teamId: 3, number: 14, name: "Bae Jun-ho",       position: "AM", club: "Stoke City",             age: 22, caps: 12, goals: 1,  startX: 65, startY: 50 },
+  { id: 316, teamId: 3, number: 8,  name: "Paik Seung-ho",    position: "DM", club: "Birmingham",             age: 29, caps: 22, goals: 4,  startX: 50, startY: 60 },
+  { id: 317, teamId: 3, number: 25, name: "Yang Hyun-jun",    position: "LW", club: "Celtic",                 age: 24, caps: 11, goals: 1 },
+  { id: 318, teamId: 3, number: 15, name: "Eom Ji-sung",      position: "CM", club: "Swansea",                age: 23, caps: 8,  goals: 0 },
+  { id: 319, teamId: 3, number: 18, name: "Lee Kang-in",      position: "AM", club: "Paris Saint-Germain",    age: 25, caps: 32, goals: 5,  startX: 35, startY: 50 },
+  { id: 320, teamId: 3, number: 20, name: "Lee Dong-gyeong",  position: "AM", club: "Ulsan",                  age: 29, caps: 9,  goals: 0 },
+  { id: 321, teamId: 3, number: 17, name: "Lee Jae-sung",     position: "CM", club: "Mainz",                  age: 33, caps: 95, goals: 18 },
+  { id: 322, teamId: 3, number: 9,  name: "Hwang In-beom",    position: "DM", club: "Feyenoord",              age: 30, caps: 60, goals: 8 },
+  { id: 323, teamId: 3, number: 11, name: "Hwang Hee-chan",   position: "RW", club: "Wolverhampton",          age: 30, caps: 67, goals: 18, startX: 78, startY: 30 },
+  { id: 324, teamId: 3, number: 7,  name: "Son Heung-min",    position: "LW", club: "LAFC",                   age: 33, caps: 142,goals: 54, startX: 22, startY: 30, isCaptain: true },
+  { id: 325, teamId: 3, number: 10, name: "Oh Hyeon-gyu",     position: "ST", club: "Beşiktaş",               age: 25, caps: 21, goals: 6,  startX: 50, startY: 18 },
+  { id: 326, teamId: 3, number: 12, name: "Cho Gue-sung",     position: "ST", club: "Midtjylland",            age: 28, caps: 36, goals: 11 },
+];
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Haiti · Group C · OFFICIAL (announced May 2026)
+// ─────────────────────────────────────────────────────────────────────────────
+const HAITI: Player[] = [
+  { id: 5101, teamId: 51, number: 1,  name: "Johnny Placide",       position: "GK", club: "Bastia",               age: 37, caps: 53, goals: 0,  startX: 50, startY: 92 },
+  { id: 5102, teamId: 51, number: 12, name: "Alexandre Pierre",     position: "GK", club: "Sochaux",              age: 28, caps: 14, goals: 0 },
+  { id: 5103, teamId: 51, number: 23, name: "Josué Duverger",       position: "GK", club: "Cosmos Koblenz",       age: 27, caps: 4,  goals: 0 },
+  { id: 5104, teamId: 51, number: 4,  name: "Ricardo Adé",          position: "CB", club: "LDU Quito",            age: 27, caps: 25, goals: 2,  startX: 38, startY: 80 },
+  { id: 5105, teamId: 51, number: 2,  name: "Carlens Arcus",        position: "RB", club: "Angers",               age: 30, caps: 24, goals: 0,  startX: 82, startY: 75 },
+  { id: 5106, teamId: 51, number: 5,  name: "Martin Experience",    position: "CB", club: "Nancy",                age: 25, caps: 4,  goals: 0 },
+  { id: 5107, teamId: 51, number: 3,  name: "Jean-Kevin Duverne",   position: "LB", club: "Gent",                 age: 28, caps: 16, goals: 0,  startX: 18, startY: 75 },
+  { id: 5108, teamId: 51, number: 13, name: "Duke Lacroix",         position: "RB", club: "Colorado Springs",     age: 32, caps: 11, goals: 0 },
+  { id: 5109, teamId: 51, number: 14, name: "Wilguens Paugain",     position: "CB", club: "Zulte Waregem",        age: 26, caps: 6,  goals: 0 },
+  { id: 5110, teamId: 51, number: 6,  name: "Hannes Delcroix",      position: "CB", club: "Lugano",               age: 27, caps: 5,  goals: 0,  startX: 62, startY: 80 },
+  { id: 5111, teamId: 51, number: 22, name: "Keeto Thermoncy",      position: "LB", club: "Young Boys",           age: 22, caps: 3,  goals: 0 },
+  { id: 5112, teamId: 51, number: 8,  name: "Leverton Pierre",      position: "CM", club: "Vizela",               age: 23, caps: 9,  goals: 1,  startX: 35, startY: 55 },
+  { id: 5113, teamId: 51, number: 16, name: "Danley Jean Jacques",  position: "DM", club: "Philadelphia Union",   age: 28, caps: 14, goals: 0,  startX: 50, startY: 60 },
+  { id: 5114, teamId: 51, number: 15, name: "Carl Sainté",          position: "CM", club: "El Paso Locomotive",   age: 29, caps: 8,  goals: 0 },
+  { id: 5115, teamId: 51, number: 10, name: "Jean-Ricner Bellegarde",position: "AM",club: "Wolverhampton",        age: 28, caps: 17, goals: 2,  startX: 65, startY: 50, isCaptain: true },
+  { id: 5116, teamId: 51, number: 17, name: "Woodensky Pierre",     position: "CM", club: "Violette",             age: 21, caps: 2,  goals: 0 },
+  { id: 5117, teamId: 51, number: 19, name: "Dominique Simon",      position: "CM", club: "Tatran Prešov",        age: 24, caps: 4,  goals: 0 },
+  { id: 5118, teamId: 51, number: 9,  name: "Duckens Nazon",        position: "ST", club: "Esteghlal",            age: 31, caps: 33, goals: 14, startX: 50, startY: 18 },
+  { id: 5119, teamId: 51, number: 11, name: "Frantzy Pierrot",      position: "ST", club: "Çaykur Rizespor",      age: 30, caps: 19, goals: 5 },
+  { id: 5120, teamId: 51, number: 7,  name: "Derrick Etienne Jr.",  position: "RW", club: "Toronto FC",           age: 30, caps: 31, goals: 6,  startX: 78, startY: 30 },
+  { id: 5121, teamId: 51, number: 20, name: "Louicius Deedson",     position: "LW", club: "FC Dallas",            age: 22, caps: 5,  goals: 1 },
+  { id: 5122, teamId: 51, number: 18, name: "Ruben Providence",     position: "ST", club: "Almere City",          age: 25, caps: 8,  goals: 2 },
+  { id: 5123, teamId: 51, number: 21, name: "Josué Casimir",        position: "LW", club: "Auxerre",              age: 23, caps: 6,  goals: 1,  startX: 22, startY: 30 },
+  { id: 5124, teamId: 51, number: 24, name: "Yassin Fortuné",       position: "RW", club: "Vizela",               age: 23, caps: 3,  goals: 0 },
+  { id: 5125, teamId: 51, number: 25, name: "Wilson Isidor",        position: "ST", club: "Sunderland",           age: 25, caps: 4,  goals: 1 },
+  { id: 5126, teamId: 51, number: 26, name: "Lenny Joseph",         position: "CM", club: "Ferencváros",          age: 24, caps: 5,  goals: 0 },
+];
+
 const SQUADS_BY_TEAM: Record<number, Player[]> = {
+  3: SOUTH_KOREA,
   4: ARGENTINA,
   13: BRAZIL,
   14: FRANCE,
   21: NORWAY,
   22: SPAIN,
   30: ENGLAND,
+  50: BOSNIA,
+  51: HAITI,
 };
 
 export function getSquad(teamId: number): Player[] {

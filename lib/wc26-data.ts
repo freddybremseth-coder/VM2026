@@ -77,19 +77,19 @@ export const TEAMS: WCTeam[] = [
   // Group A
   { id: 1,  name: "Mexico",              shortName: "MEX", flag: "mx",     confederation: "CONCACAF", group: "A", fifaRank: 14, squadStatus: "preliminary", manager: "Javier Aguirre",       preferredFormation: "4-3-3" },
   { id: 48, name: "South Africa",        shortName: "RSA", flag: "za",     confederation: "CAF",      group: "A", fifaRank: 59, squadStatus: "pending",     manager: "Hugo Broos",            preferredFormation: "4-3-3" },
-  { id: 3,  name: "South Korea",         shortName: "KOR", flag: "kr",     confederation: "AFC",      group: "A", fifaRank: 23, squadStatus: "pending",     manager: "Hong Myung-bo",          preferredFormation: "4-2-3-1" },
+  { id: 3,  name: "South Korea",         shortName: "KOR", flag: "kr",     confederation: "AFC",      group: "A", fifaRank: 23, squadStatus: "official",    manager: "Hong Myung-bo",          preferredFormation: "4-2-3-1" },
   { id: 49, name: "Czechia",             shortName: "CZE", flag: "cz",     confederation: "UEFA",     group: "A", fifaRank: 43, squadStatus: "pending",     manager: "Ivan Hašek",             preferredFormation: "3-4-2-1" },
 
   // Group B
   { id: 5,  name: "Canada",              shortName: "CAN", flag: "ca",     confederation: "CONCACAF", group: "B", fifaRank: 38, squadStatus: "preliminary", manager: "Jesse Marsch",           preferredFormation: "4-3-3" },
-  { id: 50, name: "Bosnia & Herzegovina",shortName: "BIH", flag: "ba",     confederation: "UEFA",     group: "B", fifaRank: 76, squadStatus: "pending",     manager: "Sergej Barbarez",        preferredFormation: "4-3-3" },
+  { id: 50, name: "Bosnia & Herzegovina",shortName: "BIH", flag: "ba",     confederation: "UEFA",     group: "B", fifaRank: 76, squadStatus: "official",    manager: "Sergej Barbarez",        preferredFormation: "4-3-3" },
   { id: 47, name: "Qatar",               shortName: "QAT", flag: "qa",     confederation: "AFC",      group: "B", fifaRank: 53, squadStatus: "pending",     manager: "Luís García",            preferredFormation: "5-3-2" },
   { id: 10, name: "Switzerland",         shortName: "SUI", flag: "ch",     confederation: "UEFA",     group: "B", fifaRank: 20, squadStatus: "pending",     manager: "Murat Yakın",            preferredFormation: "3-4-2-1" },
 
   // Group C
-  { id: 13, name: "Brazil",              shortName: "BRA", flag: "br",     confederation: "CONMEBOL", group: "C", fifaRank: 5,  squadStatus: "preliminary", manager: "Carlo Ancelotti",        preferredFormation: "4-2-3-1" },
+  { id: 13, name: "Brazil",              shortName: "BRA", flag: "br",     confederation: "CONMEBOL", group: "C", fifaRank: 5,  squadStatus: "official",    manager: "Carlo Ancelotti",        preferredFormation: "4-2-3-1" },
   { id: 12, name: "Morocco",             shortName: "MAR", flag: "ma",     confederation: "CAF",      group: "C", fifaRank: 13, squadStatus: "preliminary", manager: "Walid Regragui",         preferredFormation: "4-3-3" },
-  { id: 51, name: "Haiti",               shortName: "HAI", flag: "ht",     confederation: "CONCACAF", group: "C", fifaRank: 83, squadStatus: "pending",     manager: "Sébastien Migné",        preferredFormation: "4-4-2" },
+  { id: 51, name: "Haiti",               shortName: "HAI", flag: "ht",     confederation: "CONCACAF", group: "C", fifaRank: 83, squadStatus: "official",    manager: "Sébastien Migné",        preferredFormation: "4-4-2" },
   { id: 52, name: "Scotland",            shortName: "SCO", flag: "gb-sct", confederation: "UEFA",     group: "C", fifaRank: 39, squadStatus: "pending",     manager: "Steve Clarke",           preferredFormation: "3-4-2-1" },
 
   // Group D
