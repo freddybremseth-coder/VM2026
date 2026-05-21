@@ -24,22 +24,41 @@ export function PlayerFilters({ players }: Props) {
   const [teamId, setTeamId] = useState<number | "">("");
   const [posGroup, setPosGroup] = useState<string>("All");
 
+  // Build a quick lookup: every player gets an index of searchable text
+  // (player name, club, team name, team shortName) so multi-word queries like
+  // "norway haa" find Haaland by matching one token against the team and one
+  // against the player.
+  const teamLookup = useMemo(() => new Map(TEAMS.map((t) => [t.id, t])), []);
   const teamOptions = useMemo(() => {
     const ids = new Set(players.map((p) => p.teamId));
-    return TEAMS.filter((t) => ids.has(t.id)).sort((a, b) => a.name.localeCompare(b.name));
+    return TEAMS.filter((t) => ids.has(t.id)).sort((a, b) =>
+      a.name.localeCompare(b.name),
+    );
   }, [players]);
 
   const filtered = useMemo(() => {
-    const q = query.trim().toLowerCase();
+    const tokens = query.trim().toLowerCase().split(/\s+/).filter(Boolean);
     const active = POS_GROUPS.find((g) => g.label === posGroup)!;
     return players.filter((p) => {
       if (teamId !== "" && p.teamId !== teamId) return false;
       if (active.positions.length > 0 && !active.positions.includes(p.position)) return false;
-      if (q && !p.name.toLowerCase().includes(q) && !p.club.toLowerCase().includes(q))
-        return false;
+      if (tokens.length > 0) {
+        const team = teamLookup.get(p.teamId);
+        const haystack = [
+          p.name,
+          p.club,
+          team?.name ?? "",
+          team?.shortName ?? "",
+        ]
+          .join(" ")
+          .toLowerCase();
+        for (const tok of tokens) {
+          if (!haystack.includes(tok)) return false;
+        }
+      }
       return true;
     });
-  }, [players, query, teamId, posGroup]);
+  }, [players, query, teamId, posGroup, teamLookup]);
 
   return (
     <div>
@@ -52,14 +71,16 @@ export function PlayerFilters({ players }: Props) {
           <input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search name or club…"
+            placeholder="Search — try “norway haa” or “arsenal”…"
             className="w-full rounded-md bg-pitch-900/80 border border-pitch-700 pl-9 pr-3 py-2 text-sm placeholder:text-pitch-500 focus:outline-none focus:ring-2 focus:ring-accent-500/40 focus:border-accent-500/40"
           />
         </label>
 
         <select
           value={teamId}
-          onChange={(e) => setTeamId(e.target.value === "" ? "" : Number(e.target.value))}
+          onChange={(e) =>
+            setTeamId(e.target.value === "" ? "" : Number(e.target.value))
+          }
           className="rounded-md bg-pitch-900/80 border border-pitch-700 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-accent-500/40"
         >
           <option value="">All teams</option>
@@ -114,7 +135,7 @@ export function PlayerFilters({ players }: Props) {
                   className="border-b border-pitch-800 last:border-b-0 hover:bg-pitch-800/40"
                 >
                   <td className="px-4 py-2 font-mono text-pitch-500 stat-num">
-                    {p.number}
+                    {p.number || "—"}
                   </td>
                   <td className="px-4 py-2">
                     <span className="px-1.5 py-0.5 rounded text-[10px] font-mono font-semibold bg-pitch-800 text-pitch-300">
@@ -141,13 +162,13 @@ export function PlayerFilters({ players }: Props) {
                     {p.club}
                   </td>
                   <td className="px-4 py-2 text-right font-mono text-pitch-300 stat-num">
-                    {p.age}
+                    {p.age ?? "—"}
                   </td>
                   <td className="px-4 py-2 text-right font-mono text-pitch-300 stat-num">
-                    {p.caps}
+                    {p.caps ?? "—"}
                   </td>
                   <td className="px-4 py-2 text-right font-mono text-accent-300 stat-num font-semibold">
-                    {p.goals}
+                    {p.goals ?? "—"}
                   </td>
                 </tr>
               );

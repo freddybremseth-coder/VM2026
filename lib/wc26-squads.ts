@@ -20,13 +20,15 @@ export interface Player {
   /** Stable id, scoped to the team. Just `teamId * 100 + n`. */
   id: number;
   teamId: number;
+  /** Squad number — 0 if unknown / not assigned yet. */
   number: number;
   name: string;
   position: Position;
   club: string;
-  age: number;
-  caps: number;
-  goals: number;
+  /** Optional stats — left undefined when not published yet. */
+  age?: number;
+  caps?: number;
+  goals?: number;
   /** Where on the pitch they'd start if picked, in percentage coords. */
   startX?: number;
   startY?: number;
@@ -314,16 +316,23 @@ const HAITI: Player[] = [
   { id: 5126, teamId: 51, number: 26, name: "Lenny Joseph",         position: "CM", club: "Ferencváros",          age: 24, caps: 5,  goals: 0 },
 ];
 
+import { EXTRA_SQUADS } from "./wc26-squads-extra";
+
+// Wave-1 squads defined inline above. Wave-2 squads (Switzerland, Scotland,
+// Croatia, Belgium, Japan, Sweden, Tunisia, Curaçao, Côte d'Ivoire, NZ,
+// Austria, Portugal, DR Congo, Mexico, and the updated official France) live
+// in `wc26-squads-extra.ts` and override the wave-1 entries when both exist.
 const SQUADS_BY_TEAM: Record<number, Player[]> = {
   3: SOUTH_KOREA,
   4: ARGENTINA,
   13: BRAZIL,
-  14: FRANCE,
+  14: FRANCE, // overridden by EXTRA_SQUADS[14] below
   21: NORWAY,
   22: SPAIN,
   30: ENGLAND,
   50: BOSNIA,
   51: HAITI,
+  ...EXTRA_SQUADS,
 };
 
 export function getSquad(teamId: number): Player[] {
