@@ -1,6 +1,8 @@
-import { GitBranch, Trophy } from "lucide-react";
+import { GitBranch, Trophy, MapPin } from "lucide-react";
 import { TeamFlag } from "@/components/shared/TeamFlag";
-import { GROUPS, teamsByGroup, type WCTeam } from "@/lib/wc26-data";
+import { GROUPS, teamsByGroup, venueById, type WCTeam } from "@/lib/wc26-data";
+import { fixturesByRound } from "@/lib/wc26-fixtures";
+import { formatKickoff } from "@/lib/utils";
 
 export default function BracketPage() {
   return (
@@ -14,9 +16,9 @@ export default function BracketPage() {
           Group stage & knockout bracket
         </h1>
         <p className="text-sm text-pitch-400 mt-1 max-w-3xl">
-          48 teams, 12 groups of 4 → top 2 from each group and the 8 best
-          third-place teams advance to the Round of 32. Standings update as
-          matches conclude.
+          48 teams across 12 groups · top 2 + 8 best third-placed teams advance
+          to the Round of 32 · 32 knockout matches · final at MetLife Stadium on
+          19 July 2026.
         </p>
       </header>
 
@@ -69,52 +71,71 @@ function GroupCard({ group, teams }: { group: string; teams: WCTeam[] }) {
   );
 }
 
-/**
- * Static placeholder structure. The actual draw populates these slots after the
- * group stage — we render it as an empty tree until then.
- */
 function KnockoutTree() {
-  const rounds: { name: string; matches: number }[] = [
-    { name: "Round of 32", matches: 16 },
-    { name: "Round of 16", matches: 8 },
-    { name: "Quarter-finals", matches: 4 },
-    { name: "Semi-finals", matches: 2 },
-    { name: "Final", matches: 1 },
+  const rounds = [
+    { key: "R32" as const,    label: "Round of 32",   fixtures: fixturesByRound("R32") },
+    { key: "R16" as const,    label: "Round of 16",   fixtures: fixturesByRound("R16") },
+    { key: "QF" as const,     label: "Quarter-finals",fixtures: fixturesByRound("QF") },
+    { key: "SF" as const,     label: "Semi-finals",   fixtures: fixturesByRound("SF") },
+    { key: "FINAL" as const,  label: "Final",         fixtures: fixturesByRound("FINAL") },
   ];
 
   return (
     <div className="card-panel p-5 overflow-x-auto">
-      <div className="flex gap-6 min-w-max">
+      <div className="flex gap-5 min-w-max">
         {rounds.map((r) => (
-          <div key={r.name} className="flex-1 min-w-[180px]">
-            <div className="text-[10px] uppercase tracking-widest text-accent-400 font-semibold mb-3">
-              {r.name}
+          <div key={r.key} className="flex-1 min-w-[220px]">
+            <div className="flex items-baseline justify-between mb-3">
+              <span className="text-[10px] uppercase tracking-widest text-accent-400 font-semibold">
+                {r.label}
+              </span>
+              <span className="text-[10px] font-mono text-pitch-500">
+                {r.fixtures.length}
+              </span>
             </div>
             <div
               className="flex flex-col"
-              style={{ gap: `${24 / r.matches + 8}px` }}
+              style={{ gap: r.fixtures.length === 1 ? "24px" : `${Math.max(8, 240 / r.fixtures.length - 24)}px` }}
             >
-              {Array.from({ length: r.matches }).map((_, i) => (
-                <div
-                  key={i}
-                  className="rounded-md border border-pitch-700/60 bg-pitch-900/40 px-3 py-2 text-[11px]"
-                >
-                  <div className="flex items-center justify-between text-pitch-500 font-mono">
-                    <span>TBD</span>
-                    <span className="text-pitch-700">·</span>
-                    <span>TBD</span>
+              {r.fixtures.map((f) => {
+                const venue = venueById(f.venueId);
+                const date = new Date(f.kickoff);
+                const dateLabel = date.toLocaleDateString("en-GB", {
+                  day: "numeric",
+                  month: "short",
+                });
+                return (
+                  <div
+                    key={f.id}
+                    className={`rounded-md border bg-pitch-900/40 px-3 py-2 text-[11px] ${
+                      r.key === "FINAL"
+                        ? "border-accent-500/40 bg-accent-500/5"
+                        : "border-pitch-700/60"
+                    }`}
+                  >
+                    <div className="flex items-center justify-between text-pitch-500 font-mono">
+                      <span className="text-pitch-300">{dateLabel}</span>
+                      <span>{formatKickoff(f.kickoff)}</span>
+                    </div>
+                    <div className="text-pitch-500 font-mono mt-1 truncate">
+                      TBD · TBD
+                    </div>
+                    {venue && (
+                      <div className="text-[10px] text-pitch-500 mt-0.5 flex items-center gap-1 truncate">
+                        <MapPin size={9} /> {venue.city}
+                      </div>
+                    )}
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         ))}
       </div>
-      <p className="mt-5 text-[11px] text-pitch-500">
-        Knockout pairings populate after group-stage standings finalise on 27
-        June 2026. We will then auto-fill seeds and update routes as matches
-        complete.
-      </p>
+      <div className="mt-5 pt-4 border-t border-pitch-700/60 text-[11px] text-pitch-500">
+        Third-place playoff: <span className="text-pitch-300">18 Jul · Hard Rock Stadium, Miami</span>.
+        Pairings populate as group standings finalise on 27 June.
+      </div>
     </div>
   );
 }

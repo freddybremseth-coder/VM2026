@@ -3,21 +3,37 @@ import { Target, LogIn, Lock } from "lucide-react";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { PredictionForm } from "@/components/prediction/PredictionForm";
 import { TeamFlag } from "@/components/shared/TeamFlag";
-import { formatKickoff } from "@/lib/utils";
-import todayData from "@/mock/matches/today.json";
-import type { MatchSummary } from "@/lib/types";
+import { formatKickoff, formatDateLabel } from "@/lib/utils";
+import { nextFixtures, type Fixture } from "@/lib/wc26-fixtures";
+import { teamById, venueById } from "@/lib/wc26-data";
+
+const STAGE_LABEL_KO: Record<string, string> = {
+  R32: "Round of 32",
+  R16: "Round of 16",
+  QF: "Quarter-final",
+  SF: "Semi-final",
+  "3RD": "Third place",
+  FINAL: "Final",
+};
+
+function stageLabel(f: Fixture): string {
+  return f.stage.kind === "group"
+    ? `Group ${f.stage.group} · MD${f.stage.matchday}`
+    : STAGE_LABEL_KO[f.stage.round];
+}
 
 export default async function PredictionsPage() {
   const supabase = createSupabaseServerClient();
   const { data: { user } } = await supabase.auth.getUser();
-  const matches = todayData.matches as MatchSummary[];
 
-  const openMatches = matches.filter((m) => m.status === "scheduled");
-  const lockedMatches = matches.filter((m) => m.status !== "scheduled");
+  const now = new Date();
+  const open = nextFixtures(now.toISOString(), 12).filter(
+    (f) => f.homeId && f.awayId, // only fixtures with known pairings (group stage)
+  );
 
   let existingByMatch = new Map<number, { home_score: number; away_score: number }>();
-  if (user) {
-    const ids = matches.map((m) => m.id);
+  if (user && open.length > 0) {
+    const ids = open.map((f) => f.id);
     const { data } = await supabase
       .from("predictions")
       .select("match_id, home_score, away_score")
@@ -38,10 +54,11 @@ export default async function PredictionsPage() {
           Predictions
         </div>
         <h1 className="text-2xl md:text-3xl font-bold tracking-tight">
-          Your tips for today
+          Your tips for upcoming matches
         </h1>
         <p className="text-sm text-pitch-400 mt-1">
-          Tip the score before kickoff. Predictions lock as soon as the match starts.
+          3 pts for exact score · 1 pt for correct outcome. Tips lock at
+          kickoff.
         </p>
       </header>
 
@@ -49,47 +66,50 @@ export default async function PredictionsPage() {
 
       <section className="space-y-3">
         <h2 className="text-xs uppercase tracking-widest font-semibold text-pitch-200">
-          Open · {openMatches.length} {openMatches.length === 1 ? "match" : "matches"}
+          Open · next {open.length} {open.length === 1 ? "match" : "matches"}
         </h2>
-        {openMatches.length === 0 ? (
+        {open.length === 0 ? (
           <div className="card-panel p-6 text-center text-sm text-pitch-500">
-            No more matches open for tips today.
+            No matches open for tips right now.
           </div>
         ) : !user ? (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3 opacity-50 pointer-events-none">
-            {openMatches.map((m) => (
-              <PreviewCard key={m.id} match={m} />
+            {open.map((f) => (
+              <PreviewCard key={f.id} fixture={f} />
             ))}
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            {openMatches.map((m) => (
-              <PredictionForm
-                key={m.id}
-                match={m}
-                existing={existingByMatch.get(m.id)}
-              />
-            ))}
+            {open.map((f) => {
+              const home = teamById(f.homeId!);
+              const away = teamById(f.awayId!);
+              const venue = venueById(f.venueId);
+              if (!home || !away) return null;
+              return (
+                <PredictionForm
+                  key={f.id}
+                  matchId={f.id}
+                  stageLabel={stageLabel(f)}
+                  kickoff={f.kickoff}
+                  venueLabel={venue?.city ?? "TBD"}
+                  home={home}
+                  away={away}
+                  existing={existingByMatch.get(f.id)}
+                />
+              );
+            })}
           </div>
         )}
       </section>
 
-      {lockedMatches.length > 0 && (
-        <section className="space-y-3">
-          <h2 className="text-xs uppercase tracking-widest font-semibold text-pitch-200 flex items-center gap-1.5">
-            <Lock size={11} /> Locked
-          </h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            {lockedMatches.map((m) => (
-              <LockedCard
-                key={m.id}
-                match={m}
-                tip={existingByMatch.get(m.id)}
-              />
-            ))}
-          </div>
-        </section>
-      )}
+      <section className="card-panel p-4 flex items-start gap-3">
+        <Lock size={14} className="text-pitch-500 shrink-0 mt-0.5" />
+        <p className="text-xs text-pitch-400 leading-relaxed">
+          Knockout fixtures appear here once the group-stage standings determine
+          the pairings (from 28 June). You'll be able to tip every match through
+          to the final.
+        </p>
+      </section>
     </div>
   );
 }
@@ -126,60 +146,25 @@ function SignInPrompt() {
   );
 }
 
-function PreviewCard({ match }: { match: MatchSummary }) {
+function PreviewCard({ fixture }: { fixture: Fixture }) {
+  const home = fixture.homeId ? teamById(fixture.homeId) : undefined;
+  const away = fixture.awayId ? teamById(fixture.awayId) : undefined;
+  if (!home || !away) return null;
   return (
     <div className="card-panel p-4">
       <div className="text-[11px] uppercase tracking-widest text-pitch-400 mb-3">
-        {match.stage} · {formatKickoff(match.kickoff)}
+        {stageLabel(fixture)} · {formatKickoff(fixture.kickoff)}
       </div>
       <div className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-2">
-          <TeamFlag code={match.home.flag} size="md" />
-          <span className="text-sm font-semibold">{match.home.shortName}</span>
+          <TeamFlag code={home.flag} size="md" />
+          <span className="text-sm font-semibold">{home.shortName}</span>
         </div>
         <span className="font-mono text-pitch-500 text-sm">VS</span>
         <div className="flex items-center gap-2">
-          <span className="text-sm font-semibold">{match.away.shortName}</span>
-          <TeamFlag code={match.away.flag} size="md" />
+          <span className="text-sm font-semibold">{away.shortName}</span>
+          <TeamFlag code={away.flag} size="md" />
         </div>
-      </div>
-    </div>
-  );
-}
-
-function LockedCard({
-  match,
-  tip,
-}: {
-  match: MatchSummary;
-  tip?: { home_score: number; away_score: number };
-}) {
-  return (
-    <div className="card-panel p-4 opacity-80">
-      <div className="text-[11px] uppercase tracking-widest text-pitch-400 mb-3 flex items-center justify-between">
-        <span>{match.stage}</span>
-        <span className="text-pitch-500 font-mono">
-          {match.status === "finished" ? "FT" : match.status === "live" ? `${match.minute}'` : "—"}
-        </span>
-      </div>
-      <div className="flex items-center justify-between gap-3">
-        <div className="flex items-center gap-2">
-          <TeamFlag code={match.home.flag} size="md" />
-          <span className="text-sm font-semibold">{match.home.shortName}</span>
-        </div>
-        <div className="font-mono text-lg font-bold stat-num">
-          {match.score ? `${match.score.home}–${match.score.away}` : "—"}
-        </div>
-        <div className="flex items-center gap-2">
-          <span className="text-sm font-semibold">{match.away.shortName}</span>
-          <TeamFlag code={match.away.flag} size="md" />
-        </div>
-      </div>
-      <div className="mt-3 pt-3 border-t border-pitch-700/60 text-[11px] font-mono text-pitch-400 flex justify-between">
-        <span>Your tip</span>
-        <span className={tip ? "text-pitch-100" : "text-pitch-500"}>
-          {tip ? `${tip.home_score}–${tip.away_score}` : "Not submitted"}
-        </span>
       </div>
     </div>
   );

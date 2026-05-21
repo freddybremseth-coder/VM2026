@@ -1,4 +1,3 @@
-import { notFound } from "next/navigation";
 import { AlertTriangle } from "lucide-react";
 import { FormationPitch } from "@/components/match/FormationPitch";
 import { SquadList } from "@/components/match/SquadList";
@@ -8,7 +7,7 @@ import { getStartingXI, getBench } from "@/lib/wc26-squads";
 
 export default function LineupsPage({ params }: { params: { matchId: string } }) {
   const match = getMatchDetail(params.matchId);
-  if (!match) notFound();
+  if (!match) return null;
 
   const homeTeam = teamById(match.teams.home.id);
   const awayTeam = teamById(match.teams.away.id);

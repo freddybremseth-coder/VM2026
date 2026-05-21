@@ -1,4 +1,3 @@
-import { notFound } from "next/navigation";
 import { XGTimelineChart } from "@/components/match/XGTimelineChart";
 import { StatComparisonBars } from "@/components/match/StatComparisonBars";
 import { AIPredictionBox } from "@/components/match/AIPredictionBox";
@@ -7,7 +6,8 @@ import { getMatchDetail } from "@/lib/match-data";
 
 export default function MatchOverview({ params }: { params: { matchId: string } }) {
   const match = getMatchDetail(params.matchId);
-  if (!match) notFound();
+  // Layout renders a fixture preview if there's no detailed event data.
+  if (!match) return null;
 
   return (
     <div className="grid grid-cols-1 xl:grid-cols-3 gap-5">

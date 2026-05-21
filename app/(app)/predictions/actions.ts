@@ -2,8 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
-import todayData from "@/mock/matches/today.json";
-import type { MatchSummary } from "@/lib/types";
+import { fixtureById } from "@/lib/wc26-fixtures";
 
 export interface PredictionResult {
   ok?: true;
@@ -26,13 +25,12 @@ export async function savePredictionAction(
     return { error: "Away score must be 0–20." };
   }
 
-  // Enforce kickoff cutoff server-side (RLS does not know match data).
-  const match = (todayData.matches as MatchSummary[]).find((m) => m.id === matchId);
-  if (!match) return { error: "Match not found." };
-  if (match.status !== "scheduled") {
-    return { error: "Predictions are locked once the match has started." };
+  const fixture = fixtureById(matchId);
+  if (!fixture) return { error: "Match not found." };
+  if (fixture.stage.kind === "knockout" && (!fixture.homeId || !fixture.awayId)) {
+    return { error: "Knockout pairing not yet known." };
   }
-  if (new Date(match.kickoff).getTime() <= Date.now()) {
+  if (new Date(fixture.kickoff).getTime() <= Date.now()) {
     return { error: "Kickoff has passed — predictions are locked." };
   }
 

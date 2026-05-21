@@ -1,21 +1,40 @@
 "use client";
 
 import { useFormState, useFormStatus } from "react-dom";
-import { Check, Save } from "lucide-react";
+import { Check, Save, MapPin } from "lucide-react";
 import { TeamFlag } from "@/components/shared/TeamFlag";
-import { formatKickoff } from "@/lib/utils";
+import { formatKickoff, formatDateLabel } from "@/lib/utils";
 import {
   savePredictionAction,
   type PredictionResult,
 } from "@/app/(app)/predictions/actions";
-import type { MatchSummary } from "@/lib/types";
+
+interface TeamRef {
+  id: number;
+  name: string;
+  shortName: string;
+  flag: string;
+}
 
 interface Props {
-  match: MatchSummary;
+  matchId: number;
+  stageLabel: string;
+  kickoff: string;
+  venueLabel: string;
+  home: TeamRef;
+  away: TeamRef;
   existing?: { home_score: number; away_score: number };
 }
 
-export function PredictionForm({ match, existing }: Props) {
+export function PredictionForm({
+  matchId,
+  stageLabel,
+  kickoff,
+  venueLabel,
+  home,
+  away,
+  existing,
+}: Props) {
   const [state, formAction] = useFormState<PredictionResult, FormData>(
     savePredictionAction,
     {},
@@ -23,27 +42,27 @@ export function PredictionForm({ match, existing }: Props) {
 
   return (
     <form action={formAction} className="card-panel p-4">
-      <input type="hidden" name="matchId" value={match.id} />
+      <input type="hidden" name="matchId" value={matchId} />
 
       <div className="flex items-center justify-between text-[11px] uppercase tracking-widest text-pitch-400 mb-3">
-        <span>{match.stage}</span>
+        <span>{stageLabel}</span>
         <span className="font-mono text-pitch-300">
-          {formatKickoff(match.kickoff)} · {match.venue.city}
+          {formatDateLabel(kickoff).split(",")[0]} · {formatKickoff(kickoff)}
         </span>
       </div>
 
       <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-4">
-        <TeamSide team={match.home} align="right" />
+        <TeamSide team={home} align="right" />
         <div className="flex items-center gap-2">
           <ScoreInput name="homeScore" defaultValue={existing?.home_score ?? 0} />
           <span className="text-pitch-600 font-mono">·</span>
           <ScoreInput name="awayScore" defaultValue={existing?.away_score ?? 0} />
         </div>
-        <TeamSide team={match.away} align="left" />
+        <TeamSide team={away} align="left" />
       </div>
 
       <div className="mt-4 pt-3 border-t border-pitch-700/60 flex items-center justify-between gap-3">
-        <div className="min-h-[18px] text-[11px]">
+        <div className="min-h-[18px] text-[11px] flex items-center gap-1.5">
           {state.error && <span className="text-loss">{state.error}</span>}
           {state.ok && (
             <span className="text-accent-300 flex items-center gap-1">
@@ -52,7 +71,12 @@ export function PredictionForm({ match, existing }: Props) {
           )}
           {!state.error && !state.ok && existing && (
             <span className="text-pitch-500">
-              Last saved: {existing.home_score}–{existing.away_score}
+              Saved: {existing.home_score}–{existing.away_score}
+            </span>
+          )}
+          {!state.error && !state.ok && !existing && (
+            <span className="text-pitch-500 flex items-center gap-1">
+              <MapPin size={10} /> {venueLabel}
             </span>
           )}
         </div>
@@ -66,7 +90,7 @@ function TeamSide({
   team,
   align,
 }: {
-  team: MatchSummary["home"];
+  team: TeamRef;
   align: "left" | "right";
 }) {
   return (
