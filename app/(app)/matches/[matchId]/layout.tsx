@@ -9,6 +9,7 @@ import {
   Activity,
   Sparkles,
   Trophy,
+  Share2,
 } from "lucide-react";
 import { TeamFlag } from "@/components/shared/TeamFlag";
 import { MatchHeader } from "@/components/match/MatchHeader";
@@ -129,12 +130,20 @@ export default function MatchLayout({
             </div>
           </div>
         </div>
-        <Link
-          href="/predictions"
-          className="rounded-md bg-accent-500 hover:bg-accent-400 text-pitch-950 text-xs font-semibold px-4 py-2 transition-colors flex items-center gap-1.5 shrink-0"
-        >
-          Tipp nå
-        </Link>
+        <div className="flex items-center gap-2 shrink-0">
+          <Link
+            href={`/share/match/${fixture.id}`}
+            className="rounded-md bg-pitch-800 hover:bg-pitch-700 text-pitch-200 text-xs font-semibold px-3 py-2 transition-colors flex items-center gap-1.5"
+          >
+            <Share2 size={12} /> Share
+          </Link>
+          <Link
+            href="/predictions"
+            className="rounded-md bg-accent-500 hover:bg-accent-400 text-pitch-950 text-xs font-semibold px-4 py-2 transition-colors flex items-center gap-1.5"
+          >
+            Tipp nå
+          </Link>
+        </div>
       </div>
 
       {preview && <AIMatchPreview preview={preview} />}

@@ -1,7 +1,8 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Shuffle, Crown, ArrowRight, Flag } from "lucide-react";
+import Link from "next/link";
+import { Shuffle, Crown, ArrowRight, Flag, Share2 } from "lucide-react";
 import { TeamFlag } from "@/components/shared/TeamFlag";
 import {
   modeLabel,
@@ -121,8 +122,16 @@ export function BracketSimulator() {
               {champion.name}
             </div>
           </div>
-          <div className="text-[11px] uppercase tracking-widest font-mono text-pitch-400 hidden sm:block">
-            {modeLabel(mode)}
+          <div className="flex items-center gap-2 shrink-0">
+            <div className="text-[11px] uppercase tracking-widest font-mono text-pitch-400 hidden sm:block">
+              {modeLabel(mode)}
+            </div>
+            <Link
+              href={`/share/bracket/${champion.shortName}`}
+              className="rounded-md bg-accent-500 hover:bg-accent-400 text-pitch-950 text-xs font-semibold px-3 py-1.5 flex items-center gap-1.5"
+            >
+              <Share2 size={12} /> Share
+            </Link>
           </div>
         </div>
       )}
