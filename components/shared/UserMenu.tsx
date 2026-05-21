@@ -3,20 +3,30 @@ import { LogIn, LogOut, User } from "lucide-react";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { logoutAction } from "@/app/(auth)/actions";
 
+function SignedOutBadge() {
+  return (
+    <Link
+      href="/login"
+      className="flex items-center gap-1.5 rounded-md bg-accent-500/15 text-accent-300 ring-1 ring-accent-500/30 hover:bg-accent-500/25 px-3 py-1.5 text-xs font-semibold transition-colors"
+    >
+      <LogIn size={13} />
+      Sign in
+    </Link>
+  );
+}
+
 export async function UserMenu() {
+  // If Supabase isn't configured (eg. Vercel without env vars), render the
+  // signed-out state without throwing.
+  if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+    return <SignedOutBadge />;
+  }
+
   const supabase = createSupabaseServerClient();
   const { data: { user } } = await supabase.auth.getUser();
 
   if (!user) {
-    return (
-      <Link
-        href="/login"
-        className="flex items-center gap-1.5 rounded-md bg-accent-500/15 text-accent-300 ring-1 ring-accent-500/30 hover:bg-accent-500/25 px-3 py-1.5 text-xs font-semibold transition-colors"
-      >
-        <LogIn size={13} />
-        Sign in
-      </Link>
-    );
+    return <SignedOutBadge />;
   }
 
   const { data: profile } = await supabase
