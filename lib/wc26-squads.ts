@@ -37,7 +37,10 @@ export interface Player {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Norway · Group F · preliminary
+// Norway · Group I · preliminary (final 26 announced 21 May 2026 at Grue IL —
+// awaiting confirmation of the full list. The 11 players Solbakken named as
+// "confirmed" in his April briefing are present below: Nyland, Ajer, Heggem,
+// Østigård, Ødegaard, Aursnes, Haaland, Sørloth, Nusa, Bobb, Schjelderup.)
 // ─────────────────────────────────────────────────────────────────────────────
 const NORWAY: Player[] = [
   // Goalkeepers
@@ -66,6 +69,9 @@ const NORWAY: Player[] = [
   { id: 2120, teamId: 21, number: 18, name: "Alexander Sørloth",   position: "ST", club: "Atlético Madrid", age: 30, caps: 47, goals: 11 },
   { id: 2121, teamId: 21, number: 19, name: "Jørgen Strand Larsen",position: "ST", club: "Wolves",          age: 25, caps: 11, goals: 2 },
   { id: 2122, teamId: 21, number: 23, name: "Markus Solbakken",    position: "DM", club: "Hoffenheim",      age: 25, caps: 8,  goals: 0 },
+  // Added 21 May 2026 — both confirmed by Solbakken in pre-announcement briefing
+  { id: 2123, teamId: 21, number: 12, name: "Torbjørn Heggem",     position: "CB", club: "West Brom",       age: 26, caps: 4,  goals: 0 },
+  { id: 2124, teamId: 21, number: 24, name: "Andreas Schjelderup", position: "LW", club: "Benfica",         age: 21, caps: 9,  goals: 2 },
 ];
 
 // ─────────────────────────────────────────────────────────────────────────────
