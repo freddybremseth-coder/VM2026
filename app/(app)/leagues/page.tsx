@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Trophy, Users, ChevronRight, LogIn } from "lucide-react";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { CreateLeagueForm, JoinLeagueForm } from "@/components/league/LeagueForms";
+import { LeagueAvatar } from "@/components/league/LeagueAvatar";
 
 export default async function LeaguesPage() {
   const supabase = createSupabaseServerClient();
@@ -9,7 +10,7 @@ export default async function LeaguesPage() {
 
   if (!user) {
     return (
-      <div className="px-6 py-6 max-w-[1100px] mx-auto">
+      <div className="px-4 sm:px-6 py-6 max-w-[1100px] mx-auto">
         <Header />
         <div className="card-panel p-6 ring-1 ring-accent-500/20 flex items-center justify-between gap-4">
           <div className="flex items-center gap-3">
@@ -63,7 +64,7 @@ export default async function LeaguesPage() {
   const myLeagues = (memberships as Membership[] | null) ?? [];
 
   return (
-    <div className="px-6 py-6 max-w-[1100px] mx-auto space-y-8">
+    <div className="px-4 sm:px-6 py-6 max-w-[1100px] mx-auto space-y-8">
       <Header />
 
       <section className="space-y-3">
@@ -82,8 +83,13 @@ export default async function LeaguesPage() {
                 href={`/leagues/${m.league_id}`}
                 className="card-panel p-4 group hover:border-accent-500/40 transition-colors"
               >
-                <div className="flex items-start justify-between gap-3">
-                  <div className="min-w-0">
+                <div className="flex items-start gap-3">
+                  <LeagueAvatar
+                    seed={m.mini_leagues.id}
+                    name={m.mini_leagues.name}
+                    size={44}
+                  />
+                  <div className="flex-1 min-w-0">
                     <div className="font-semibold text-sm truncate flex items-center gap-2">
                       {m.mini_leagues.name}
                       {m.mini_leagues.owner_id === user.id && (

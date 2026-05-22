@@ -1,8 +1,11 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
-import { ArrowLeft, Copy, Crown, LogOut, Users } from "lucide-react";
+import { ArrowLeft, Crown, LogOut, Users, Share2, Sparkles } from "lucide-react";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { leaveLeagueAction } from "@/app/(app)/leagues/actions";
+import { LeagueAvatar } from "@/components/league/LeagueAvatar";
+import { CopyLinkButton } from "@/components/shared/CopyLinkButton";
+import { buildBanterReport, type BanterMember } from "@/lib/banter-report";
 
 interface MemberRow {
   user_id: string;
@@ -49,8 +52,15 @@ export default async function LeagueDetailPage({
   const rows = (members as MemberRow[] | null) ?? [];
   const isOwner = league.owner_id === user.id;
 
+  const banterMembers: BanterMember[] = rows.map((m) => ({
+    username: m.profiles?.display_name || m.profiles?.username || "(anonymous)",
+    points: m.points,
+    isYou: m.user_id === user.id,
+  }));
+  const banter = buildBanterReport(league.name, banterMembers);
+
   return (
-    <div className="px-6 py-6 max-w-[1100px] mx-auto space-y-5">
+    <div className="px-4 sm:px-6 py-6 max-w-[1100px] mx-auto space-y-5">
       <Link
         href="/leagues"
         className="inline-flex items-center gap-1.5 text-xs text-pitch-400 hover:text-accent-300 transition-colors"
@@ -58,11 +68,12 @@ export default async function LeagueDetailPage({
         <ArrowLeft size={12} /> All leagues
       </Link>
 
-      <div className="card-panel p-6">
-        <div className="flex items-start justify-between gap-4">
-          <div className="min-w-0">
-            <div className="flex items-center gap-2 mb-1">
-              <h1 className="text-2xl font-bold tracking-tight">{league.name}</h1>
+      <div className="card-panel p-4 sm:p-6">
+        <div className="flex items-start gap-4">
+          <LeagueAvatar seed={league.id} name={league.name} size={56} />
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2 mb-1 flex-wrap">
+              <h1 className="text-xl sm:text-2xl font-bold tracking-tight">{league.name}</h1>
               {isOwner && (
                 <span className="text-[10px] uppercase tracking-widest font-mono text-accent-400 bg-accent-500/15 px-2 py-0.5 rounded">
                   Owner
@@ -91,14 +102,54 @@ export default async function LeagueDetailPage({
           )}
         </div>
 
-        <div className="mt-5 pt-4 border-t border-pitch-700/60 flex flex-wrap items-center gap-x-6 gap-y-2 text-xs">
-          <InviteCode code={league.invite_code} />
-          <span className="flex items-center gap-1.5 text-pitch-400">
-            <Users size={12} /> {rows.length}{" "}
-            {rows.length === 1 ? "member" : "members"}
-          </span>
+        <div className="mt-5 pt-4 border-t border-pitch-700/60 flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
+          <div className="flex items-center gap-3 text-xs flex-wrap">
+            <span className="text-[10px] uppercase tracking-widest text-pitch-500">
+              Invite code
+            </span>
+            <code className="font-mono text-pitch-100 bg-pitch-800 px-2 py-1 rounded text-xs select-all">
+              {league.invite_code}
+            </code>
+            <span className="flex items-center gap-1.5 text-pitch-400">
+              <Users size={12} /> {rows.length}{" "}
+              {rows.length === 1 ? "member" : "members"}
+            </span>
+          </div>
+          <div className="sm:ml-auto">
+            <CopyLinkButton
+              label="Share invite link"
+              className="rounded-md bg-accent-500 hover:bg-accent-400 text-pitch-950 text-xs font-semibold px-3 py-1.5 transition-colors flex items-center gap-1.5"
+            />
+          </div>
         </div>
       </div>
+
+      {banter && (
+        <section className="card-panel p-5 ring-1 ring-accent-500/20 relative overflow-hidden">
+          <div className="absolute inset-0 opacity-[0.04] grid-lines pointer-events-none" />
+          <div className="relative">
+            <div className="flex items-center gap-2 mb-3">
+              <div className="h-7 w-7 rounded-md bg-accent-500/15 flex items-center justify-center">
+                <Sparkles size={14} className="text-accent-400" />
+              </div>
+              <div>
+                <div className="text-xs font-semibold">{banter.headline}</div>
+                <div className="text-[10px] uppercase tracking-widest text-pitch-500 font-mono">
+                  ChatGenius · banter report
+                </div>
+              </div>
+            </div>
+            <div className="space-y-2 text-sm text-pitch-200 leading-relaxed">
+              {banter.lines.map((line, i) => (
+                <p key={i} className="flex gap-2">
+                  <span className="text-accent-400 font-mono text-xs mt-0.5">›</span>
+                  <span>{line}</span>
+                </p>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
 
       <section>
         <h2 className="text-xs uppercase tracking-widest font-semibold text-pitch-200 mb-3">
@@ -167,30 +218,3 @@ export default async function LeagueDetailPage({
   );
 }
 
-function InviteCode({ code }: { code: string }) {
-  return (
-    <div className="flex items-center gap-2">
-      <span className="text-[10px] uppercase tracking-widest text-pitch-500">
-        Invite code
-      </span>
-      <code className="font-mono text-pitch-100 bg-pitch-800 px-2 py-1 rounded text-xs">
-        {code}
-      </code>
-      <CopyButton code={code} />
-    </div>
-  );
-}
-
-function CopyButton({ code }: { code: string }) {
-  return (
-    <button
-      type="button"
-      aria-label="Copy invite code"
-      title="Copy"
-      className="p-1 rounded text-pitch-400 hover:text-accent-300 hover:bg-pitch-800"
-      data-copy={code}
-    >
-      <Copy size={12} />
-    </button>
-  );
-}
