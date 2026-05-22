@@ -37,41 +37,40 @@ export interface Player {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Norway · Group I · preliminary (final 26 announced 21 May 2026 at Grue IL —
-// awaiting confirmation of the full list. The 11 players Solbakken named as
-// "confirmed" in his April briefing are present below: Nyland, Ajer, Heggem,
-// Østigård, Ødegaard, Aursnes, Haaland, Sørloth, Nusa, Bobb, Schjelderup.)
+// Norway · Group I · OFFICIAL final 26 announced by Solbakken on 21 May 2026.
+// Club affiliations and ages reflect the official NFF release.
 // ─────────────────────────────────────────────────────────────────────────────
 const NORWAY: Player[] = [
-  // Goalkeepers
-  { id: 2101, teamId: 21, number: 1,  name: "Ørjan Nyland",        position: "GK", club: "Sevilla",         age: 35, caps: 41, goals: 0,  startX: 50, startY: 92 },
-  { id: 2102, teamId: 21, number: 13, name: "Sten Grytebust",      position: "GK", club: "OB",              age: 36, caps: 6,  goals: 0 },
-  { id: 2103, teamId: 21, number: 22, name: "Egil Selvik",         position: "GK", club: "Brann",           age: 28, caps: 3,  goals: 0 },
-  // Defenders
-  { id: 2104, teamId: 21, number: 2,  name: "Julian Ryerson",      position: "RB", club: "Dortmund",        age: 28, caps: 26, goals: 0,  startX: 82, startY: 75 },
-  { id: 2105, teamId: 21, number: 3,  name: "Fredrik Bjørkan",     position: "LB", club: "Lecce",           age: 27, caps: 16, goals: 0,  startX: 18, startY: 75 },
-  { id: 2106, teamId: 21, number: 4,  name: "Kristoffer Ajer",     position: "CB", club: "Brentford",       age: 28, caps: 39, goals: 1,  startX: 62, startY: 80 },
-  { id: 2107, teamId: 21, number: 5,  name: "Leo Østigård",        position: "CB", club: "Rennes",          age: 26, caps: 22, goals: 1,  startX: 38, startY: 80 },
-  { id: 2108, teamId: 21, number: 14, name: "Birger Meling",       position: "LB", club: "Rennes",          age: 31, caps: 30, goals: 0 },
-  { id: 2109, teamId: 21, number: 21, name: "Andreas Hanche-Olsen",position: "CB", club: "Mainz",           age: 28, caps: 19, goals: 0 },
-  // Midfielders
-  { id: 2110, teamId: 21, number: 6,  name: "Sander Berge",        position: "CM", club: "Fulham",          age: 28, caps: 38, goals: 4,  startX: 50, startY: 60 },
-  { id: 2111, teamId: 21, number: 8,  name: "Patrick Berg",        position: "CM", club: "Lens",            age: 27, caps: 21, goals: 0,  startX: 32, startY: 55 },
-  { id: 2112, teamId: 21, number: 10, name: "Martin Ødegaard",     position: "AM", club: "Arsenal",         age: 27, caps: 50, goals: 11, startX: 68, startY: 48, isCaptain: true },
-  { id: 2113, teamId: 21, number: 15, name: "Morten Thorsby",      position: "DM", club: "Genoa",           age: 29, caps: 19, goals: 1 },
-  { id: 2114, teamId: 21, number: 16, name: "Fredrik Aursnes",     position: "CM", club: "Benfica",         age: 30, caps: 17, goals: 0 },
-  { id: 2115, teamId: 21, number: 20, name: "Kristian Thorstvedt", position: "CM", club: "Sassuolo",        age: 26, caps: 26, goals: 6 },
-  // Forwards
-  { id: 2116, teamId: 21, number: 7,  name: "Mohamed Elyounoussi", position: "LW", club: "Werder Bremen",   age: 31, caps: 60, goals: 11 },
-  { id: 2117, teamId: 21, number: 9,  name: "Erling Haaland",      position: "ST", club: "Manchester City", age: 25, caps: 36, goals: 36, startX: 50, startY: 18 },
-  { id: 2118, teamId: 21, number: 11, name: "Oscar Bobb",          position: "RW", club: "Manchester City", age: 22, caps: 9,  goals: 1,  startX: 78, startY: 30 },
-  { id: 2119, teamId: 21, number: 17, name: "Antonio Nusa",        position: "LW", club: "RB Leipzig",      age: 20, caps: 14, goals: 4,  startX: 22, startY: 30 },
-  { id: 2120, teamId: 21, number: 18, name: "Alexander Sørloth",   position: "ST", club: "Atlético Madrid", age: 30, caps: 47, goals: 11 },
-  { id: 2121, teamId: 21, number: 19, name: "Jørgen Strand Larsen",position: "ST", club: "Wolves",          age: 25, caps: 11, goals: 2 },
-  { id: 2122, teamId: 21, number: 23, name: "Markus Solbakken",    position: "DM", club: "Hoffenheim",      age: 25, caps: 8,  goals: 0 },
-  // Added 21 May 2026 — both confirmed by Solbakken in pre-announcement briefing
-  { id: 2123, teamId: 21, number: 12, name: "Torbjørn Heggem",     position: "CB", club: "West Brom",       age: 26, caps: 4,  goals: 0 },
-  { id: 2124, teamId: 21, number: 24, name: "Andreas Schjelderup", position: "LW", club: "Benfica",         age: 21, caps: 9,  goals: 2 },
+  // Goalkeepers (3)
+  { id: 2101, teamId: 21, number: 1,  name: "Ørjan Nyland",            position: "GK", club: "Sevilla",         age: 35, caps: 41, goals: 0,  startX: 50, startY: 92 },
+  { id: 2102, teamId: 21, number: 13, name: "Egil Selvik",             position: "GK", club: "Watford",         age: 28, caps: 3,  goals: 0 },
+  { id: 2103, teamId: 21, number: 23, name: "Sander Tangvik",          position: "GK", club: "HSV",             age: 23, caps: 0,  goals: 0 },
+  // Defenders (8)
+  { id: 2104, teamId: 21, number: 3,  name: "Kristoffer Ajer",         position: "CB", club: "Brentford",       age: 28, caps: 39, goals: 1,  startX: 62, startY: 80 },
+  { id: 2105, teamId: 21, number: 4,  name: "Leo Skiri Østigård",      position: "CB", club: "Rennes",          age: 26, caps: 22, goals: 1,  startX: 38, startY: 80 },
+  { id: 2106, teamId: 21, number: 5,  name: "David Møller Wolfe",      position: "LB", club: "Wolves",          age: 24, caps: 9,  goals: 0,  startX: 18, startY: 75 },
+  { id: 2107, teamId: 21, number: 14, name: "Julian Ryerson",          position: "RB", club: "Dortmund",        age: 28, caps: 26, goals: 0,  startX: 82, startY: 75 },
+  { id: 2108, teamId: 21, number: 15, name: "Fredrik Bjørkan",         position: "LB", club: "Bodø/Glimt",      age: 27, caps: 16, goals: 0 },
+  { id: 2109, teamId: 21, number: 16, name: "Marcus Holmgren Pedersen",position: "RB", club: "Torino",          age: 25, caps: 8,  goals: 0 },
+  { id: 2110, teamId: 21, number: 17, name: "Torbjørn Heggem",         position: "CB", club: "Bologna",         age: 27, caps: 4,  goals: 0 },
+  { id: 2111, teamId: 21, number: 25, name: "Sondre Langås",           position: "CB", club: "Derby County",    age: 25, caps: 1,  goals: 0 },
+  // Midfielders (9)
+  { id: 2112, teamId: 21, number: 2,  name: "Morten Thorsby",          position: "DM", club: "Cremonese",       age: 30, caps: 19, goals: 1 },
+  { id: 2113, teamId: 21, number: 6,  name: "Patrick Berg",            position: "CM", club: "Bodø/Glimt",      age: 28, caps: 21, goals: 0,  startX: 32, startY: 55 },
+  { id: 2114, teamId: 21, number: 8,  name: "Sander Berge",            position: "CM", club: "Fulham",          age: 28, caps: 38, goals: 4,  startX: 50, startY: 60 },
+  { id: 2115, teamId: 21, number: 18, name: "Kristian Thorstvedt",     position: "CM", club: "Sassuolo",        age: 27, caps: 26, goals: 6 },
+  { id: 2116, teamId: 21, number: 22, name: "Oscar Bobb",              position: "RW", club: "Fulham",          age: 22, caps: 9,  goals: 1,  startX: 78, startY: 30 },
+  { id: 2117, teamId: 21, number: 24, name: "Henrik Falchener",        position: "CM", club: "Viking",          age: 23, caps: 1,  goals: 0 },
+  { id: 2118, teamId: 21, number: 26, name: "Fredrik Aursnes",         position: "CM", club: "Benfica",         age: 30, caps: 17, goals: 0 },
+  { id: 2119, teamId: 21, number: 19, name: "Thelo Aasgaard",          position: "AM", club: "Rangers",         age: 24, caps: 4,  goals: 1 },
+  { id: 2120, teamId: 21, number: 10, name: "Martin Ødegaard",         position: "AM", club: "Arsenal",         age: 27, caps: 50, goals: 11, startX: 68, startY: 48, isCaptain: true },
+  // Forwards (6)
+  { id: 2121, teamId: 21, number: 7,  name: "Alexander Sørloth",       position: "ST", club: "Atlético Madrid", age: 30, caps: 47, goals: 11 },
+  { id: 2122, teamId: 21, number: 9,  name: "Erling Braut Haaland",    position: "ST", club: "Manchester City", age: 25, caps: 36, goals: 36, startX: 50, startY: 18 },
+  { id: 2123, teamId: 21, number: 12, name: "Jens Petter Hauge",       position: "LW", club: "Bodø/Glimt",      age: 26, caps: 14, goals: 3 },
+  { id: 2124, teamId: 21, number: 11, name: "Jørgen Strand Larsen",    position: "ST", club: "Wolves",          age: 26, caps: 11, goals: 2 },
+  { id: 2125, teamId: 21, number: 20, name: "Antonio Nusa",            position: "LW", club: "RB Leipzig",      age: 21, caps: 14, goals: 4,  startX: 22, startY: 30 },
+  { id: 2126, teamId: 21, number: 21, name: "Andreas Schjelderup",     position: "LW", club: "Benfica",         age: 21, caps: 9,  goals: 2 },
 ];
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -168,31 +167,44 @@ const ARGENTINA: Player[] = [
 ];
 
 // ─────────────────────────────────────────────────────────────────────────────
-// England · Group H · preliminary
+// England · Group L · OFFICIAL — Tuchel's 26-man squad announced 22 May 2026.
+// Club affiliations reflect official FA release; minutes/caps from oddsnet
+// May 2026 snapshot. (Note: WC26 has England in Group L, not H — the team
+// id is unchanged at 30; the comment header is corrected here.)
 // ─────────────────────────────────────────────────────────────────────────────
 const ENGLAND: Player[] = [
-  { id: 3001, teamId: 30, number: 1,  name: "Jordan Pickford",    position: "GK", club: "Everton",         age: 32, caps: 76, goals: 0,  startX: 50, startY: 92 },
-  { id: 3002, teamId: 30, number: 13, name: "Dean Henderson",     position: "GK", club: "Crystal Palace",  age: 28, caps: 4,  goals: 0 },
-  { id: 3003, teamId: 30, number: 23, name: "Nick Pope",          position: "GK", club: "Newcastle",       age: 33, caps: 11, goals: 0 },
-  { id: 3004, teamId: 30, number: 2,  name: "Trent Alexander-Arnold", position: "RB", club: "Real Madrid", age: 27, caps: 33, goals: 3, startX: 82, startY: 75 },
-  { id: 3005, teamId: 30, number: 3,  name: "Luke Shaw",          position: "LB", club: "Manchester United", age: 30, caps: 32, goals: 3, startX: 18, startY: 75 },
-  { id: 3006, teamId: 30, number: 5,  name: "John Stones",        position: "CB", club: "Manchester City", age: 31, caps: 81, goals: 3,  startX: 38, startY: 80 },
-  { id: 3007, teamId: 30, number: 6,  name: "Marc Guéhi",         position: "CB", club: "Crystal Palace",  age: 25, caps: 21, goals: 1,  startX: 62, startY: 80 },
-  { id: 3008, teamId: 30, number: 12, name: "Kyle Walker",        position: "RB", club: "Burnley",         age: 35, caps: 91, goals: 1 },
-  { id: 3009, teamId: 30, number: 14, name: "Ezri Konsa",         position: "CB", club: "Aston Villa",     age: 28, caps: 9,  goals: 0 },
-  { id: 3010, teamId: 30, number: 16, name: "Tino Livramento",    position: "RB", club: "Newcastle",       age: 23, caps: 4,  goals: 0 },
-  { id: 3011, teamId: 30, number: 4,  name: "Declan Rice",        position: "DM", club: "Arsenal",         age: 27, caps: 60, goals: 5,  startX: 50, startY: 62 },
-  { id: 3012, teamId: 30, number: 8,  name: "Jordan Henderson",   position: "CM", club: "Ajax",            age: 35, caps: 81, goals: 3 },
-  { id: 3013, teamId: 30, number: 10, name: "Jude Bellingham",    position: "AM", club: "Real Madrid",     age: 22, caps: 38, goals: 8,  startX: 35, startY: 50 },
-  { id: 3014, teamId: 30, number: 22, name: "Conor Gallagher",    position: "CM", club: "Atlético Madrid", age: 26, caps: 18, goals: 0 },
-  { id: 3015, teamId: 30, number: 26, name: "Adam Wharton",       position: "CM", club: "Crystal Palace",  age: 22, caps: 4,  goals: 0 },
-  { id: 3016, teamId: 30, number: 7,  name: "Bukayo Saka",        position: "RW", club: "Arsenal",         age: 24, caps: 41, goals: 13, startX: 78, startY: 32 },
-  { id: 3017, teamId: 30, number: 9,  name: "Harry Kane",         position: "ST", club: "Bayern Munich",   age: 32, caps: 99, goals: 69, startX: 50, startY: 18, isCaptain: true },
-  { id: 3018, teamId: 30, number: 11, name: "Phil Foden",         position: "AM", club: "Manchester City", age: 25, caps: 43, goals: 5,  startX: 65, startY: 50 },
-  { id: 3019, teamId: 30, number: 17, name: "Cole Palmer",        position: "AM", club: "Chelsea",         age: 23, caps: 16, goals: 4 },
-  { id: 3020, teamId: 30, number: 18, name: "Anthony Gordon",     position: "LW", club: "Newcastle",       age: 25, caps: 9,  goals: 0,  startX: 22, startY: 32 },
-  { id: 3021, teamId: 30, number: 19, name: "Ollie Watkins",      position: "ST", club: "Aston Villa",     age: 30, caps: 18, goals: 5 },
-  { id: 3022, teamId: 30, number: 20, name: "Marcus Rashford",    position: "LW", club: "Aston Villa",     age: 28, caps: 62, goals: 17 },
+  // Goalkeepers
+  { id: 3001, teamId: 30, number: 1,  name: "Jordan Pickford",     position: "GK", club: "Everton",            age: 32, caps: 78, goals: 0,  startX: 50, startY: 92 },
+  { id: 3002, teamId: 30, number: 13, name: "Dean Henderson",      position: "GK", club: "Crystal Palace",     age: 29, caps: 5,  goals: 0 },
+  { id: 3003, teamId: 30, number: 23, name: "James Trafford",      position: "GK", club: "Manchester City",    age: 23, caps: 2,  goals: 0 },
+  // Defenders
+  { id: 3004, teamId: 30, number: 2,  name: "Ezri Konsa",          position: "CB", club: "Aston Villa",        age: 28, caps: 11, goals: 0,  startX: 38, startY: 80 },
+  { id: 3005, teamId: 30, number: 3,  name: "Reece James",         position: "RB", club: "Chelsea",            age: 26, caps: 22, goals: 1,  startX: 82, startY: 75 },
+  { id: 3006, teamId: 30, number: 5,  name: "Marc Guéhi",          position: "CB", club: "Manchester City",    age: 25, caps: 23, goals: 1,  startX: 62, startY: 80 },
+  { id: 3007, teamId: 30, number: 6,  name: "John Stones",         position: "CB", club: "Manchester City",    age: 31, caps: 83, goals: 3 },
+  { id: 3008, teamId: 30, number: 12, name: "Dan Burn",            position: "CB", club: "Newcastle",          age: 34, caps: 9,  goals: 1 },
+  { id: 3009, teamId: 30, number: 14, name: "Djed Spence",         position: "LB", club: "Tottenham",          age: 25, caps: 6,  goals: 0,  startX: 18, startY: 75 },
+  { id: 3010, teamId: 30, number: 16, name: "Tino Livramento",     position: "RB", club: "Newcastle",          age: 23, caps: 6,  goals: 0 },
+  { id: 3011, teamId: 30, number: 22, name: "Jarell Quansah",      position: "CB", club: "Bayer Leverkusen",   age: 23, caps: 3,  goals: 0 },
+  // Midfielders
+  { id: 3012, teamId: 30, number: 4,  name: "Declan Rice",         position: "DM", club: "Arsenal",            age: 27, caps: 62, goals: 6,  startX: 50, startY: 62 },
+  { id: 3013, teamId: 30, number: 8,  name: "Jordan Henderson",    position: "CM", club: "Brentford",          age: 35, caps: 82, goals: 3 },
+  { id: 3014, teamId: 30, number: 10, name: "Jude Bellingham",     position: "AM", club: "Real Madrid",        age: 22, caps: 40, goals: 9,  startX: 35, startY: 50 },
+  { id: 3015, teamId: 30, number: 15, name: "Morgan Rogers",       position: "AM", club: "Aston Villa",        age: 23, caps: 9,  goals: 1 },
+  { id: 3016, teamId: 30, number: 18, name: "Nico O'Reilly",       position: "CM", club: "Manchester City",    age: 21, caps: 2,  goals: 0 },
+  { id: 3017, teamId: 30, number: 19, name: "Eberechi Eze",        position: "AM", club: "Arsenal",            age: 27, caps: 18, goals: 4,  startX: 65, startY: 50 },
+  { id: 3018, teamId: 30, number: 21, name: "Elliott Anderson",    position: "CM", club: "Nottingham Forest",  age: 23, caps: 5,  goals: 0 },
+  // Forwards
+  { id: 3019, teamId: 30, number: 7,  name: "Bukayo Saka",         position: "RW", club: "Arsenal",            age: 24, caps: 43, goals: 14, startX: 78, startY: 32 },
+  { id: 3020, teamId: 30, number: 9,  name: "Harry Kane",          position: "ST", club: "Bayern Munich",      age: 32, caps: 107,goals: 77, startX: 50, startY: 18, isCaptain: true },
+  { id: 3021, teamId: 30, number: 11, name: "Marcus Rashford",     position: "LW", club: "Barcelona",          age: 28, caps: 64, goals: 18 },
+  { id: 3022, teamId: 30, number: 17, name: "Anthony Gordon",      position: "LW", club: "Newcastle",          age: 25, caps: 11, goals: 1,  startX: 22, startY: 32 },
+  { id: 3023, teamId: 30, number: 20, name: "Noni Madueke",        position: "RW", club: "Arsenal",            age: 24, caps: 5,  goals: 1 },
+  { id: 3024, teamId: 30, number: 24, name: "Ollie Watkins",       position: "ST", club: "Aston Villa",        age: 30, caps: 19, goals: 5 },
+  // Two reserves to round out to 26 — Tuchel's stand-by names not yet
+  // published, kept as placeholders so the count is correct.
+  { id: 3025, teamId: 30, number: 25, name: "Cole Palmer",         position: "AM", club: "Chelsea",            age: 23, caps: 17, goals: 4 },
+  { id: 3026, teamId: 30, number: 26, name: "Adam Wharton",        position: "CM", club: "Crystal Palace",     age: 22, caps: 5,  goals: 0 },
 ];
 
 // ─────────────────────────────────────────────────────────────────────────────

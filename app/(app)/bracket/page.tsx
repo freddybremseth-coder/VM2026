@@ -1,6 +1,7 @@
 import { GitBranch, Trophy, MapPin, Cpu } from "lucide-react";
 import { TeamFlag } from "@/components/shared/TeamFlag";
 import { BracketSimulator } from "@/components/bracket/BracketSimulator";
+import { ModelExplainer } from "@/components/shared/ModelExplainer";
 import { GROUPS, teamsByGroup, venueById, type WCTeam } from "@/lib/wc26-data";
 import { fixturesByRound } from "@/lib/wc26-fixtures";
 import { formatKickoff } from "@/lib/utils";
@@ -51,6 +52,8 @@ export default function BracketPage() {
         </h2>
         <KnockoutTree />
       </section>
+
+      <ModelExplainer />
     </div>
   );
 }

@@ -4,6 +4,7 @@ import { TeamFlag } from "@/components/shared/TeamFlag";
 import { teamById, teamsByGroup, venueById } from "@/lib/wc26-data";
 import { FIXTURES, type Fixture } from "@/lib/wc26-fixtures";
 import { getSquad } from "@/lib/wc26-squads";
+import { getPlayerForm, type ClubOutcome } from "@/lib/player-form";
 import { formatKickoff, formatDateLabel } from "@/lib/utils";
 import { getDictionary } from "@/lib/i18n";
 
@@ -27,10 +28,10 @@ export default function NorgePage() {
   const groupTeams = teamsByGroup("I");
 
   const squad = getSquad(NORWAY_ID);
-  // Players we'd highlight in form-tracker even before tournament — high
-  // recent goal-scoring & international form.
-  const KEY_PLAYER_NAMES = ["Erling Haaland", "Martin Ødegaard", "Alexander Sørloth"];
-  const keyPlayers = squad.filter((p) => KEY_PLAYER_NAMES.includes(p.name));
+  // Players we'd highlight in form-tracker — these are the names + variants
+  // we keep in sync with the official 26-man squad.
+  const KEY_PLAYER_IDS = [2122, 2120, 2121, 2125, 2116]; // Haaland, Ødegaard, Sørloth, Nusa, Bobb
+  const keyPlayers = squad.filter((p) => KEY_PLAYER_IDS.includes(p.id));
 
   return (
     <div className="px-4 sm:px-6 py-6 max-w-[1400px] mx-auto space-y-6">
@@ -237,7 +238,13 @@ function GroupStandings({
   );
 }
 
-function KeyPlayers({ players, label }: { players: ReturnType<typeof getSquad>; label: string }) {
+function KeyPlayers({
+  players,
+  label,
+}: {
+  players: ReturnType<typeof getSquad>;
+  label: string;
+}) {
   return (
     <div className="card-panel p-5">
       <div className="flex items-center gap-2 mb-3">
@@ -246,30 +253,75 @@ function KeyPlayers({ players, label }: { players: ReturnType<typeof getSquad>; 
           {label}
         </h2>
       </div>
-      <ul className="space-y-3">
-        {players.map((p) => (
-          <li key={p.id} className="flex items-center gap-3">
-            <div className="h-9 w-9 rounded-md bg-gradient-to-br from-accent-400 to-accent-600 flex items-center justify-center text-pitch-950 font-mono font-bold text-sm stat-num">
-              {p.number || "—"}
-            </div>
-            <div className="flex-1 min-w-0">
-              <div className="text-sm font-semibold truncate">{p.name}</div>
-              <div className="text-[11px] text-pitch-500 truncate">
-                {p.club} · {p.position}
+      <ul className="space-y-3.5">
+        {players.map((p) => {
+          const form = getPlayerForm(p.id);
+          return (
+            <li key={p.id} className="flex flex-col gap-2">
+              <div className="flex items-center gap-3">
+                <div className="h-10 w-10 rounded-md bg-gradient-to-br from-accent-400 to-accent-600 flex items-center justify-center text-pitch-950 font-mono font-bold text-sm stat-num shrink-0">
+                  {p.number || "—"}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="text-sm font-semibold truncate">{p.name}</div>
+                  <div className="text-[11px] text-pitch-400 truncate">
+                    {p.club} · {p.position}
+                  </div>
+                </div>
+                <div className="text-right shrink-0">
+                  <div className="font-mono text-base font-bold stat-num text-accent-300">
+                    {p.goals ?? "—"}
+                  </div>
+                  <div className="text-[10px] uppercase tracking-widest text-pitch-400 font-mono">
+                    {p.caps ?? "—"} caps
+                  </div>
+                </div>
               </div>
-            </div>
-            <div className="text-right">
-              <div className="font-mono text-base font-bold stat-num text-accent-300">
-                {p.goals ?? "—"}
-              </div>
-              <div className="text-[10px] uppercase tracking-widest text-pitch-500 font-mono">
-                {p.caps ?? "—"} caps
-              </div>
-            </div>
-          </li>
-        ))}
+
+              {form && (
+                <div className="ml-13 pl-1 flex items-center gap-3 text-[11px] text-pitch-400 font-mono">
+                  <span className="text-pitch-300">
+                    <span className="text-pitch-100 font-semibold stat-num">{form.apps}</span> apps ·{" "}
+                    <span className="text-accent-300 font-semibold stat-num">{form.goals}</span>g ·{" "}
+                    <span className="text-data-300 font-semibold stat-num">{form.assists}</span>a
+                  </span>
+                  <span className="text-pitch-600">·</span>
+                  <div className="flex items-center gap-0.5">
+                    {form.last5.map((o, i) => (
+                      <OutcomeDot key={i} outcome={o} />
+                    ))}
+                  </div>
+                </div>
+              )}
+              {form?.note && (
+                <div className="ml-13 pl-1 text-[11px] text-pitch-400 italic">
+                  {form.note}
+                </div>
+              )}
+            </li>
+          );
+        })}
       </ul>
+      <div className="mt-4 pt-3 border-t border-pitch-700/60 text-[10px] uppercase tracking-widest text-pitch-500 font-mono">
+        Club form · 2025/26 season
+      </div>
     </div>
+  );
+}
+
+function OutcomeDot({ outcome }: { outcome: ClubOutcome }) {
+  const cls = {
+    W: "bg-win/30 text-win ring-win/50",
+    D: "bg-draw/15 text-draw ring-draw/40",
+    L: "bg-loss/15 text-loss ring-loss/40",
+    B: "bg-pitch-800 text-pitch-500 ring-pitch-700",
+  }[outcome];
+  return (
+    <span
+      className={`h-5 w-5 inline-flex items-center justify-center rounded-sm text-[10px] font-bold font-mono ring-1 ${cls}`}
+    >
+      {outcome}
+    </span>
   );
 }
 

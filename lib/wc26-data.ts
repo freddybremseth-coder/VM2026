@@ -126,7 +126,7 @@ export const TEAMS: WCTeam[] = [
   { id: 14, name: "France",              shortName: "FRA", flag: "fr",     confederation: "UEFA",     group: "I", fifaRank: 2,  squadStatus: "official",    manager: "Didier Deschamps",       preferredFormation: "4-2-3-1" },
   { id: 8,  name: "Senegal",             shortName: "SEN", flag: "sn",     confederation: "CAF",      group: "I", fifaRank: 19, squadStatus: "official",    manager: "Pape Thiaw",             preferredFormation: "4-3-3" },
   { id: 27, name: "Iraq",                shortName: "IRQ", flag: "iq",     confederation: "AFC",      group: "I", fifaRank: 58, squadStatus: "preliminary", manager: "Graham Arnold",          preferredFormation: "4-2-3-1" },
-  { id: 21, name: "Norway",              shortName: "NOR", flag: "no",     confederation: "UEFA",     group: "I", fifaRank: 39, squadStatus: "preliminary", manager: "Ståle Solbakken",        preferredFormation: "4-3-3" },
+  { id: 21, name: "Norway",              shortName: "NOR", flag: "no",     confederation: "UEFA",     group: "I", fifaRank: 39, squadStatus: "official",    manager: "Ståle Solbakken",        preferredFormation: "4-3-3" },
 
   // Group J
   { id: 4,  name: "Argentina",           shortName: "ARG", flag: "ar",     confederation: "CONMEBOL", group: "J", fifaRank: 1,  squadStatus: "preliminary", manager: "Lionel Scaloni",         preferredFormation: "4-4-2" },
@@ -141,7 +141,7 @@ export const TEAMS: WCTeam[] = [
   { id: 37, name: "Colombia",            shortName: "COL", flag: "co",     confederation: "CONMEBOL", group: "K", fifaRank: 12, squadStatus: "preliminary", manager: "Néstor Lorenzo",         preferredFormation: "4-2-3-1" },
 
   // Group L
-  { id: 30, name: "England",             shortName: "ENG", flag: "gb-eng", confederation: "UEFA",     group: "L", fifaRank: 4,  squadStatus: "preliminary", manager: "Thomas Tuchel",          preferredFormation: "4-2-3-1" },
+  { id: 30, name: "England",             shortName: "ENG", flag: "gb-eng", confederation: "UEFA",     group: "L", fifaRank: 4,  squadStatus: "official",    manager: "Thomas Tuchel",          preferredFormation: "4-2-3-1" },
   { id: 42, name: "Croatia",             shortName: "CRO", flag: "hr",     confederation: "UEFA",     group: "L", fifaRank: 11, squadStatus: "official",    manager: "Zlatko Dalić",           preferredFormation: "4-3-3" },
   { id: 28, name: "Ghana",               shortName: "GHA", flag: "gh",     confederation: "CAF",      group: "L", fifaRank: 76, squadStatus: "pending",     manager: "Otto Addo",              preferredFormation: "4-3-3" },
   { id: 25, name: "Panama",              shortName: "PAN", flag: "pa",     confederation: "CONCACAF", group: "L", fifaRank: 40, squadStatus: "pending",     manager: "Thomas Christiansen",    preferredFormation: "4-3-3" },

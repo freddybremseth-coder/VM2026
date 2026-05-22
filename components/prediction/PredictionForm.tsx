@@ -3,7 +3,8 @@
 import * as React from "react";
 import { useRef, useState } from "react";
 import { useFormState, useFormStatus } from "react-dom";
-import { Check, Save, MapPin, Cpu } from "lucide-react";
+import Link from "next/link";
+import { Check, Save, MapPin, Cpu, Share2 } from "lucide-react";
 import { TeamFlag } from "@/components/shared/TeamFlag";
 import { formatKickoff, formatDateLabel } from "@/lib/utils";
 import {
@@ -88,17 +89,29 @@ export function PredictionForm({
             </span>
           )}
           {!state.error && !state.ok && existing && (
-            <span className="text-pitch-500">
+            <span className="text-pitch-400">
               Saved: {existing.home_score}–{existing.away_score}
             </span>
           )}
           {!state.error && !state.ok && !existing && (
-            <span className="text-pitch-500 flex items-center gap-1">
+            <span className="text-pitch-400 flex items-center gap-1">
               <MapPin size={10} /> {venueLabel}
             </span>
           )}
         </div>
-        <SubmitButton hasExisting={!!existing} />
+        <div className="flex items-center gap-2">
+          {existing && (
+            <Link
+              href={`/share/tip/${matchId}/${existing.home_score}-${existing.away_score}`}
+              className="rounded-md bg-pitch-800 hover:bg-pitch-700 text-pitch-200 text-xs font-semibold px-2.5 py-1.5 transition-colors flex items-center gap-1.5"
+              aria-label="Share my tip"
+            >
+              <Share2 size={12} />
+              <span className="hidden sm:inline">Share</span>
+            </Link>
+          )}
+          <SubmitButton hasExisting={!!existing} />
+        </div>
       </div>
     </form>
   );

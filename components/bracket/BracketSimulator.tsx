@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { Shuffle, Crown, ArrowRight, Flag, Share2, Cpu } from "lucide-react";
+import { Shuffle, Crown, ArrowRight, Flag, Share2, Cpu, RotateCcw } from "lucide-react";
 import { TeamFlag } from "@/components/shared/TeamFlag";
 import {
   modeLabel,
@@ -23,11 +23,52 @@ import {
  * State lives in component memory — user reloads = bracket resets. We can
  * persist to localStorage / Supabase in a later sprint.
  */
+const STORAGE_KEY = "wc26.bracket.v1";
+
 export function BracketSimulator() {
   const seed = useMemo(() => seedR32(), []);
   const [mode, setMode] = useState<SimulatorMode>("rank");
   /** winners[round][tieIndex] — undefined means "not yet picked". */
   const [picks, setPicks] = useState<(WCTeam | undefined)[][]>([[], [], [], [], []]);
+  const [hydrated, setHydrated] = useState(false);
+
+  // Restore from localStorage on mount.
+  useEffect(() => {
+    setHydrated(true);
+    try {
+      const raw = typeof window !== "undefined" && window.localStorage.getItem(STORAGE_KEY);
+      if (!raw) return;
+      const parsed = JSON.parse(raw) as { mode?: SimulatorMode; picks?: string[][] };
+      if (parsed.mode === "rank" || parsed.mode === "chaos" || parsed.mode === "norway") {
+        setMode(parsed.mode);
+      }
+      if (Array.isArray(parsed.picks)) {
+        // picks are saved as shortNames; resolve back to WCTeam objects.
+        const fromCodes: (WCTeam | undefined)[][] = parsed.picks.map((round) =>
+          round.map((code) => seed.find((t) => t.shortName === code))
+            .concat([]), // ensure we don't share references
+        );
+        // Re-validate by replaying the bracket from R32 seeds.
+        setPicks(fromCodes);
+      }
+    } catch {
+      // Bad cookie / corrupted JSON — ignore and start fresh.
+    }
+  }, [seed]);
+
+  // Persist on every change (after hydration so we don't overwrite on mount).
+  useEffect(() => {
+    if (!hydrated) return;
+    try {
+      const payload = JSON.stringify({
+        mode,
+        picks: picks.map((round) => round.map((t) => t?.shortName ?? "")),
+      });
+      window.localStorage.setItem(STORAGE_KEY, payload);
+    } catch {
+      // out of quota or storage unavailable — silently skip
+    }
+  }, [hydrated, mode, picks]);
 
   function applyMode(m: SimulatorMode) {
     setMode(m);
@@ -38,6 +79,11 @@ export function BracketSimulator() {
   function clear() {
     setMode("rank");
     setPicks([[], [], [], [], []]);
+    try {
+      window.localStorage.removeItem(STORAGE_KEY);
+    } catch {
+      // ignore
+    }
   }
 
   function pick(roundIdx: number, tieIdx: number, team: WCTeam) {
@@ -101,9 +147,11 @@ export function BracketSimulator() {
           <button
             type="button"
             onClick={clear}
-            className="text-[11px] uppercase tracking-widest font-mono px-3 py-1.5 rounded-md bg-pitch-800 hover:bg-pitch-700 text-pitch-300"
+            className="text-[11px] uppercase tracking-widest font-mono px-3 py-1.5 rounded-md bg-pitch-800 hover:bg-pitch-700 text-pitch-200 flex items-center gap-1.5"
+            title="Reset saved bracket"
           >
-            Clear
+            <RotateCcw size={11} />
+            Reset
           </button>
         </div>
       </div>

@@ -18,6 +18,7 @@ import { AIMatchPreview } from "@/components/match/AIMatchPreview";
 import { FormCard } from "@/components/match/FormCard";
 import { HeadToHeadCard } from "@/components/match/HeadToHeadCard";
 import { DataSourceBanner } from "@/components/shared/DataSourceBanner";
+import { ModelExplainer } from "@/components/shared/ModelExplainer";
 import { getMatchDetail, getFixtureView } from "@/lib/match-data";
 import { buildPreviewLive } from "@/lib/ai-preview";
 import { teamById } from "@/lib/wc26-data";
@@ -157,6 +158,8 @@ export default async function MatchLayout({
       <DataSourceBanner
         caveat="xG timeline, shots, possession and tactics populate live once the match starts."
       />
+
+      <ModelExplainer />
     </div>
   );
 }
