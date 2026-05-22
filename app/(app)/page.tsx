@@ -10,6 +10,7 @@ import {
   ArrowRight,
 } from "lucide-react";
 import { TeamFlag } from "@/components/shared/TeamFlag";
+import { WelcomeOnboarding } from "@/components/shared/WelcomeOnboarding";
 import { teamById, venueById, TOURNAMENT } from "@/lib/wc26-data";
 import { FIXTURES, nextFixtures, fixturesOn } from "@/lib/wc26-fixtures";
 import { formatKickoff, formatDateLabel } from "@/lib/utils";
@@ -30,6 +31,7 @@ export default function DashboardPage() {
 
   return (
     <div className="px-4 sm:px-6 py-6 max-w-[1600px] mx-auto space-y-8">
+      <WelcomeOnboarding />
       <header className="flex flex-col md:flex-row md:items-end md:justify-between gap-3">
         <div>
           <div className="text-[10px] uppercase tracking-widest text-accent-400 font-semibold mb-1">

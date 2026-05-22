@@ -19,6 +19,7 @@ import { FormCard } from "@/components/match/FormCard";
 import { HeadToHeadCard } from "@/components/match/HeadToHeadCard";
 import { DataSourceBanner } from "@/components/shared/DataSourceBanner";
 import { ModelExplainer } from "@/components/shared/ModelExplainer";
+import { StickyMobileCTA } from "@/components/match/StickyMobileCTA";
 import { getMatchDetail, getFixtureView } from "@/lib/match-data";
 import { buildPreviewLive } from "@/lib/ai-preview";
 import { teamById } from "@/lib/wc26-data";
@@ -35,17 +36,20 @@ export default async function MatchLayout({
   const match = getMatchDetail(params.matchId);
   if (match) {
     return (
-      <div className="px-4 sm:px-6 py-6 max-w-[1600px] mx-auto space-y-5">
-        <Link
-          href="/"
-          className="inline-flex items-center gap-1.5 text-xs text-pitch-400 hover:text-accent-300 transition-colors"
-        >
-          <ArrowLeft size={12} /> Back to dashboard
-        </Link>
-        <MatchHeader match={match} />
-        <MatchTabs matchId={match.id} />
-        <div className="pt-2">{children}</div>
-      </div>
+      <>
+        <div className="px-4 sm:px-6 py-6 pb-24 lg:pb-6 max-w-[1600px] mx-auto space-y-5">
+          <Link
+            href="/"
+            className="inline-flex items-center gap-1.5 text-xs text-pitch-400 hover:text-accent-300 transition-colors"
+          >
+            <ArrowLeft size={12} /> Back to dashboard
+          </Link>
+          <MatchHeader match={match} />
+          <MatchTabs matchId={match.id} />
+          <div className="pt-2">{children}</div>
+        </div>
+        <StickyMobileCTA matchId={match.id} />
+      </>
     );
   }
 
@@ -56,7 +60,8 @@ export default async function MatchLayout({
   const preview = await buildPreviewLive(Number(params.matchId));
 
   return (
-    <div className="px-4 sm:px-6 py-6 max-w-[1600px] mx-auto space-y-5">
+    <>
+    <div className="px-4 sm:px-6 py-6 pb-24 lg:pb-6 max-w-[1600px] mx-auto space-y-5">
       <Link
         href="/"
         className="inline-flex items-center gap-1.5 text-xs text-pitch-400 hover:text-accent-300 transition-colors"
@@ -161,6 +166,8 @@ export default async function MatchLayout({
 
       <ModelExplainer />
     </div>
+    <StickyMobileCTA matchId={fixture.id} />
+    </>
   );
 }
 
