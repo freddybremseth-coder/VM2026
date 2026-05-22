@@ -3,36 +3,58 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Menu, X } from "lucide-react";
+import {
+  LayoutDashboard,
+  Calendar,
+  Users,
+  User,
+  Target,
+  Trophy,
+  GitBranch,
+  Flag,
+  Menu,
+  X,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 import { AppLogo, ChatGeniusBadge, CreditsBadge } from "./Logo";
-import {
-  NAV_ITEMS,
-  DEFAULT_NAV_LABELS,
-  type NavLabels,
-} from "@/lib/nav-items";
+import { DEFAULT_NAV_LABELS, type NavLabels } from "@/lib/nav-items";
+
+// Inline NAV items so this component does not depend on a separate file
+// import at runtime — eliminates the most common cause of the "drawer
+// opens but middle is empty" bug (tree-shaking / chunk-split races).
+const NAV = [
+  { href: "/",            key: "dashboard"   as const, Icon: LayoutDashboard },
+  { href: "/norge",       key: "norge"       as const, Icon: Flag },
+  { href: "/matches",     key: "matches"     as const, Icon: Calendar },
+  { href: "/teams",       key: "teams"       as const, Icon: Users },
+  { href: "/players",     key: "players"     as const, Icon: User },
+  { href: "/predictions", key: "predictions" as const, Icon: Target },
+  { href: "/leagues",     key: "leagues"     as const, Icon: Trophy },
+  { href: "/bracket",     key: "bracket"     as const, Icon: GitBranch },
+];
 
 /**
  * Mobile-only hamburger + slide-in drawer. The desktop Sidebar stays
  * `hidden lg:flex`, so this component is the only navigation surface for
- * touch users. Closes on route change, backdrop tap, Escape, or X button.
+ * touch users. Closes on route change, backdrop tap, Escape, or X.
  *
- * Defensive: labels are optional and fall back to English defaults, so even
- * if a stale client chunk doesn't pass them, the menu still renders fully.
+ * Layout note: we deliberately avoid `flex-1` + nested `h-full` for the
+ * inner list — that combo collapses to 0 height on iOS Safari in some
+ * versions. Instead the aside is explicitly `h-dvh` and the inner list
+ * just expands naturally with the content; the footer stays at the
+ * bottom via `mt-auto`.
  */
 export function MobileNav({ labels }: { labels?: Partial<NavLabels> }) {
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
 
-  // Resolve labels with fallbacks so the menu can never go blank.
+  // Resolve labels with fallbacks so the menu never goes blank.
   const resolved: NavLabels = { ...DEFAULT_NAV_LABELS, ...(labels ?? {}) };
 
-  // Close when the route changes (link click)
   useEffect(() => {
     setOpen(false);
   }, [pathname]);
 
-  // Close on Escape + lock body scroll when open
   useEffect(() => {
     if (!open) return;
     const onKey = (e: KeyboardEvent) => {
@@ -60,21 +82,24 @@ export function MobileNav({ labels }: { labels?: Partial<NavLabels> }) {
 
       {open && (
         <div
-          className="lg:hidden fixed inset-0 z-[60] flex"
+          className="lg:hidden fixed inset-0 z-[60]"
           role="dialog"
           aria-modal="true"
         >
-          {/* Backdrop */}
+          {/* Solid backdrop — full viewport. */}
           <button
             type="button"
             aria-label="Close navigation"
             onClick={() => setOpen(false)}
-            className="absolute inset-0 bg-pitch-950/85 backdrop-blur-sm"
+            className="absolute inset-0 bg-pitch-950/90 backdrop-blur-sm"
           />
 
-          {/* Drawer */}
-          <aside className="relative w-80 max-w-[88vw] h-full bg-pitch-900 border-r border-pitch-700 flex flex-col px-3 py-5 shadow-2xl">
-            <div className="px-2 mb-6 flex items-center justify-between">
+          {/* Drawer — fixed to the left edge with explicit viewport height. */}
+          <aside
+            className="absolute top-0 left-0 w-80 max-w-[88vw] bg-pitch-900 border-r border-pitch-700 shadow-2xl flex flex-col px-3 py-5"
+            style={{ height: "100dvh" }}
+          >
+            <div className="px-2 mb-6 flex items-center justify-between shrink-0">
               <Link href="/" className="flex items-center gap-2.5">
                 <AppLogo size={36} />
                 <div className="leading-tight">
@@ -96,8 +121,8 @@ export function MobileNav({ labels }: { labels?: Partial<NavLabels> }) {
               </button>
             </div>
 
-            <nav className="flex flex-col gap-0.5 flex-1 overflow-y-auto">
-              {NAV_ITEMS.map(({ href, key, icon: Icon }) => {
+            <nav className="flex flex-col gap-1 overflow-y-auto">
+              {NAV.map(({ href, key, Icon }) => {
                 const label = resolved[key];
                 const active =
                   href === "/" ? pathname === "/" : pathname.startsWith(href);
@@ -106,7 +131,7 @@ export function MobileNav({ labels }: { labels?: Partial<NavLabels> }) {
                     key={href}
                     href={href}
                     className={cn(
-                      "group flex items-center gap-3 rounded-md px-3 py-3 text-base transition-colors",
+                      "flex items-center gap-3 rounded-md px-3 py-3 text-base transition-colors",
                       active
                         ? "bg-pitch-800 text-accent-300 font-semibold"
                         : "text-pitch-100 hover:bg-pitch-800/60 hover:text-white",
@@ -116,9 +141,7 @@ export function MobileNav({ labels }: { labels?: Partial<NavLabels> }) {
                       size={18}
                       className={cn(
                         "shrink-0",
-                        active
-                          ? "text-accent-400"
-                          : "text-pitch-300 group-hover:text-pitch-100",
+                        active ? "text-accent-400" : "text-pitch-300",
                       )}
                     />
                     <span>{label}</span>
@@ -127,7 +150,7 @@ export function MobileNav({ labels }: { labels?: Partial<NavLabels> }) {
               })}
             </nav>
 
-            <div className="mt-4 pt-4 border-t border-pitch-700 px-2 space-y-3">
+            <div className="mt-auto pt-4 border-t border-pitch-700 px-2 space-y-3 shrink-0">
               <ChatGeniusBadge />
               <CreditsBadge />
             </div>
