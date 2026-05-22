@@ -3,15 +3,17 @@ import { Trophy, Users, ChevronRight, LogIn } from "lucide-react";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { CreateLeagueForm, JoinLeagueForm } from "@/components/league/LeagueForms";
 import { LeagueAvatar } from "@/components/league/LeagueAvatar";
+import { getDictionary } from "@/lib/i18n";
 
 export default async function LeaguesPage() {
   const supabase = createSupabaseServerClient();
   const { data: { user } } = await supabase.auth.getUser();
+  const t = getDictionary();
 
   if (!user) {
     return (
       <div className="px-4 sm:px-6 py-6 max-w-[1100px] mx-auto">
-        <Header />
+        <Header title={t.leagues.title} subtitle={t.leagues.subtitle} />
         <div className="card-panel p-6 ring-1 ring-accent-500/20 flex items-center justify-between gap-4">
           <div className="flex items-center gap-3">
             <div className="h-10 w-10 rounded-md bg-accent-500/15 flex items-center justify-center">
@@ -65,15 +67,15 @@ export default async function LeaguesPage() {
 
   return (
     <div className="px-4 sm:px-6 py-6 max-w-[1100px] mx-auto space-y-8">
-      <Header />
+      <Header title={t.leagues.title} subtitle={t.leagues.subtitle} />
 
       <section className="space-y-3">
         <h2 className="text-xs uppercase tracking-widest font-semibold text-pitch-200">
-          Your leagues
+          {t.leagues.yours}
         </h2>
         {myLeagues.length === 0 ? (
           <div className="card-panel p-6 text-center text-sm text-pitch-500">
-            You're not in any mini-leagues yet. Create one below or join with an invite code.
+            {t.leagues.none}
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -133,19 +135,15 @@ export default async function LeaguesPage() {
   );
 }
 
-function Header() {
+function Header({ title, subtitle }: { title: string; subtitle: string }) {
   return (
     <header className="mb-6">
       <div className="flex items-center gap-2 text-[10px] uppercase tracking-widest text-accent-400 font-semibold mb-1">
         <Trophy size={12} />
         Mini-leagues
       </div>
-      <h1 className="text-2xl md:text-3xl font-bold tracking-tight">
-        Tip against your friends
-      </h1>
-      <p className="text-sm text-pitch-400 mt-1">
-        Create a private league, share the invite code, and compare points throughout the tournament.
-      </p>
+      <h1 className="text-2xl md:text-3xl font-bold tracking-tight">{title}</h1>
+      <p className="text-sm text-pitch-400 mt-1">{subtitle}</p>
     </header>
   );
 }

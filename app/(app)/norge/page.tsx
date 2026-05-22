@@ -5,10 +5,12 @@ import { teamById, teamsByGroup, venueById } from "@/lib/wc26-data";
 import { FIXTURES, type Fixture } from "@/lib/wc26-fixtures";
 import { getSquad } from "@/lib/wc26-squads";
 import { formatKickoff, formatDateLabel } from "@/lib/utils";
+import { getDictionary } from "@/lib/i18n";
 
 const NORWAY_ID = 21;
 
 export default function NorgePage() {
+  const t = getDictionary();
   const norway = teamById(NORWAY_ID);
   if (!norway) {
     return <div className="p-6">Norway team data not loaded.</div>;
@@ -38,29 +40,27 @@ export default function NorgePage() {
           <div>
             <div className="flex items-center gap-2 text-[10px] uppercase tracking-widest text-accent-400 font-semibold mb-1">
               <Flag size={12} />
-              Følg Norge
+              {t.norge.follow}
             </div>
             <h1 className="text-2xl md:text-3xl font-bold tracking-tight">
-              Norge i VM 2026
+              {t.norge.title}
             </h1>
-            <p className="text-sm text-pitch-400 mt-1">
-              Group I · 3 matches · Ståle Solbakken · 4-3-3
-            </p>
+            <p className="text-sm text-pitch-400 mt-1">{t.norge.subtitle}</p>
           </div>
         </div>
         <Link
           href="/predictions"
           className="flex items-center gap-1.5 rounded-md bg-accent-500 hover:bg-accent-400 text-pitch-950 text-xs font-semibold px-4 py-2 transition-colors shrink-0"
         >
-          <Target size={13} /> Tipp Norges kamper
+          <Target size={13} /> {t.norge.tipMatches}
         </Link>
       </header>
 
-      {nextMatch && <NextMatchHero fixture={nextMatch} />}
+      {nextMatch && <NextMatchHero fixture={nextMatch} label={t.norge.nextMatch} />}
 
       <section>
         <h2 className="text-xs uppercase tracking-widest font-semibold text-pitch-200 mb-3 flex items-center gap-2">
-          <Calendar size={12} className="text-accent-400" /> Alle Norges kamper
+          <Calendar size={12} className="text-accent-400" /> {t.norge.allMatches}
         </h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
           {norwayFixtures.map((f) => (
@@ -70,16 +70,16 @@ export default function NorgePage() {
       </section>
 
       <section className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-        <GroupStandings groupTeams={groupTeams} />
-        <KeyPlayers players={keyPlayers} />
+        <GroupStandings groupTeams={groupTeams} label={t.norge.standings} />
+        <KeyPlayers players={keyPlayers} label={t.norge.playersToWatch} />
       </section>
 
-      <Scenario />
+      <Scenario title={t.norge.scenarioTitle} />
     </div>
   );
 }
 
-function NextMatchHero({ fixture }: { fixture: Fixture }) {
+function NextMatchHero({ fixture, label }: { fixture: Fixture; label: string }) {
   const home = fixture.homeId ? teamById(fixture.homeId) : undefined;
   const away = fixture.awayId ? teamById(fixture.awayId) : undefined;
   const venue = venueById(fixture.venueId);
@@ -96,7 +96,7 @@ function NextMatchHero({ fixture }: { fixture: Fixture }) {
       <div className="absolute inset-0 opacity-[0.05] grid-lines pointer-events-none" />
       <div className="relative">
         <div className="flex items-center justify-between text-[10px] uppercase tracking-widest text-accent-400 font-semibold mb-4">
-          <span>Neste Norge-kamp</span>
+          <span>{label}</span>
           <span className="text-pitch-300 font-mono">
             om {days}d {hours}t
           </span>
@@ -196,15 +196,17 @@ function NorgeFixtureCard({ fixture }: { fixture: Fixture }) {
 
 function GroupStandings({
   groupTeams,
+  label,
 }: {
   groupTeams: ReturnType<typeof teamsByGroup>;
+  label: string;
 }) {
   return (
     <div className="card-panel p-5">
       <div className="flex items-center gap-2 mb-3">
         <Trophy size={12} className="text-accent-400" />
         <h2 className="text-xs uppercase tracking-widest font-semibold text-pitch-200">
-          Group I — standings
+          {label}
         </h2>
       </div>
       <ul className="space-y-2">
@@ -235,13 +237,13 @@ function GroupStandings({
   );
 }
 
-function KeyPlayers({ players }: { players: ReturnType<typeof getSquad> }) {
+function KeyPlayers({ players, label }: { players: ReturnType<typeof getSquad>; label: string }) {
   return (
     <div className="card-panel p-5">
       <div className="flex items-center gap-2 mb-3">
         <Flag size={12} className="text-accent-400" />
         <h2 className="text-xs uppercase tracking-widest font-semibold text-pitch-200">
-          Players to watch
+          {label}
         </h2>
       </div>
       <ul className="space-y-3">
@@ -271,13 +273,13 @@ function KeyPlayers({ players }: { players: ReturnType<typeof getSquad> }) {
   );
 }
 
-function Scenario() {
+function Scenario({ title }: { title: string }) {
   return (
     <section className="card-panel p-5">
       <div className="flex items-center gap-2 mb-3">
         <Sparkles className="text-accent-400" />
         <h2 className="text-xs uppercase tracking-widest font-semibold text-pitch-200">
-          Hva må Norge gjøre for å gå videre?
+          {title}
         </h2>
       </div>
       <div className="text-sm text-pitch-300 leading-relaxed space-y-2">

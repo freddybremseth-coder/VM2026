@@ -17,16 +17,17 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { AppLogo, ChatGeniusBadge } from "./Logo";
+import type { NavLabels } from "./Sidebar";
 
-const NAV = [
-  { href: "/", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/norge", label: "Følg Norge", icon: Flag },
-  { href: "/matches", label: "Matches", icon: Calendar },
-  { href: "/teams", label: "Teams", icon: Users },
-  { href: "/players", label: "Players", icon: User },
-  { href: "/predictions", label: "Predictions", icon: Target },
-  { href: "/leagues", label: "Mini-leagues", icon: Trophy },
-  { href: "/bracket", label: "Bracket", icon: GitBranch },
+const NAV_META = [
+  { href: "/", key: "dashboard" as const, icon: LayoutDashboard },
+  { href: "/norge", key: "norge" as const, icon: Flag },
+  { href: "/matches", key: "matches" as const, icon: Calendar },
+  { href: "/teams", key: "teams" as const, icon: Users },
+  { href: "/players", key: "players" as const, icon: User },
+  { href: "/predictions", key: "predictions" as const, icon: Target },
+  { href: "/leagues", key: "leagues" as const, icon: Trophy },
+  { href: "/bracket", key: "bracket" as const, icon: GitBranch },
 ];
 
 /**
@@ -34,7 +35,7 @@ const NAV = [
  * `hidden lg:flex`, so this component is the only navigation surface for
  * touch users. Closes on route change, backdrop tap, or Escape.
  */
-export function MobileNav() {
+export function MobileNav({ labels }: { labels: NavLabels }) {
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
 
@@ -108,7 +109,8 @@ export function MobileNav() {
             </div>
 
             <nav className="flex flex-col gap-0.5 flex-1 overflow-y-auto">
-              {NAV.map(({ href, label, icon: Icon }) => {
+              {NAV_META.map(({ href, key, icon: Icon }) => {
+                const label = labels[key];
                 const active =
                   href === "/" ? pathname === "/" : pathname.startsWith(href);
                 return (

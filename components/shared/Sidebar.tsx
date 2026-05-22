@@ -15,19 +15,57 @@ import {
 import { cn } from "@/lib/utils";
 import { AppLogo, ChatGeniusBadge, CreditsBadge } from "./Logo";
 
-const NAV = [
-  { href: "/", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/norge", label: "Følg Norge", icon: Flag },
-  { href: "/matches", label: "Matches", icon: Calendar },
-  { href: "/teams", label: "Teams", icon: Users },
-  { href: "/players", label: "Players", icon: User },
-  { href: "/predictions", label: "Predictions", icon: Target },
-  { href: "/leagues", label: "Mini-leagues", icon: Trophy },
-  { href: "/bracket", label: "Bracket", icon: GitBranch },
-];
+export interface NavLabels {
+  dashboard: string;
+  norge: string;
+  matches: string;
+  teams: string;
+  players: string;
+  predictions: string;
+  leagues: string;
+  bracket: string;
+}
 
-export function Sidebar() {
+const NAV_ICONS = {
+  dashboard: LayoutDashboard,
+  norge: Flag,
+  matches: Calendar,
+  teams: Users,
+  players: User,
+  predictions: Target,
+  leagues: Trophy,
+  bracket: GitBranch,
+};
+
+const NAV_HREFS = {
+  dashboard: "/",
+  norge: "/norge",
+  matches: "/matches",
+  teams: "/teams",
+  players: "/players",
+  predictions: "/predictions",
+  leagues: "/leagues",
+  bracket: "/bracket",
+} as const;
+
+const NAV_ORDER = [
+  "dashboard",
+  "norge",
+  "matches",
+  "teams",
+  "players",
+  "predictions",
+  "leagues",
+  "bracket",
+] as const;
+
+export function Sidebar({ labels }: { labels: NavLabels }) {
   const pathname = usePathname();
+  const items = NAV_ORDER.map((key) => ({
+    href: NAV_HREFS[key],
+    label: labels[key],
+    icon: NAV_ICONS[key],
+  }));
   return (
     <aside className="hidden lg:flex w-60 shrink-0 flex-col border-r border-pitch-800 bg-pitch-900/40 px-3 py-5">
       <Link href="/" className="px-2 mb-6 flex items-center gap-2.5 group">
@@ -43,7 +81,7 @@ export function Sidebar() {
       </Link>
 
       <nav className="flex flex-col gap-0.5">
-        {NAV.map(({ href, label, icon: Icon }) => {
+        {items.map(({ href, label, icon: Icon }) => {
           const active = href === "/" ? pathname === "/" : pathname.startsWith(href);
           return (
             <Link

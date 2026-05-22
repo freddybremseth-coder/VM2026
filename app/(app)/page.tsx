@@ -13,8 +13,10 @@ import { TeamFlag } from "@/components/shared/TeamFlag";
 import { teamById, venueById, TOURNAMENT } from "@/lib/wc26-data";
 import { FIXTURES, nextFixtures, fixturesOn } from "@/lib/wc26-fixtures";
 import { formatKickoff, formatDateLabel } from "@/lib/utils";
+import { getDictionary } from "@/lib/i18n";
 
 export default function DashboardPage() {
+  const t = getDictionary();
   const now = new Date();
   const startDate = new Date(TOURNAMENT.startDate + "T00:00:00Z");
   const finalDate = new Date(TOURNAMENT.endDate + "T00:00:00Z");
@@ -31,43 +33,43 @@ export default function DashboardPage() {
       <header className="flex flex-col md:flex-row md:items-end md:justify-between gap-3">
         <div>
           <div className="text-[10px] uppercase tracking-widest text-accent-400 font-semibold mb-1">
-            {tournamentLive ? "Live tournament" : "Countdown"}
+            {tournamentLive ? t.dashboard.liveTournament : t.dashboard.countdown}
           </div>
           <h1 className="text-2xl md:text-3xl font-bold tracking-tight">
             {tournamentLive
               ? formatDateLabel(now.toISOString())
-              : `${daysToKickoff} days to kickoff`}
+              : t.dashboard.daysToKickoff(daysToKickoff)}
           </h1>
           <p className="text-sm text-pitch-400 mt-1">
             {tournamentLive
               ? "Tournament in progress · 48 teams · 104 matches"
-              : `Opener: ${formatDateLabel(TOURNAMENT.startDate)} · Mexico vs South Africa at Estadio Azteca`}
+              : t.dashboard.openerLine(formatDateLabel(TOURNAMENT.startDate))}
           </p>
         </div>
-        <CountBadges />
+        <CountBadges labels={t.dashboard} />
       </header>
 
-      <HeroCTAs />
+      <HeroCTAs hero={t.dashboard} />
 
       {todayFixtures.length > 0 && (
         <FixturesSection
-          title="Today"
+          title={t.dashboard.today}
           icon={<Sparkles size={14} className="text-accent-400" />}
           fixtures={todayFixtures}
         />
       )}
 
       {!tournamentLive && (
-        <OpenerSpotlight />
+        <OpenerSpotlight openerLabel={t.dashboard.tournamentOpener} />
       )}
 
       <FixturesSection
-        title={tournamentLive ? "Upcoming" : "First matches"}
+        title={tournamentLive ? t.dashboard.upcoming : t.dashboard.firstMatches}
         icon={<Clock size={14} className="text-data-400" />}
         fixtures={upcoming}
       />
 
-      <KeyFacts />
+      <KeyFacts label={t.dashboard.keyDates} />
     </div>
   );
 }
@@ -77,31 +79,35 @@ export default function DashboardPage() {
  * any data scrolling: create a private league, place a tip, follow Norway.
  * These are the actions we want first-time visitors to take, not "browse stats".
  */
-function HeroCTAs() {
+function HeroCTAs({
+  hero,
+}: {
+  hero: ReturnType<typeof getDictionary>["dashboard"];
+}) {
   return (
     <section className="grid grid-cols-1 md:grid-cols-3 gap-3">
       <HeroCard
         href="/leagues"
         icon={<Trophy size={18} className="text-pitch-950" />}
-        kicker="Mini-league"
-        title="Lag VM-liga"
-        body="Inviter venner med en lenke. Privat leaderboard, ukentlig oppsummering."
+        kicker={hero.heroLeague.kicker}
+        title={hero.heroLeague.title}
+        body={hero.heroLeague.body}
         tone="accent"
       />
       <HeroCard
         href="/predictions"
         icon={<Target size={18} className="text-pitch-950" />}
-        kicker="Predictions"
-        title="Tipp åpningskampen"
-        body="3 free guest tips før du må logge inn. Mexico–RSA først ut."
+        kicker={hero.heroPredict.kicker}
+        title={hero.heroPredict.title}
+        body={hero.heroPredict.body}
         tone="data"
       />
       <HeroCard
         href="/norge"
         icon={<Flag size={18} className="text-pitch-950" />}
-        kicker="Følg laget ditt"
-        title="Norge i Gruppe I"
-        body="Neste kamp, gruppestilling, Haaland-tracker og scenario."
+        kicker={hero.heroNorway.kicker}
+        title={hero.heroNorway.title}
+        body={hero.heroNorway.body}
         tone="draw"
       />
     </section>
@@ -155,20 +161,24 @@ function HeroCard({
   );
 }
 
-function CountBadges() {
+function CountBadges({
+  labels,
+}: {
+  labels: ReturnType<typeof getDictionary>["dashboard"];
+}) {
   const total = FIXTURES.length;
   const group = FIXTURES.filter((f) => f.stage.kind === "group").length;
   const ko = total - group;
   return (
     <div className="flex items-center gap-2 text-xs">
-      <span className="stat-pill">{total} matches</span>
-      <span className="stat-pill">{group} group</span>
-      <span className="stat-pill">{ko} knockout</span>
+      <span className="stat-pill">{total} {labels.matches}</span>
+      <span className="stat-pill">{group} {labels.group}</span>
+      <span className="stat-pill">{ko} {labels.knockout}</span>
     </div>
   );
 }
 
-function OpenerSpotlight() {
+function OpenerSpotlight({ openerLabel }: { openerLabel: string }) {
   const opener = FIXTURES[0];
   if (!opener) return null;
   const home = opener.homeId ? teamById(opener.homeId) : undefined;
@@ -180,7 +190,7 @@ function OpenerSpotlight() {
       <div className="absolute inset-0 opacity-[0.05] grid-lines pointer-events-none" />
       <div className="relative">
         <div className="text-[10px] uppercase tracking-widest text-accent-400 font-semibold mb-3">
-          Tournament opener
+          {openerLabel}
         </div>
         {/* Mobile: stack home / time / away. Desktop: 3-col grid */}
         <div className="flex flex-col sm:grid sm:grid-cols-[1fr_auto_1fr] sm:items-center gap-4 sm:gap-6">
@@ -325,13 +335,13 @@ function TeamSide({
   );
 }
 
-function KeyFacts() {
+function KeyFacts({ label }: { label: string }) {
   return (
     <section>
       <div className="flex items-center gap-2 mb-3">
         <Calendar size={14} className="text-accent-400" />
         <h2 className="text-xs uppercase tracking-widest font-semibold text-pitch-200">
-          Key dates
+          {label}
         </h2>
       </div>
       <div className="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-6 gap-3">
