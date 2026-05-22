@@ -10,6 +10,8 @@ import {
   getGuestPrediction,
   saveGuestPrediction,
 } from "@/lib/guest-predictions";
+import { suggestTip, TIP_MODE_META, type TipMode } from "@/lib/ai-tip-helper";
+import { AITipBar } from "./PredictionForm";
 
 interface TeamRef {
   id: number;
@@ -43,6 +45,15 @@ export function GuestPredictionForm({
   const [feedback, setFeedback] = useState<
     { kind: "ok"; saved: { h: number; a: number } } | { kind: "limit" } | null
   >(null);
+  const [aiHint, setAiHint] = useState<string | null>(null);
+
+  function fillAITip(mode: TipMode) {
+    const tip = suggestTip(matchId, mode);
+    if (!tip) return;
+    setHomeScore(tip.home);
+    setAwayScore(tip.away);
+    setAiHint(`${TIP_MODE_META[mode].icon} ${tip.reasoning}`);
+  }
 
   useEffect(() => {
     setHydrated(true);
@@ -90,6 +101,8 @@ export function GuestPredictionForm({
         </div>
         <TeamSide team={away} align="left" />
       </div>
+
+      {!limitReached && <AITipBar onPick={fillAITip} hint={aiHint} />}
 
       <div className="mt-4 pt-3 border-t border-pitch-700/60 flex items-center justify-between gap-3">
         <div className="min-h-[18px] text-[11px] flex items-center gap-1.5">
