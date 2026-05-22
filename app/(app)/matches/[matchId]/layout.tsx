@@ -15,9 +15,12 @@ import { TeamFlag } from "@/components/shared/TeamFlag";
 import { MatchHeader } from "@/components/match/MatchHeader";
 import { MatchTabs } from "@/components/match/MatchTabs";
 import { AIMatchPreview } from "@/components/match/AIMatchPreview";
+import { FormCard } from "@/components/match/FormCard";
+import { HeadToHeadCard } from "@/components/match/HeadToHeadCard";
 import { DataSourceBanner } from "@/components/shared/DataSourceBanner";
 import { getMatchDetail, getFixtureView } from "@/lib/match-data";
 import { buildPreviewLive } from "@/lib/ai-preview";
+import { teamById } from "@/lib/wc26-data";
 import { formatKickoff, formatDateLabel } from "@/lib/utils";
 
 export default async function MatchLayout({
@@ -134,23 +137,22 @@ export default async function MatchLayout({
 
       {preview && <AIMatchPreview preview={preview} />}
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
-        <PrematchCard
-          icon={<Users size={14} className="text-accent-400" />}
-          title="Expected starting XI"
-          status="Available 30 min before kickoff"
-        />
-        <PrematchCard
-          icon={<Activity size={14} className="text-data-400" />}
-          title="Last 5 matches"
-          status="Coming next"
-        />
-        <PrematchCard
-          icon={<Trophy size={14} className="text-draw" />}
-          title="Head-to-head history"
-          status="Coming next"
-        />
-      </div>
+      {fixture.teams.home && fixture.teams.away && (() => {
+        const homeTeam = teamById(fixture.teams.home.id);
+        const awayTeam = teamById(fixture.teams.away.id);
+        if (!homeTeam || !awayTeam) return null;
+        return (
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
+            <PrematchCard
+              icon={<Users size={14} className="text-accent-400" />}
+              title="Expected starting XI"
+              status="Tap the Lineups tab — confirmed squads have probable XI on a pitch graphic."
+            />
+            <FormCard home={homeTeam} away={awayTeam} />
+            <HeadToHeadCard home={homeTeam} away={awayTeam} />
+          </div>
+        );
+      })()}
 
       <DataSourceBanner
         caveat="xG timeline, shots, possession and tactics populate live once the match starts."
