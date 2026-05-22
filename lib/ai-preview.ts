@@ -19,6 +19,7 @@
 import { teamById, type WCTeam } from "./wc26-data";
 import { fixtureById, type Fixture } from "./wc26-fixtures";
 import { getSquad, type Player } from "./wc26-squads";
+import { tryClaudeText } from "./ai/claude";
 
 export interface PreviewInputs {
   fixture: Fixture;
@@ -55,6 +56,93 @@ export function buildPreview(matchId: number): MatchPreview | null {
   const awayTopScorer = topScorer(fixture.awayId);
 
   return composePreview({ fixture, home, away, homeTopScorer, awayTopScorer });
+}
+
+/**
+ * Async variant — tries Claude first, falls back to the deterministic template.
+ * Use this from server components / actions when you want the LLM upgrade.
+ */
+export async function buildPreviewLive(matchId: number): Promise<MatchPreview | null> {
+  const baseline = buildPreview(matchId);
+  if (!baseline) return null;
+
+  const fixture = fixtureById(matchId)!;
+  const home = teamById(fixture.homeId!)!;
+  const away = teamById(fixture.awayId!)!;
+  const homeStar = topScorer(home.id);
+  const awayStar = topScorer(away.id);
+
+  const text = await tryClaudeText({
+    systemPrompt: PREVIEW_SYSTEM_PROMPT,
+    userPrompt: buildClaudeUserPrompt({
+      fixture,
+      home,
+      away,
+      homeTopScorer: homeStar,
+      awayTopScorer: awayStar,
+    }, baseline),
+    maxTokens: 350,
+  });
+
+  if (!text) return baseline; // fallback to deterministic
+
+  // Claude returns three numbered lines. Parse defensively.
+  const parsed = parseClaudeLines(text);
+  if (!parsed) return baseline;
+
+  return {
+    ...baseline,
+    ...parsed,
+    model: "claude-sonnet-4-5",
+    generatedAt: new Date().toISOString(),
+  };
+}
+
+const PREVIEW_SYSTEM_PROMPT = [
+  "You are ChatGenius, a football-tactics writer for an app that previews 2026 FIFA World Cup matches.",
+  "You receive structured inputs about a fixture: stage, ranks, formations, top scorers, and a baseline model recommendation.",
+  "Your output is exactly three lines, prefixed `1.`, `2.`, `3.`:",
+  "  1. A hook (1 sentence) — set the stakes with personality, no clichés.",
+  "  2. A tactical read (1-2 sentences) — name the player/formation duel that decides it.",
+  "  3. The model recommendation, copied VERBATIM from the input (do not rewrite).",
+  "British football vocabulary. No emoji. No markdown. No team-name typos.",
+].join(" ");
+
+function buildClaudeUserPrompt(
+  inputs: PreviewInputs,
+  baseline: MatchPreview,
+): string {
+  const stage =
+    inputs.fixture.stage.kind === "group"
+      ? `Group ${inputs.fixture.stage.group} matchday ${inputs.fixture.stage.matchday}`
+      : inputs.fixture.stage.round;
+  const homeStar = inputs.homeTopScorer
+    ? `${inputs.homeTopScorer.name} (${inputs.homeTopScorer.goals} goals / ${inputs.homeTopScorer.caps} caps)`
+    : "no standout scorer";
+  const awayStar = inputs.awayTopScorer
+    ? `${inputs.awayTopScorer.name} (${inputs.awayTopScorer.goals} goals / ${inputs.awayTopScorer.caps} caps)`
+    : "no standout scorer";
+
+  return [
+    `Fixture: ${inputs.home.name} (${inputs.home.shortName}, FIFA #${inputs.home.fifaRank ?? "—"}, ${inputs.home.preferredFormation}, manager ${inputs.home.manager}) vs ${inputs.away.name} (${inputs.away.shortName}, FIFA #${inputs.away.fifaRank ?? "—"}, ${inputs.away.preferredFormation}, manager ${inputs.away.manager})`,
+    `Stage: ${stage}`,
+    `Top scorers: ${inputs.home.shortName} — ${homeStar}; ${inputs.away.shortName} — ${awayStar}`,
+    `Model recommendation (copy line 3 VERBATIM): ${baseline.recommendation}`,
+  ].join("\n");
+}
+
+function parseClaudeLines(text: string): { hook: string; read: string; recommendation: string } | null {
+  const lines = text
+    .split("\n")
+    .map((l) => l.trim())
+    .filter(Boolean);
+  const numbered: Record<string, string> = {};
+  for (const line of lines) {
+    const m = line.match(/^([1-3])[.)]\s+(.+)$/);
+    if (m) numbered[m[1]] = m[2];
+  }
+  if (!numbered["1"] || !numbered["2"] || !numbered["3"]) return null;
+  return { hook: numbered["1"]!, read: numbered["2"]!, recommendation: numbered["3"]! };
 }
 
 function topScorer(teamId: number): Player | undefined {

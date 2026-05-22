@@ -17,10 +17,10 @@ import { MatchTabs } from "@/components/match/MatchTabs";
 import { AIMatchPreview } from "@/components/match/AIMatchPreview";
 import { DataSourceBanner } from "@/components/shared/DataSourceBanner";
 import { getMatchDetail, getFixtureView } from "@/lib/match-data";
-import { buildPreview } from "@/lib/ai-preview";
+import { buildPreviewLive } from "@/lib/ai-preview";
 import { formatKickoff, formatDateLabel } from "@/lib/utils";
 
-export default function MatchLayout({
+export default async function MatchLayout({
   params,
   children,
 }: {
@@ -49,7 +49,7 @@ export default function MatchLayout({
   const fixture = getFixtureView(params.matchId);
   if (!fixture) notFound();
 
-  const preview = buildPreview(Number(params.matchId));
+  const preview = await buildPreviewLive(Number(params.matchId));
 
   return (
     <div className="px-4 sm:px-6 py-6 max-w-[1600px] mx-auto space-y-5">

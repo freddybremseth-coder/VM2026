@@ -15,10 +15,13 @@ export interface BanterMember {
   isYou?: boolean;
 }
 
+import { tryClaudeText } from "./ai/claude";
+
 export interface BanterReport {
   headline: string;
   lines: string[];
   generatedAt: string;
+  model?: string;
 }
 
 export function buildBanterReport(
@@ -88,5 +91,58 @@ export function buildBanterReport(
           : `📊 ${leader.username} leads ${leagueName}`,
     lines,
     generatedAt: new Date().toISOString(),
+    model: "wcf-baseline-v0.1 (template)",
   };
 }
+
+/**
+ * Async variant — tries Claude, falls back to the deterministic template.
+ */
+export async function buildBanterReportLive(
+  leagueName: string,
+  members: BanterMember[],
+): Promise<BanterReport | null> {
+  const baseline = buildBanterReport(leagueName, members);
+  if (!baseline) return null;
+
+  const sorted = [...members].sort((a, b) => b.points - a.points);
+  const list = sorted
+    .map(
+      (m, i) =>
+        `  ${i + 1}. ${m.username}${m.isYou ? " (the viewer)" : ""} — ${m.points} pts`,
+    )
+    .join("\n");
+
+  const text = await tryClaudeText({
+    systemPrompt: BANTER_SYSTEM_PROMPT,
+    userPrompt: `League: ${leagueName}\nStanding:\n${list}`,
+    maxTokens: 200,
+  });
+
+  if (!text) return baseline;
+
+  // Claude returns 2-3 lines, one per row, each ≤ 18 words.
+  const lines = text
+    .split("\n")
+    .map((l) => l.replace(/^[›>\-*\d.)]\s*/, "").trim())
+    .filter((l) => l.length > 0)
+    .slice(0, 3);
+
+  if (lines.length < 2) return baseline;
+
+  return {
+    ...baseline,
+    lines,
+    model: "claude-sonnet-4-5",
+    generatedAt: new Date().toISOString(),
+  };
+}
+
+const BANTER_SYSTEM_PROMPT = [
+  "You are ChatGenius writing a witty 2–3 line weekly banter report for a private World Cup tipping league.",
+  "Tone: cheeky, never mean. British football vocabulary. Use the viewer's perspective ('you', 'your') when they're flagged.",
+  "Output exactly 2–3 lines, no numbering, no markdown, no emoji.",
+  "Line 1: who leads and the gap.",
+  "Line 2: the viewer's position relative to nearest rival.",
+  "Line 3 (optional): one-sentence read on momentum.",
+].join(" ");

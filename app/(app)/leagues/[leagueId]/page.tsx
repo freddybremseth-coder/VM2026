@@ -5,7 +5,7 @@ import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { leaveLeagueAction } from "@/app/(app)/leagues/actions";
 import { LeagueAvatar } from "@/components/league/LeagueAvatar";
 import { CopyLinkButton } from "@/components/shared/CopyLinkButton";
-import { buildBanterReport, type BanterMember } from "@/lib/banter-report";
+import { buildBanterReportLive, type BanterMember } from "@/lib/banter-report";
 
 interface MemberRow {
   user_id: string;
@@ -57,7 +57,7 @@ export default async function LeagueDetailPage({
     points: m.points,
     isYou: m.user_id === user.id,
   }));
-  const banter = buildBanterReport(league.name, banterMembers);
+  const banter = await buildBanterReportLive(league.name, banterMembers);
 
   return (
     <div className="px-4 sm:px-6 py-6 max-w-[1100px] mx-auto space-y-5">

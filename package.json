@@ -19,7 +19,8 @@
     "tailwind-merge": "2.5.4",
     "class-variance-authority": "0.7.0",
     "@supabase/supabase-js": "2.45.6",
-    "@supabase/ssr": "0.5.2"
+    "@supabase/ssr": "0.5.2",
+    "@anthropic-ai/sdk": "0.32.1"
   },
   "devDependencies": {
     "@types/node": "20.16.11",
