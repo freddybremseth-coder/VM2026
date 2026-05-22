@@ -31,7 +31,7 @@ export default function NorgePage() {
   const keyPlayers = squad.filter((p) => KEY_PLAYER_NAMES.includes(p.name));
 
   return (
-    <div className="px-6 py-6 max-w-[1400px] mx-auto space-y-6">
+    <div className="px-4 sm:px-6 py-6 max-w-[1400px] mx-auto space-y-6">
       <header className="flex flex-col md:flex-row md:items-end md:justify-between gap-3">
         <div className="flex items-center gap-4">
           <TeamFlag code="no" size="lg" />
@@ -92,7 +92,7 @@ function NextMatchHero({ fixture }: { fixture: Fixture }) {
   const hours = Math.floor((diffMs / (1000 * 60 * 60)) % 24);
 
   return (
-    <section className="card-panel p-6 ring-1 ring-accent-500/30 relative overflow-hidden">
+    <section className="card-panel p-4 sm:p-6 ring-1 ring-accent-500/30 relative overflow-hidden">
       <div className="absolute inset-0 opacity-[0.05] grid-lines pointer-events-none" />
       <div className="relative">
         <div className="flex items-center justify-between text-[10px] uppercase tracking-widest text-accent-400 font-semibold mb-4">
@@ -101,33 +101,18 @@ function NextMatchHero({ fixture }: { fixture: Fixture }) {
             om {days}d {hours}t
           </span>
         </div>
-        <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-6">
-          <div className="flex items-center justify-end gap-3 text-right">
-            <div>
-              <div className="text-xl font-bold tracking-tight">{home.name}</div>
-              <div className="text-[11px] uppercase tracking-widest text-pitch-400 font-mono mt-0.5">
-                {home.shortName}
-              </div>
-            </div>
-            <TeamFlag code={home.flag} size="lg" />
-          </div>
+        {/* Mobile: stack home / time / away. Desktop: 3-col grid */}
+        <div className="flex flex-col sm:grid sm:grid-cols-[1fr_auto_1fr] sm:items-center gap-4 sm:gap-6">
+          <NorgeHeroTeamRow team={home} align="right" />
           <div className="flex flex-col items-center">
-            <div className="font-mono text-3xl font-bold stat-num text-accent-300">
+            <div className="font-mono text-2xl sm:text-3xl font-bold stat-num text-accent-300">
               {formatKickoff(fixture.kickoff)}
             </div>
-            <div className="text-[10px] uppercase tracking-widest text-pitch-400 font-mono mt-1">
+            <div className="text-[10px] uppercase tracking-widest text-pitch-400 font-mono mt-1 text-center">
               {formatDateLabel(fixture.kickoff)}
             </div>
           </div>
-          <div className="flex items-center gap-3">
-            <TeamFlag code={away.flag} size="lg" />
-            <div>
-              <div className="text-xl font-bold tracking-tight">{away.name}</div>
-              <div className="text-[11px] uppercase tracking-widest text-pitch-400 font-mono mt-0.5">
-                {away.shortName}
-              </div>
-            </div>
-          </div>
+          <NorgeHeroTeamRow team={away} align="left" />
         </div>
         {venue && (
           <div className="mt-5 pt-4 border-t border-pitch-700/60 text-center text-xs text-pitch-400 flex items-center justify-center gap-1.5">
@@ -144,6 +129,37 @@ function NextMatchHero({ fixture }: { fixture: Fixture }) {
         </div>
       </div>
     </section>
+  );
+}
+
+function NorgeHeroTeamRow({
+  team,
+  align,
+}: {
+  team: ReturnType<typeof teamById> & {};
+  align: "left" | "right";
+}) {
+  if (!team) return null;
+  return (
+    <div
+      className={
+        "flex items-center gap-3 min-w-0" +
+        (align === "right"
+          ? " sm:flex-row sm:justify-end sm:text-right"
+          : " sm:flex-row sm:justify-start")
+      }
+    >
+      <TeamFlag code={team.flag} size="lg" className={align === "right" ? "sm:hidden" : ""} />
+      <div className={"min-w-0 flex-1 sm:flex-initial" + (align === "right" ? " sm:text-right" : "")}>
+        <div className="text-lg sm:text-xl font-bold tracking-tight truncate">{team.name}</div>
+        <div className="text-[11px] uppercase tracking-widest text-pitch-400 font-mono mt-0.5">
+          {team.shortName}
+        </div>
+      </div>
+      {align === "right" && (
+        <TeamFlag code={team.flag} size="lg" className="hidden sm:inline-block" />
+      )}
+    </div>
   );
 }
 

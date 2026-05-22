@@ -13,32 +13,33 @@ export function MatchHeader({ match }: Props) {
   const score = match.score;
 
   return (
-    <div className="card-panel p-6 relative overflow-hidden">
+    <div className="card-panel p-4 sm:p-6 relative overflow-hidden">
       <div className="absolute inset-0 opacity-[0.04] grid-lines pointer-events-none" />
 
       <div className="relative">
         <div className="flex items-center justify-between text-[11px] uppercase tracking-widest mb-5">
-          <span className="text-accent-400 font-semibold">{match.stage}</span>
+          <span className="text-accent-400 font-semibold truncate">{match.stage}</span>
           {live ? (
-            <span className="flex items-center gap-1.5 text-loss font-semibold">
+            <span className="flex items-center gap-1.5 text-loss font-semibold shrink-0">
               <span className="live-dot" />
-              {match.status === "halftime" ? "Half time" : `${match.minute}' Live`}
+              {match.status === "halftime" ? "HT" : `${match.minute}'`}
             </span>
           ) : (
-            <span className="text-pitch-400">{match.status.toUpperCase()}</span>
+            <span className="text-pitch-400 shrink-0">{match.status.toUpperCase()}</span>
           )}
         </div>
 
-        <div className="grid grid-cols-[1fr_auto_1fr] gap-6 items-center">
+        {/* Mobile: stack home / score / away vertically. Desktop: 3-col grid. */}
+        <div className="flex flex-col sm:grid sm:grid-cols-[1fr_auto_1fr] gap-4 sm:gap-6 sm:items-center">
           <TeamBlock team={home} align="right" />
           <div className="flex flex-col items-center">
             {score ? (
               <>
-                <div className="font-mono text-5xl font-bold stat-num leading-none flex items-baseline gap-3">
+                <div className="font-mono text-4xl sm:text-5xl font-bold stat-num leading-none flex items-baseline gap-3">
                   <span className={cn(score.home > score.away && "text-accent-300")}>
                     {score.home}
                   </span>
-                  <span className="text-pitch-600 text-3xl">·</span>
+                  <span className="text-pitch-600 text-2xl sm:text-3xl">·</span>
                   <span className={cn(score.away > score.home && "text-accent-300")}>
                     {score.away}
                   </span>
@@ -50,13 +51,13 @@ export function MatchHeader({ match }: Props) {
                 )}
               </>
             ) : (
-              <div className="font-mono text-3xl text-pitch-400">VS</div>
+              <div className="font-mono text-2xl sm:text-3xl text-pitch-400">VS</div>
             )}
           </div>
           <TeamBlock team={away} align="left" />
         </div>
 
-        <div className="mt-6 pt-4 border-t border-pitch-700/60 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-[11px] text-pitch-400">
+        <div className="mt-6 pt-4 border-t border-pitch-700/60 flex flex-wrap items-center justify-center gap-x-4 sm:gap-x-6 gap-y-2 text-[11px] text-pitch-400">
           <span className="flex items-center gap-1.5">
             <MapPin size={12} />
             {match.venue.name} · {match.venue.city}
@@ -64,11 +65,11 @@ export function MatchHeader({ match }: Props) {
           {match.attendance && (
             <span className="flex items-center gap-1.5">
               <Users size={12} />
-              {match.attendance.toLocaleString()} attendance
+              {match.attendance.toLocaleString()}
             </span>
           )}
           {match.referee && (
-            <span className="flex items-center gap-1.5">
+            <span className="hidden sm:flex items-center gap-1.5">
               <UserCircle2 size={12} />
               {match.referee}
             </span>
@@ -89,18 +90,28 @@ function TeamBlock({
   return (
     <div
       className={cn(
-        "flex items-center gap-4",
-        align === "right" ? "justify-end text-right" : "justify-start",
+        // Mobile: each team row left-aligned on its own line with flag + name.
+        // Desktop: home pinned right, away pinned left, around the centre score.
+        "flex items-center gap-3 sm:gap-4 min-w-0",
+        align === "right"
+          ? "sm:justify-end sm:text-right sm:flex-row"
+          : "sm:justify-start sm:flex-row",
       )}
     >
-      {align === "left" && <TeamFlag code={team.flag} size="lg" />}
-      <div className={cn("min-w-0", align === "right" && "text-right")}>
-        <div className="text-xl font-bold tracking-tight">{team.name}</div>
-        <div className="text-[11px] uppercase tracking-widest text-pitch-400 font-mono mt-0.5">
+      {/* On mobile both teams render flag-first for a consistent left-anchored row */}
+      <TeamFlag code={team.flag} size="lg" className={cn(align === "right" && "sm:hidden")} />
+      <div className={cn("min-w-0 flex-1 sm:flex-initial", align === "right" && "sm:text-right")}>
+        <div className="text-lg sm:text-xl font-bold tracking-tight truncate">
+          {team.name}
+        </div>
+        <div className="text-[11px] uppercase tracking-widest text-pitch-400 font-mono mt-0.5 truncate">
           {team.formation} · {team.manager}
         </div>
       </div>
-      {align === "right" && <TeamFlag code={team.flag} size="lg" />}
+      {/* Desktop-only mirrored flag for the right-aligned home block */}
+      {align === "right" && (
+        <TeamFlag code={team.flag} size="lg" className="hidden sm:inline-block" />
+      )}
     </div>
   );
 }
