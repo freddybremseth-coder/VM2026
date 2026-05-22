@@ -1,16 +1,23 @@
 import Link from "next/link";
-import { Flag, Calendar, MapPin, Trophy, Target, ArrowRight } from "lucide-react";
+import { Flag, Calendar, MapPin, Trophy, Target, ArrowRight, TrendingUp } from "lucide-react";
+import { NorwayScenarioCalculator } from "@/components/norge/NorwayScenarioCalculator";
 import { TeamFlag } from "@/components/shared/TeamFlag";
+import { TeamFormStripStatic } from "@/components/shared/TeamFormStrip";
 import { teamById, teamsByGroup, venueById } from "@/lib/wc26-data";
 import { FIXTURES, type Fixture } from "@/lib/wc26-fixtures";
 import { getSquad } from "@/lib/wc26-squads";
 import { getPlayerForm, type ClubOutcome } from "@/lib/player-form";
+import { getTeamFormBatch, type TeamFormData } from "@/lib/team-form";
+import { getTournamentTopScorers, getTournamentTopAssisters } from "@/lib/team-stats";
+import { TopScorersList } from "@/components/shared/TopScorersList";
 import { formatKickoff, formatDateLabel } from "@/lib/utils";
 import { getDictionary } from "@/lib/i18n";
 
 const NORWAY_ID = 21;
+// All Group I team IDs (for form fetching)
+const GROUP_I_IDS = [14, 8, 27, 21]; // France, Senegal, Iraq, Norway
 
-export default function NorgePage() {
+export default async function NorgePage() {
   const t = getDictionary();
   const norway = teamById(NORWAY_ID);
   if (!norway) {
@@ -32,6 +39,19 @@ export default function NorgePage() {
   // we keep in sync with the official 26-man squad.
   const KEY_PLAYER_IDS = [2122, 2120, 2121, 2125, 2116]; // Haaland, Ødegaard, Sørloth, Nusa, Bobb
   const keyPlayers = squad.filter((p) => KEY_PLAYER_IDS.includes(p.id));
+
+  // Fetch pre-tournament international form for all Group I teams
+  const formMap = await getTeamFormBatch(GROUP_I_IDS);
+  const norwayForm = formMap.get(NORWAY_ID);
+
+  // Group I leaderboards — international goals + assists (squad data only)
+  const groupISet = new Set(GROUP_I_IDS);
+  const groupIScorers = getTournamentTopScorers(50)
+    .filter((l) => groupISet.has(l.teamId))
+    .slice(0, 5);
+  const groupIAssisters = getTournamentTopAssisters(50)
+    .filter((l) => groupISet.has(l.teamId))
+    .slice(0, 5);
 
   return (
     <div className="px-4 sm:px-6 py-6 max-w-[1400px] mx-auto space-y-6">
@@ -70,12 +90,37 @@ export default function NorgePage() {
         </div>
       </section>
 
+      {/* Norway national team international form */}
+      {norwayForm && <NorwayFormCard form={norwayForm} />}
+
+      {/* Group I leaderboards */}
+      {(groupIScorers.length > 0 || groupIAssisters.length > 0) && (
+        <section className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+          {groupIScorers.length > 0 && (
+            <TopScorersList
+              title="Toppscorere · Gruppe I"
+              leaders={groupIScorers}
+              metric="goals"
+              subtitle="int. mål · all-time"
+            />
+          )}
+          {groupIAssisters.length > 0 && (
+            <TopScorersList
+              title="Assistkonger · Gruppe I"
+              leaders={groupIAssisters}
+              metric="assists"
+              subtitle="int. assists · all-time"
+            />
+          )}
+        </section>
+      )}
+
       <section className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-        <GroupStandings groupTeams={groupTeams} label={t.norge.standings} />
+        <GroupStandings groupTeams={groupTeams} label={t.norge.standings} formMap={formMap} />
         <KeyPlayers players={keyPlayers} label={t.norge.playersToWatch} />
       </section>
 
-      <Scenario title={t.norge.scenarioTitle} />
+      <NorwayScenarioCalculator />
     </div>
   );
 }
@@ -142,9 +187,10 @@ function NorgeHeroTeamRow({
 }) {
   if (!team) return null;
   return (
-    <div
+    <Link
+      href={`/teams/${team.id}`}
       className={
-        "flex items-center gap-3 min-w-0" +
+        "flex items-center gap-3 min-w-0 group rounded-md -mx-2 px-2 py-1 hover:bg-pitch-800/40 transition-colors" +
         (align === "right"
           ? " sm:flex-row sm:justify-end sm:text-right"
           : " sm:flex-row sm:justify-start")
@@ -152,7 +198,9 @@ function NorgeHeroTeamRow({
     >
       <TeamFlag code={team.flag} size="lg" className={align === "right" ? "sm:hidden" : ""} />
       <div className={"min-w-0 flex-1 sm:flex-initial" + (align === "right" ? " sm:text-right" : "")}>
-        <div className="text-lg sm:text-xl font-bold tracking-tight truncate">{team.name}</div>
+        <div className="text-lg sm:text-xl font-bold tracking-tight truncate group-hover:text-accent-200 transition-colors">
+          {team.name}
+        </div>
         <div className="text-[11px] uppercase tracking-widest text-pitch-400 font-mono mt-0.5">
           {team.shortName}
         </div>
@@ -160,7 +208,7 @@ function NorgeHeroTeamRow({
       {align === "right" && (
         <TeamFlag code={team.flag} size="lg" className="hidden sm:inline-block" />
       )}
-    </div>
+    </Link>
   );
 }
 
@@ -195,13 +243,103 @@ function NorgeFixtureCard({ fixture }: { fixture: Fixture }) {
   );
 }
 
+// ─── Norway national form card ───────────────────────────────────────────────
+
+function NorwayFormCard({ form }: { form: TeamFormData }) {
+  const isMock = form.source === "mock";
+  const resultColor = (r: "W" | "D" | "L") =>
+    r === "W" ? "text-win" : r === "D" ? "text-draw" : "text-loss";
+  const resultBg = (r: "W" | "D" | "L") =>
+    r === "W"
+      ? "bg-win text-pitch-950"
+      : r === "D"
+      ? "bg-draw text-pitch-950"
+      : "bg-loss text-white";
+  const resultLabel = (r: "W" | "D" | "L") =>
+    r === "W" ? "S" : r === "D" ? "U" : "T";
+
+  return (
+    <section className="card-panel p-5">
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center gap-2">
+          <TrendingUp size={12} className="text-accent-400" />
+          <h2 className="text-xs uppercase tracking-widest font-semibold text-pitch-200">
+            Norges landslag — siste kamper
+          </h2>
+        </div>
+        <span
+          className={`text-[9px] font-mono uppercase tracking-widest px-2 py-0.5 rounded ${
+            isMock
+              ? "bg-pitch-800 text-pitch-500"
+              : "bg-data-500/10 text-data-300"
+          }`}
+        >
+          {isMock ? "eksempeldata" : "api-football"}
+        </span>
+      </div>
+
+      <div className="space-y-2">
+        {form.matches.map((m, i) => (
+          <div
+            key={i}
+            className="flex items-center gap-3 text-sm py-1.5 border-b border-pitch-800/60 last:border-0"
+          >
+            {/* Result dot */}
+            <span
+              className={`inline-flex items-center justify-center w-6 h-6 rounded-full text-[10px] font-bold shrink-0 ${resultBg(m.result)}`}
+            >
+              {resultLabel(m.result)}
+            </span>
+
+            {/* Opponent */}
+            <span className="flex-1 text-pitch-100 text-xs">
+              {m.venue === "H" ? "hjemme vs" : m.venue === "A" ? "borte vs" : "nøytral vs"}{" "}
+              <span className="font-semibold">{m.opponentFlag ?? ""} {m.opponent}</span>
+            </span>
+
+            {/* Score */}
+            <span className={`font-mono text-sm font-bold stat-num ${resultColor(m.result)}`}>
+              {m.goalsFor}–{m.goalsAgainst}
+            </span>
+
+            {/* Date + competition */}
+            <div className="text-right shrink-0 hidden sm:block">
+              <div className="text-[10px] text-pitch-400 font-mono">{m.date.slice(0, 7)}</div>
+              <div className="text-[10px] text-pitch-600 truncate max-w-[120px]">{m.competition}</div>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {isMock && (
+        <p className="mt-3 text-[10px] text-pitch-600 italic">
+          Eksempeldata — sett <code className="font-mono text-pitch-500">API_FOOTBALL_KEY</code> for ekte kampresultater.
+        </p>
+      )}
+    </section>
+  );
+}
+
+// ─── Group standings with form ────────────────────────────────────────────────
+
 function GroupStandings({
   groupTeams,
   label,
+  formMap,
 }: {
   groupTeams: ReturnType<typeof teamsByGroup>;
   label: string;
+  formMap: Map<number, TeamFormData>;
 }) {
+  const resultBg = (r: "W" | "D" | "L") =>
+    r === "W"
+      ? "bg-win text-pitch-950"
+      : r === "D"
+      ? "bg-draw text-pitch-950"
+      : "bg-loss text-white";
+  const resultLabel = (r: "W" | "D" | "L") =>
+    r === "W" ? "S" : r === "D" ? "U" : "T";
+
   return (
     <div className="card-panel p-5">
       <div className="flex items-center gap-2 mb-3">
@@ -210,29 +348,51 @@ function GroupStandings({
           {label}
         </h2>
       </div>
-      <ul className="space-y-2">
-        {groupTeams.map((t, i) => (
-          <li key={t.id} className="flex items-center gap-3 text-sm">
-            <span className="font-mono text-pitch-500 w-4 text-right stat-num">
-              {i + 1}
-            </span>
-            <TeamFlag code={t.flag} size="sm" />
-            <span
-              className={`flex-1 truncate ${
-                t.id === NORWAY_ID ? "font-bold text-accent-300" : "text-pitch-100"
-              }`}
-            >
-              {t.name}
-            </span>
-            <span className="font-mono text-pitch-500 stat-num text-xs">
-              0·0·0·0·0
-            </span>
-          </li>
-        ))}
+      <ul className="space-y-3">
+        {groupTeams.map((t, i) => {
+          const form = formMap.get(t.id);
+          return (
+            <li key={t.id}>
+              <Link
+                href={`/teams/${t.id}`}
+                className="flex items-center gap-3 text-sm hover:bg-pitch-800/40 -mx-2 px-2 py-1 rounded transition-colors group"
+              >
+                <span className="font-mono text-pitch-500 w-4 text-right stat-num">
+                  {i + 1}
+                </span>
+                <TeamFlag code={t.flag} size="sm" />
+                <span
+                  className={`flex-1 truncate group-hover:text-accent-200 transition-colors ${
+                    t.id === NORWAY_ID ? "font-bold text-accent-300" : "text-pitch-100"
+                  }`}
+                >
+                  {t.name}
+                </span>
+              </Link>
+              {/* Form dots */}
+              {form && (
+                <div className="flex items-center gap-1 mt-1.5 ml-7 pl-3">
+                  {form.matches.map((m, j) => (
+                    <span
+                      key={j}
+                      title={`${m.opponent} ${m.goalsFor}–${m.goalsAgainst}`}
+                      className={`inline-flex items-center justify-center w-5 h-5 rounded-full text-[9px] font-bold leading-none ${resultBg(m.result)}`}
+                    >
+                      {resultLabel(m.result)}
+                    </span>
+                  ))}
+                  <span className="text-[9px] text-pitch-600 font-mono ml-1">
+                    {form.source === "mock" ? "mock" : "live"}
+                  </span>
+                </div>
+              )}
+            </li>
+          );
+        })}
       </ul>
       <p className="mt-3 text-[11px] text-pitch-500 leading-relaxed">
-        Top 2 + best 3rd → Round of 32. With France as Group I favourites,
-        Norway's path likely runs through 2nd or 3rd place.
+        Topp 2 + beste 3.-plass → Runde av 32. Frankrike er gruppefavoritter;
+        Norges vei går trolig via 2.- eller 3.-plass.
       </p>
     </div>
   );
@@ -325,52 +485,3 @@ function OutcomeDot({ outcome }: { outcome: ClubOutcome }) {
   );
 }
 
-function Scenario({ title }: { title: string }) {
-  return (
-    <section className="card-panel p-5">
-      <div className="flex items-center gap-2 mb-3">
-        <Sparkles className="text-accent-400" />
-        <h2 className="text-xs uppercase tracking-widest font-semibold text-pitch-200">
-          {title}
-        </h2>
-      </div>
-      <div className="text-sm text-pitch-300 leading-relaxed space-y-2">
-        <p>
-          Med <span className="text-accent-300 font-semibold">France</span> som
-          klar Gruppe I-favoritt, vil Norge typisk konkurrere om
-          andreplassen mot{" "}
-          <span className="text-data-300 font-semibold">Senegal</span> og en{" "}
-          <span className="text-pitch-100 font-semibold">Irak</span>-tropp som
-          spiller om første VM-slutt på 40 år.
-        </p>
-        <p className="text-pitch-400">
-          Best bet for avansement: minst 4 poeng (1 seier + 1 uavgjort) gir
-          gjerne en av de 8 beste 3.-plassene i ny 48-lags-modus. 6 poeng
-          låser 2.-plassen helt sikkert.
-        </p>
-        <p className="text-[11px] text-pitch-500 mt-3 italic">
-          AI scenario calculator coming next — will let you set any result and
-          see Norway's qualifying probability live.
-        </p>
-      </div>
-    </section>
-  );
-}
-
-function Sparkles({ className }: { className?: string }) {
-  return (
-    <svg
-      width="12"
-      height="12"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      className={className}
-    >
-      <path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z" />
-    </svg>
-  );
-}

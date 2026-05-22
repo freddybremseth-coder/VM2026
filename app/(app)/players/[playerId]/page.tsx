@@ -1,13 +1,15 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, Cpu, MapPin, TrendingUp } from "lucide-react";
+import { ArrowLeft, Cpu, TrendingUp, Trophy, Crown, Clock, Sparkles, Target } from "lucide-react";
 import { TeamFlag } from "@/components/shared/TeamFlag";
 import { DataSourceBanner } from "@/components/shared/DataSourceBanner";
-import { getAllPlayers, getSquad, type Player } from "@/lib/wc26-squads";
+import { getAllPlayers, getSquad, getPlayerMinutes } from "@/lib/wc26-squads";
 import { teamById } from "@/lib/wc26-data";
 import { getPlayerForm, type ClubOutcome } from "@/lib/player-form";
+import { getPlayerEventData } from "@/lib/match-events/provider";
+import { PlayerMatchData } from "@/components/match/PlayerMatchData";
 
-export default function PlayerProfilePage({
+export default async function PlayerProfilePage({
   params,
 }: {
   params: { playerId: string };
@@ -22,10 +24,15 @@ export default function PlayerProfilePage({
         (p) => p.id !== player.id && p.position === player.position,
       )
     : [];
+  const eventData = await getPlayerEventData(player.id);
 
-  // Goals-per-cap ratio is the simplest "scoring rate" we can compute.
+  // Derived stats
+  const intMinutes = getPlayerMinutes(player);
   const goalsPerCap =
     player.caps && player.caps > 0 ? (player.goals ?? 0) / player.caps : null;
+  const minutesPerGoal =
+    player.goals && player.goals > 0 ? Math.round(intMinutes / player.goals) : null;
+  const goalsPlusAssists = (player.goals ?? 0) + (player.assists ?? 0);
 
   return (
     <div className="px-4 sm:px-6 py-6 max-w-[1100px] mx-auto space-y-5">
@@ -63,16 +70,52 @@ export default function PlayerProfilePage({
           </div>
         </div>
 
-        <div className="mt-5 pt-4 border-t border-pitch-700/60 grid grid-cols-3 sm:grid-cols-4 gap-3 sm:gap-4">
-          <Stat label="Age" value={player.age ?? "—"} />
-          <Stat label="Caps" value={player.caps ?? "—"} />
-          <Stat label="Int. goals" value={player.goals ?? "—"} accent />
-          {goalsPerCap !== null && (
+        {/* International stats — 2 rows on mobile, single row from sm */}
+        <div className="mt-5 pt-4 border-t border-pitch-700/60">
+          <div className="text-[10px] uppercase tracking-widest text-pitch-500 font-mono mb-3 flex items-center gap-1.5">
+            <Target size={10} className="text-accent-400" />
+            Landslagsstatistikk
+          </div>
+          <div className="grid grid-cols-3 sm:grid-cols-6 gap-3 sm:gap-4">
+            <Stat label="Alder" value={player.age ?? "—"} />
             <Stat
-              label="Goals / cap"
-              value={goalsPerCap.toFixed(2)}
-              hint="all-time"
+              icon={<Crown size={10} />}
+              label="Caps"
+              value={player.caps ?? "—"}
             />
+            <Stat
+              icon={<Trophy size={10} />}
+              label="Mål"
+              value={player.goals ?? "—"}
+              accent
+            />
+            <Stat
+              icon={<Sparkles size={10} />}
+              label="Assists"
+              value={player.assists ?? "—"}
+              data
+            />
+            <Stat
+              icon={<Clock size={10} />}
+              label="Minutter"
+              value={intMinutes > 0 ? intMinutes.toLocaleString("nb-NO") : "—"}
+              hint={player.minutes === undefined ? "estimat" : undefined}
+            />
+            <Stat
+              label="G+A"
+              value={goalsPlusAssists > 0 ? goalsPlusAssists : "—"}
+              hint={
+                goalsPerCap !== null ? `${goalsPerCap.toFixed(2)}/cap` : undefined
+              }
+            />
+          </div>
+          {minutesPerGoal && (
+            <p className="mt-3 text-[11px] text-pitch-500">
+              <span className="font-mono stat-num text-pitch-300">
+                {minutesPerGoal.toLocaleString("nb-NO")}
+              </span>{" "}
+              minutter per mål for landslaget
+            </p>
           )}
         </div>
       </div>
@@ -133,16 +176,25 @@ export default function PlayerProfilePage({
         </section>
       )}
 
-      <DataSourceBanner
-        caveat="Heatmaps, shot maps and per-match event data populate when the tournament starts and a live feed is wired up."
-      />
+      {eventData ? (
+        <PlayerMatchData
+          heatmap={eventData.heatmap}
+          shots={eventData.shots}
+          matchLabel={eventData.matchLabel}
+          side={team?.id === 21 ? "home" : "away"}
+        />
+      ) : (
+        <DataSourceBanner
+          caveat="Heatmaps og kampdata aktiveres når turneringen starter og live-feed er koblet til."
+        />
+      )}
 
       <div className="card-panel p-5 flex items-start gap-3">
         <Cpu size={14} className="text-accent-400 shrink-0 mt-0.5" />
         <p className="text-xs text-pitch-300 leading-relaxed">
-          <span className="font-semibold text-pitch-100">Coming next:</span>{" "}
-          heatmap pitch from event data, fantasy/tipping value, per-tournament
-          form sparkline, and an AI-written "scouting brief" tab.
+          <span className="font-semibold text-pitch-100">Kommer:</span>{" "}
+          per-turnering form-sparkline, fantasy/tipping-verdi og AI-skrevet
+          &quot;scout-brief&quot;-fane.
         </p>
       </div>
     </div>
@@ -153,27 +205,34 @@ function Stat({
   label,
   value,
   accent,
+  data,
   hint,
+  icon,
 }: {
   label: string;
   value: number | string;
   accent?: boolean;
+  data?: boolean;
   hint?: string;
+  icon?: React.ReactNode;
 }) {
+  const valueClr = accent
+    ? "text-accent-300"
+    : data
+    ? "text-data-300"
+    : "text-pitch-100";
+
   return (
     <div>
-      <div className="text-[10px] uppercase tracking-widest text-pitch-400 mb-1">
+      <div className="text-[10px] uppercase tracking-widest text-pitch-400 mb-1 flex items-center gap-1">
+        {icon && <span className="text-pitch-500">{icon}</span>}
         {label}
       </div>
-      <div
-        className={`font-mono text-2xl font-bold stat-num ${
-          accent ? "text-accent-300" : "text-pitch-100"
-        }`}
-      >
+      <div className={`font-mono text-xl sm:text-2xl font-bold stat-num leading-none ${valueClr}`}>
         {value}
       </div>
       {hint && (
-        <div className="text-[10px] uppercase tracking-widest text-pitch-500 mt-0.5">
+        <div className="text-[10px] uppercase tracking-widest text-pitch-500 mt-1">
           {hint}
         </div>
       )}

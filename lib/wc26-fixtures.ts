@@ -1,27 +1,26 @@
 /**
  * Complete WC 2026 fixture list — all 104 matches.
  *
- * Source: FIFA official schedule (final draw 5 Dec 2025).
+ * Times are the Norwegian / CET broadcast schedule as published by NRK + TV 2
+ * (user-supplied 22 May 2026). Stored here as ISO-UTC strings (CET in June/July
+ * is CEST = UTC+2). `channel` tags the Norwegian rights-holder per fixture.
  *
- *   - 72 group-stage matches (Jun 11 – Jun 27, 2026)
- *   - 32 knockout matches:
- *       R32 (Jun 28 – Jul 3, 16 matches)
- *       R16 (Jul 4 – Jul 7, 8 matches)
- *       QF  (Jul 9 – Jul 11, 4 matches)
- *       SF  (Jul 14 – Jul 15, 2 matches)
- *       3rd (Jul 18, 1 match)
- *       FIN (Jul 19, 1 match)
+ * 72 group-stage matches (Jun 11 → Jun 28, 2026)
+ * 32 knockout matches:
+ *   R32 (Jun 28 → Jul 4)
+ *   R16 (Jul 4  → Jul 8)
+ *   QF  (Jul 9  → Jul 12)
+ *   SF  (Jul 14 → Jul 15)
+ *   3rd (Jul 18)
+ *   FIN (Jul 19)
  *
- * Kickoff times are not yet finalised for every match — we use plausible local
- * times that match FIFA's announced regional slots. Once exact UTC times are
- * published, update `kickoff` here.
- *
- * For knockout matches we use slot labels (e.g. "1A" = winner of Group A,
- * "2B" = runner-up of B, "3X" = a third-placed team) since the actual pairings
- * depend on group-stage outcomes.
+ * Knockout slot labels follow FIFA's published bracket:
+ *   "1A" = Group A winner, "2A" = Group A runner-up, "3X" = best-third placeholder.
  */
 
 import { teamByShortName, type WCTeam } from "./wc26-data";
+
+export type Channel = "NRK" | "TV 2";
 
 export type FixtureStage =
   | { kind: "group"; group: string; matchday: 1 | 2 | 3 }
@@ -32,6 +31,8 @@ export interface Fixture {
   stage: FixtureStage;
   kickoff: string; // ISO UTC
   venueId: string;
+  /** Norwegian rights-holder channel where known. */
+  channel?: Channel;
   /** For group matches, ids resolved from short names. For knockout, undefined. */
   homeId?: number;
   awayId?: number;
@@ -42,193 +43,159 @@ export interface Fixture {
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Group stage (72 matches)
-// Helper: kickoff times here are placeholders representing FIFA's typical slots
-// (12:00 / 15:00 / 18:00 / 21:00 local). Replace once official.
+// Times in UTC (subtract 2h from the CET broadcast times).
 // ─────────────────────────────────────────────────────────────────────────────
 
 interface RawGroupFixture {
   id: number;
   group: string;
   matchday: 1 | 2 | 3;
-  date: string; // YYYY-MM-DD
-  time: string; // HH:mm UTC
+  utc: string; // ISO UTC including time
   home: string; // shortName
   away: string;
   venue: string;
+  channel?: Channel;
 }
 
 const GROUP_FIXTURES: RawGroupFixture[] = [
   // ── Matchday 1 ──────────────────────────────────────────────────────────────
-  // Group A
-  { id: 1,  group: "A", matchday: 1, date: "2026-06-11", time: "20:00", home: "MEX", away: "RSA", venue: "azteca"   },
-  { id: 2,  group: "A", matchday: 1, date: "2026-06-11", time: "23:00", home: "KOR", away: "CZE", venue: "akron"    },
-  // Group B
-  { id: 3,  group: "B", matchday: 1, date: "2026-06-12", time: "20:00", home: "CAN", away: "BIH", venue: "bmo"      },
-  { id: 4,  group: "B", matchday: 1, date: "2026-06-12", time: "23:00", home: "QAT", away: "SUI", venue: "levis"    },
-  // Group D opener for USA
-  { id: 5,  group: "D", matchday: 1, date: "2026-06-12", time: "01:00", home: "USA", away: "PAR", venue: "sofi"     },
-  // Group C
-  { id: 6,  group: "C", matchday: 1, date: "2026-06-13", time: "18:00", home: "BRA", away: "MAR", venue: "metlife"  },
-  { id: 7,  group: "C", matchday: 1, date: "2026-06-13", time: "21:00", home: "HAI", away: "SCO", venue: "gillette" },
-  { id: 8,  group: "D", matchday: 1, date: "2026-06-13", time: "00:00", home: "AUS", away: "TUR", venue: "bcplace"  },
-  // Group E + F
-  { id: 9,  group: "E", matchday: 1, date: "2026-06-14", time: "18:00", home: "GER", away: "CUW", venue: "nrg"      },
-  { id: 10, group: "E", matchday: 1, date: "2026-06-14", time: "21:00", home: "CIV", away: "ECU", venue: "lincoln"  },
-  { id: 11, group: "F", matchday: 1, date: "2026-06-14", time: "00:00", home: "NED", away: "JPN", venue: "att"      },
-  { id: 12, group: "F", matchday: 1, date: "2026-06-14", time: "03:00", home: "SWE", away: "TUN", venue: "bbva"     },
-  // Group G + H
-  { id: 13, group: "G", matchday: 1, date: "2026-06-15", time: "19:00", home: "BEL", away: "EGY", venue: "bcplace"  },
-  { id: 14, group: "G", matchday: 1, date: "2026-06-15", time: "22:00", home: "IRN", away: "NZL", venue: "sofi"     },
-  { id: 15, group: "H", matchday: 1, date: "2026-06-15", time: "01:00", home: "ESP", away: "CPV", venue: "mercedes" },
-  { id: 16, group: "H", matchday: 1, date: "2026-06-15", time: "23:00", home: "KSA", away: "URU", venue: "hardrock" },
-  // Group I + J
-  { id: 17, group: "I", matchday: 1, date: "2026-06-16", time: "18:00", home: "FRA", away: "SEN", venue: "metlife"  },
-  { id: 18, group: "I", matchday: 1, date: "2026-06-16", time: "21:00", home: "IRQ", away: "NOR", venue: "gillette" },
-  { id: 19, group: "J", matchday: 1, date: "2026-06-16", time: "00:00", home: "ARG", away: "ALG", venue: "arrowhead"},
-  { id: 20, group: "J", matchday: 1, date: "2026-06-16", time: "23:00", home: "AUT", away: "JOR", venue: "levis"    },
-  // Group K + L
-  { id: 21, group: "K", matchday: 1, date: "2026-06-17", time: "19:00", home: "POR", away: "COD", venue: "nrg"      },
-  { id: 22, group: "K", matchday: 1, date: "2026-06-17", time: "22:00", home: "UZB", away: "COL", venue: "azteca"   },
-  { id: 23, group: "L", matchday: 1, date: "2026-06-17", time: "01:00", home: "ENG", away: "CRO", venue: "att"      },
-  { id: 24, group: "L", matchday: 1, date: "2026-06-17", time: "23:00", home: "GHA", away: "PAN", venue: "bmo"      },
+  { id: 1,  group: "A", matchday: 1, utc: "2026-06-11T19:00:00Z", home: "MEX", away: "RSA", venue: "azteca",    channel: "TV 2" },
+  { id: 2,  group: "A", matchday: 1, utc: "2026-06-12T02:00:00Z", home: "KOR", away: "CZE", venue: "akron",     channel: "NRK" },
+  { id: 3,  group: "B", matchday: 1, utc: "2026-06-12T19:00:00Z", home: "CAN", away: "BIH", venue: "bmo",       channel: "NRK" },
+  { id: 4,  group: "B", matchday: 1, utc: "2026-06-13T19:00:00Z", home: "QAT", away: "SUI", venue: "levis",     channel: "NRK" },
+  { id: 5,  group: "D", matchday: 1, utc: "2026-06-13T01:00:00Z", home: "USA", away: "PAR", venue: "sofi",      channel: "TV 2" },
+  { id: 6,  group: "C", matchday: 1, utc: "2026-06-13T22:00:00Z", home: "BRA", away: "MAR", venue: "metlife",   channel: "TV 2" },
+  { id: 7,  group: "C", matchday: 1, utc: "2026-06-14T01:00:00Z", home: "HAI", away: "SCO", venue: "gillette",  channel: "TV 2" },
+  { id: 8,  group: "D", matchday: 1, utc: "2026-06-14T04:00:00Z", home: "AUS", away: "TUR", venue: "bcplace",   channel: "TV 2" },
+  { id: 9,  group: "E", matchday: 1, utc: "2026-06-14T17:00:00Z", home: "GER", away: "CUW", venue: "nrg",       channel: "NRK" },
+  { id: 10, group: "E", matchday: 1, utc: "2026-06-14T23:00:00Z", home: "CIV", away: "ECU", venue: "lincoln",   channel: "TV 2" },
+  { id: 11, group: "F", matchday: 1, utc: "2026-06-14T20:00:00Z", home: "NED", away: "JPN", venue: "att",       channel: "TV 2" },
+  { id: 12, group: "F", matchday: 1, utc: "2026-06-15T02:00:00Z", home: "SWE", away: "TUN", venue: "bbva",      channel: "TV 2" },
+  { id: 13, group: "G", matchday: 1, utc: "2026-06-15T19:00:00Z", home: "BEL", away: "EGY", venue: "bcplace",   channel: "NRK" },
+  { id: 14, group: "G", matchday: 1, utc: "2026-06-16T01:00:00Z", home: "IRN", away: "NZL", venue: "sofi",      channel: "NRK" },
+  { id: 15, group: "H", matchday: 1, utc: "2026-06-15T16:00:00Z", home: "ESP", away: "CPV", venue: "mercedes",  channel: "TV 2" },
+  { id: 16, group: "H", matchday: 1, utc: "2026-06-15T22:00:00Z", home: "KSA", away: "URU", venue: "hardrock",  channel: "NRK" },
+  { id: 17, group: "I", matchday: 1, utc: "2026-06-16T19:00:00Z", home: "FRA", away: "SEN", venue: "metlife",   channel: "TV 2" },
+  { id: 18, group: "I", matchday: 1, utc: "2026-06-16T21:00:00Z", home: "IRQ", away: "NOR", venue: "gillette",  channel: "TV 2" },
+  { id: 19, group: "J", matchday: 1, utc: "2026-06-17T01:00:00Z", home: "ARG", away: "ALG", venue: "arrowhead", channel: "NRK" },
+  { id: 20, group: "J", matchday: 1, utc: "2026-06-17T04:00:00Z", home: "AUT", away: "JOR", venue: "levis",     channel: "NRK" },
+  { id: 21, group: "K", matchday: 1, utc: "2026-06-17T17:00:00Z", home: "POR", away: "COD", venue: "nrg",       channel: "NRK" },
+  { id: 22, group: "K", matchday: 1, utc: "2026-06-18T02:00:00Z", home: "UZB", away: "COL", venue: "azteca",    channel: "TV 2" },
+  { id: 23, group: "L", matchday: 1, utc: "2026-06-17T20:00:00Z", home: "ENG", away: "CRO", venue: "att",       channel: "TV 2" },
+  { id: 24, group: "L", matchday: 1, utc: "2026-06-17T23:00:00Z", home: "GHA", away: "PAN", venue: "bmo",       channel: "TV 2" },
 
   // ── Matchday 2 ──────────────────────────────────────────────────────────────
-  // Group A
-  { id: 25, group: "A", matchday: 2, date: "2026-06-18", time: "18:00", home: "CZE", away: "RSA", venue: "mercedes" },
-  { id: 26, group: "A", matchday: 2, date: "2026-06-18", time: "23:00", home: "MEX", away: "KOR", venue: "akron"    },
-  // Group B
-  { id: 27, group: "B", matchday: 2, date: "2026-06-18", time: "20:00", home: "SUI", away: "BIH", venue: "sofi"     },
-  { id: 28, group: "B", matchday: 2, date: "2026-06-18", time: "01:00", home: "CAN", away: "QAT", venue: "bcplace"  },
-  // Group C
-  { id: 29, group: "C", matchday: 2, date: "2026-06-19", time: "18:00", home: "SCO", away: "MAR", venue: "gillette" },
-  { id: 30, group: "C", matchday: 2, date: "2026-06-19", time: "21:00", home: "BRA", away: "HAI", venue: "lincoln"  },
-  // Group D
-  { id: 31, group: "D", matchday: 2, date: "2026-06-19", time: "00:00", home: "USA", away: "AUS", venue: "lumen"    },
-  { id: 32, group: "D", matchday: 2, date: "2026-06-19", time: "23:00", home: "TUR", away: "PAR", venue: "levis"    },
-  // Group E
-  { id: 33, group: "E", matchday: 2, date: "2026-06-20", time: "18:00", home: "GER", away: "CIV", venue: "bmo"      },
-  { id: 34, group: "E", matchday: 2, date: "2026-06-20", time: "21:00", home: "ECU", away: "CUW", venue: "arrowhead"},
-  // Group F
-  { id: 35, group: "F", matchday: 2, date: "2026-06-20", time: "00:00", home: "NED", away: "SWE", venue: "nrg"      },
-  { id: 36, group: "F", matchday: 2, date: "2026-06-20", time: "23:00", home: "TUN", away: "JPN", venue: "bbva"     },
-  // Group G
-  { id: 37, group: "G", matchday: 2, date: "2026-06-21", time: "19:00", home: "BEL", away: "IRN", venue: "sofi"     },
-  { id: 38, group: "G", matchday: 2, date: "2026-06-21", time: "22:00", home: "NZL", away: "EGY", venue: "bcplace"  },
-  // Group H
-  { id: 39, group: "H", matchday: 2, date: "2026-06-21", time: "18:00", home: "ESP", away: "KSA", venue: "mercedes" },
-  { id: 40, group: "H", matchday: 2, date: "2026-06-21", time: "21:00", home: "URU", away: "CPV", venue: "hardrock" },
-  // Group I
-  { id: 41, group: "I", matchday: 2, date: "2026-06-22", time: "18:00", home: "FRA", away: "IRQ", venue: "lincoln"  },
-  { id: 42, group: "I", matchday: 2, date: "2026-06-22", time: "21:00", home: "NOR", away: "SEN", venue: "metlife"  },
-  // Group J
-  { id: 43, group: "J", matchday: 2, date: "2026-06-22", time: "00:00", home: "ARG", away: "AUT", venue: "att"      },
-  { id: 44, group: "J", matchday: 2, date: "2026-06-22", time: "23:00", home: "JOR", away: "ALG", venue: "levis"    },
-  // Group K
-  { id: 45, group: "K", matchday: 2, date: "2026-06-23", time: "18:00", home: "POR", away: "UZB", venue: "nrg"      },
-  { id: 46, group: "K", matchday: 2, date: "2026-06-23", time: "22:00", home: "COL", away: "COD", venue: "akron"    },
-  // Group L
-  { id: 47, group: "L", matchday: 2, date: "2026-06-23", time: "21:00", home: "ENG", away: "GHA", venue: "gillette" },
-  { id: 48, group: "L", matchday: 2, date: "2026-06-23", time: "01:00", home: "PAN", away: "CRO", venue: "bmo"      },
+  { id: 25, group: "A", matchday: 2, utc: "2026-06-18T16:00:00Z", home: "CZE", away: "RSA", venue: "mercedes",  channel: "NRK" },
+  { id: 26, group: "A", matchday: 2, utc: "2026-06-19T01:00:00Z", home: "MEX", away: "KOR", venue: "akron",     channel: "TV 2" },
+  { id: 27, group: "B", matchday: 2, utc: "2026-06-18T19:00:00Z", home: "SUI", away: "BIH", venue: "sofi",      channel: "TV 2" },
+  { id: 28, group: "B", matchday: 2, utc: "2026-06-18T22:00:00Z", home: "CAN", away: "QAT", venue: "bcplace",   channel: "TV 2" },
+  { id: 29, group: "C", matchday: 2, utc: "2026-06-19T22:00:00Z", home: "SCO", away: "MAR", venue: "gillette",  channel: "NRK" },
+  { id: 30, group: "C", matchday: 2, utc: "2026-06-20T00:30:00Z", home: "BRA", away: "HAI", venue: "lincoln",   channel: "NRK" },
+  { id: 31, group: "D", matchday: 2, utc: "2026-06-19T19:00:00Z", home: "USA", away: "AUS", venue: "lumen",     channel: "NRK" },
+  { id: 32, group: "D", matchday: 2, utc: "2026-06-20T03:00:00Z", home: "TUR", away: "PAR", venue: "levis",     channel: "NRK" },
+  { id: 33, group: "E", matchday: 2, utc: "2026-06-20T20:00:00Z", home: "GER", away: "CIV", venue: "bmo",       channel: "TV 2" },
+  { id: 34, group: "E", matchday: 2, utc: "2026-06-21T00:00:00Z", home: "ECU", away: "CUW", venue: "arrowhead", channel: "TV 2" },
+  { id: 35, group: "F", matchday: 2, utc: "2026-06-20T17:00:00Z", home: "NED", away: "SWE", venue: "nrg",       channel: "NRK" },
+  { id: 36, group: "F", matchday: 2, utc: "2026-06-21T04:00:00Z", home: "TUN", away: "JPN", venue: "bbva",      channel: "NRK" },
+  { id: 37, group: "G", matchday: 2, utc: "2026-06-21T19:00:00Z", home: "BEL", away: "IRN", venue: "sofi",      channel: "TV 2" },
+  { id: 38, group: "G", matchday: 2, utc: "2026-06-22T01:00:00Z", home: "NZL", away: "EGY", venue: "bcplace",   channel: "TV 2" },
+  { id: 39, group: "H", matchday: 2, utc: "2026-06-21T16:00:00Z", home: "ESP", away: "KSA", venue: "mercedes",  channel: "NRK" },
+  { id: 40, group: "H", matchday: 2, utc: "2026-06-21T22:00:00Z", home: "URU", away: "CPV", venue: "hardrock",  channel: "TV 2" },
+  { id: 41, group: "I", matchday: 2, utc: "2026-06-22T21:00:00Z", home: "FRA", away: "IRQ", venue: "lincoln",   channel: "NRK" },
+  { id: 42, group: "I", matchday: 2, utc: "2026-06-23T21:00:00Z", home: "NOR", away: "SEN", venue: "metlife",   channel: "NRK" },
+  { id: 43, group: "J", matchday: 2, utc: "2026-06-22T17:00:00Z", home: "ARG", away: "AUT", venue: "att",       channel: "TV 2" },
+  { id: 44, group: "J", matchday: 2, utc: "2026-06-23T03:00:00Z", home: "JOR", away: "ALG", venue: "levis",     channel: "TV 2" },
+  { id: 45, group: "K", matchday: 2, utc: "2026-06-23T17:00:00Z", home: "POR", away: "UZB", venue: "nrg",       channel: "TV 2" },
+  { id: 46, group: "K", matchday: 2, utc: "2026-06-24T02:00:00Z", home: "COL", away: "COD", venue: "akron",     channel: "TV 2" },
+  { id: 47, group: "L", matchday: 2, utc: "2026-06-23T20:00:00Z", home: "ENG", away: "GHA", venue: "gillette",  channel: "NRK" },
+  { id: 48, group: "L", matchday: 2, utc: "2026-06-23T23:00:00Z", home: "PAN", away: "CRO", venue: "bmo",       channel: "NRK" },
 
-  // ── Matchday 3 ──────────────────────────────────────────────────────────────
-  // Group A
-  { id: 49, group: "A", matchday: 3, date: "2026-06-24", time: "20:00", home: "CZE", away: "MEX", venue: "azteca"   },
-  { id: 50, group: "A", matchday: 3, date: "2026-06-24", time: "20:00", home: "RSA", away: "KOR", venue: "bbva"     },
-  // Group B
-  { id: 51, group: "B", matchday: 3, date: "2026-06-24", time: "00:00", home: "SUI", away: "CAN", venue: "bcplace"  },
-  { id: 52, group: "B", matchday: 3, date: "2026-06-24", time: "00:00", home: "BIH", away: "QAT", venue: "lumen"    },
-  // Group C
-  { id: 53, group: "C", matchday: 3, date: "2026-06-24", time: "21:00", home: "SCO", away: "BRA", venue: "hardrock" },
-  { id: 54, group: "C", matchday: 3, date: "2026-06-24", time: "21:00", home: "MAR", away: "HAI", venue: "mercedes" },
-  // Group D
-  { id: 55, group: "D", matchday: 3, date: "2026-06-25", time: "00:00", home: "TUR", away: "USA", venue: "sofi"     },
-  { id: 56, group: "D", matchday: 3, date: "2026-06-25", time: "00:00", home: "PAR", away: "AUS", venue: "levis"    },
-  // Group E
-  { id: 57, group: "E", matchday: 3, date: "2026-06-25", time: "22:00", home: "ECU", away: "GER", venue: "metlife"  },
-  { id: 58, group: "E", matchday: 3, date: "2026-06-25", time: "22:00", home: "CUW", away: "CIV", venue: "lincoln"  },
-  // Group F
-  { id: 59, group: "F", matchday: 3, date: "2026-06-25", time: "02:00", home: "JPN", away: "SWE", venue: "att"      },
-  { id: 60, group: "F", matchday: 3, date: "2026-06-25", time: "02:00", home: "TUN", away: "NED", venue: "arrowhead"},
-  // Group G
-  { id: 61, group: "G", matchday: 3, date: "2026-06-26", time: "00:00", home: "EGY", away: "IRN", venue: "lumen"    },
-  { id: 62, group: "G", matchday: 3, date: "2026-06-26", time: "00:00", home: "NZL", away: "BEL", venue: "bcplace"  },
-  // Group H
-  { id: 63, group: "H", matchday: 3, date: "2026-06-26", time: "22:00", home: "CPV", away: "KSA", venue: "nrg"      },
-  { id: 64, group: "H", matchday: 3, date: "2026-06-26", time: "22:00", home: "URU", away: "ESP", venue: "akron"    },
-  // Group I
-  { id: 65, group: "I", matchday: 3, date: "2026-06-26", time: "21:00", home: "NOR", away: "FRA", venue: "gillette" },
-  { id: 66, group: "I", matchday: 3, date: "2026-06-26", time: "21:00", home: "SEN", away: "IRQ", venue: "bmo"      },
-  // Group J
-  { id: 67, group: "J", matchday: 3, date: "2026-06-27", time: "01:00", home: "ALG", away: "AUT", venue: "arrowhead"},
-  { id: 68, group: "J", matchday: 3, date: "2026-06-27", time: "01:00", home: "JOR", away: "ARG", venue: "att"      },
-  // Group K
-  { id: 69, group: "K", matchday: 3, date: "2026-06-27", time: "23:00", home: "COL", away: "POR", venue: "hardrock" },
-  { id: 70, group: "K", matchday: 3, date: "2026-06-27", time: "23:00", home: "COD", away: "UZB", venue: "mercedes" },
-  // Group L
-  { id: 71, group: "L", matchday: 3, date: "2026-06-27", time: "20:00", home: "PAN", away: "ENG", venue: "metlife"  },
-  { id: 72, group: "L", matchday: 3, date: "2026-06-27", time: "20:00", home: "CRO", away: "GHA", venue: "lincoln"  },
+  // ── Matchday 3 — final round always plays the two group games simultaneously ─
+  { id: 49, group: "A", matchday: 3, utc: "2026-06-25T01:00:00Z", home: "CZE", away: "MEX", venue: "azteca",    channel: "TV 2" },
+  { id: 50, group: "A", matchday: 3, utc: "2026-06-25T01:00:00Z", home: "RSA", away: "KOR", venue: "bbva",      channel: "TV 2" },
+  { id: 51, group: "B", matchday: 3, utc: "2026-06-24T19:00:00Z", home: "SUI", away: "CAN", venue: "bcplace",   channel: "NRK" },
+  { id: 52, group: "B", matchday: 3, utc: "2026-06-24T19:00:00Z", home: "BIH", away: "QAT", venue: "lumen",     channel: "NRK" },
+  { id: 53, group: "C", matchday: 3, utc: "2026-06-24T22:00:00Z", home: "SCO", away: "BRA", venue: "hardrock",  channel: "NRK" },
+  { id: 54, group: "C", matchday: 3, utc: "2026-06-24T22:00:00Z", home: "MAR", away: "HAI", venue: "mercedes",  channel: "NRK" },
+  { id: 55, group: "D", matchday: 3, utc: "2026-06-26T02:00:00Z", home: "TUR", away: "USA", venue: "sofi",      channel: "NRK" },
+  { id: 56, group: "D", matchday: 3, utc: "2026-06-26T02:00:00Z", home: "PAR", away: "AUS", venue: "levis",     channel: "NRK" },
+  { id: 57, group: "E", matchday: 3, utc: "2026-06-25T20:00:00Z", home: "ECU", away: "GER", venue: "metlife",   channel: "TV 2" },
+  { id: 58, group: "E", matchday: 3, utc: "2026-06-25T20:00:00Z", home: "CUW", away: "CIV", venue: "lincoln",   channel: "TV 2" },
+  { id: 59, group: "F", matchday: 3, utc: "2026-06-25T23:00:00Z", home: "JPN", away: "SWE", venue: "att",       channel: "TV 2" },
+  { id: 60, group: "F", matchday: 3, utc: "2026-06-25T23:00:00Z", home: "TUN", away: "NED", venue: "arrowhead", channel: "TV 2" },
+  { id: 61, group: "G", matchday: 3, utc: "2026-06-27T03:00:00Z", home: "EGY", away: "IRN", venue: "lumen",     channel: "TV 2" },
+  { id: 62, group: "G", matchday: 3, utc: "2026-06-27T03:00:00Z", home: "NZL", away: "BEL", venue: "bcplace",   channel: "TV 2" },
+  { id: 63, group: "H", matchday: 3, utc: "2026-06-27T00:00:00Z", home: "CPV", away: "KSA", venue: "nrg",       channel: "NRK" },
+  { id: 64, group: "H", matchday: 3, utc: "2026-06-27T00:00:00Z", home: "URU", away: "ESP", venue: "akron",     channel: "NRK" },
+  { id: 65, group: "I", matchday: 3, utc: "2026-06-26T21:00:00Z", home: "NOR", away: "FRA", venue: "gillette",  channel: "NRK" },
+  { id: 66, group: "I", matchday: 3, utc: "2026-06-26T21:00:00Z", home: "SEN", away: "IRQ", venue: "bmo",       channel: "NRK" },
+  { id: 67, group: "J", matchday: 3, utc: "2026-06-28T02:00:00Z", home: "ALG", away: "AUT", venue: "arrowhead", channel: "NRK" },
+  { id: 68, group: "J", matchday: 3, utc: "2026-06-28T02:00:00Z", home: "JOR", away: "ARG", venue: "att",       channel: "NRK" },
+  { id: 69, group: "K", matchday: 3, utc: "2026-06-27T23:30:00Z", home: "COL", away: "POR", venue: "hardrock",  channel: "NRK" },
+  { id: 70, group: "K", matchday: 3, utc: "2026-06-27T23:30:00Z", home: "COD", away: "UZB", venue: "mercedes",  channel: "NRK" },
+  { id: 71, group: "L", matchday: 3, utc: "2026-06-27T21:00:00Z", home: "PAN", away: "ENG", venue: "metlife",   channel: "TV 2" },
+  { id: 72, group: "L", matchday: 3, utc: "2026-06-27T21:00:00Z", home: "CRO", away: "GHA", venue: "lincoln",   channel: "TV 2" },
 ];
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Knockout stage (32 matches) — pairings populate after the group stage.
-// Slots use FIFA's seeding labels: 1A = Group A winner, 2A = runner-up, 3X = a
-// third-placed team. We use TBD-TBD until standings are known.
+// Knockout stage (32 matches) — slot labels match FIFA's published bracket.
+// Best-third placeholders display as "3X" until standings finalise on 28 Jun.
 // ─────────────────────────────────────────────────────────────────────────────
 
 interface RawKnockoutFixture {
   id: number;
   round: "R32" | "R16" | "QF" | "SF" | "3RD" | "FINAL";
-  date: string;
-  time: string;
+  utc: string;
   venue: string;
   homeSlot?: string;
   awaySlot?: string;
+  channel?: Channel;
 }
 
 const KNOCKOUT_FIXTURES: RawKnockoutFixture[] = [
-  // Round of 32 — 16 matches
-  { id: 73, round: "R32", date: "2026-06-28", time: "22:00", venue: "sofi"     },
-  { id: 74, round: "R32", date: "2026-06-29", time: "18:00", venue: "nrg"      },
-  { id: 75, round: "R32", date: "2026-06-29", time: "21:00", venue: "gillette" },
-  { id: 76, round: "R32", date: "2026-06-29", time: "00:00", venue: "bbva"     },
-  { id: 77, round: "R32", date: "2026-06-30", time: "20:00", venue: "att"      },
-  { id: 78, round: "R32", date: "2026-06-30", time: "23:00", venue: "metlife"  },
-  { id: 79, round: "R32", date: "2026-06-30", time: "02:00", venue: "azteca"   },
-  { id: 80, round: "R32", date: "2026-07-01", time: "18:00", venue: "mercedes" },
-  { id: 81, round: "R32", date: "2026-07-01", time: "21:00", venue: "lumen"    },
-  { id: 82, round: "R32", date: "2026-07-01", time: "00:00", venue: "levis"    },
-  { id: 83, round: "R32", date: "2026-07-02", time: "20:00", venue: "sofi"     },
-  { id: 84, round: "R32", date: "2026-07-02", time: "23:00", venue: "bmo"      },
-  { id: 85, round: "R32", date: "2026-07-02", time: "02:00", venue: "bcplace"  },
-  { id: 86, round: "R32", date: "2026-07-03", time: "18:00", venue: "att"      },
-  { id: 87, round: "R32", date: "2026-07-03", time: "21:00", venue: "hardrock" },
-  { id: 88, round: "R32", date: "2026-07-03", time: "00:00", venue: "arrowhead"},
+  // R32 — 16 matches, Jun 28 – Jul 4
+  { id: 73, round: "R32", utc: "2026-06-28T19:00:00Z", venue: "sofi",      homeSlot: "2A", awaySlot: "2B" },
+  { id: 74, round: "R32", utc: "2026-06-29T20:30:00Z", venue: "nrg",       homeSlot: "1E", awaySlot: "3X" },
+  { id: 75, round: "R32", utc: "2026-06-29T01:00:00Z", venue: "gillette",  homeSlot: "1F", awaySlot: "2C" },
+  { id: 76, round: "R32", utc: "2026-06-29T17:00:00Z", venue: "bbva",      homeSlot: "1C", awaySlot: "2F" },
+  { id: 77, round: "R32", utc: "2026-06-30T21:00:00Z", venue: "att",       homeSlot: "1I", awaySlot: "3X" },
+  { id: 78, round: "R32", utc: "2026-06-30T17:00:00Z", venue: "metlife",   homeSlot: "2E", awaySlot: "2I" },
+  { id: 79, round: "R32", utc: "2026-06-30T01:00:00Z", venue: "azteca",    homeSlot: "1A", awaySlot: "3X" },
+  { id: 80, round: "R32", utc: "2026-07-01T16:00:00Z", venue: "mercedes",  homeSlot: "1L", awaySlot: "3X" },
+  { id: 81, round: "R32", utc: "2026-07-01T00:00:00Z", venue: "lumen",     homeSlot: "1D", awaySlot: "3X" },
+  { id: 82, round: "R32", utc: "2026-07-01T20:00:00Z", venue: "levis",     homeSlot: "1G", awaySlot: "3X" },
+  { id: 83, round: "R32", utc: "2026-07-02T23:00:00Z", venue: "sofi",      homeSlot: "2K", awaySlot: "2L" },
+  { id: 84, round: "R32", utc: "2026-07-02T19:00:00Z", venue: "bmo",       homeSlot: "1H", awaySlot: "2J" },
+  { id: 85, round: "R32", utc: "2026-07-03T03:00:00Z", venue: "bcplace",   homeSlot: "1B", awaySlot: "3X" },
+  { id: 86, round: "R32", utc: "2026-07-03T22:00:00Z", venue: "att",       homeSlot: "1J", awaySlot: "2H" },
+  { id: 87, round: "R32", utc: "2026-07-04T01:30:00Z", venue: "hardrock",  homeSlot: "1K", awaySlot: "3X" },
+  { id: 88, round: "R32", utc: "2026-07-03T18:00:00Z", venue: "arrowhead", homeSlot: "2D", awaySlot: "2G" },
 
-  // Round of 16 — 8 matches
-  { id: 89, round: "R16", date: "2026-07-04", time: "20:00", venue: "nrg"      },
-  { id: 90, round: "R16", date: "2026-07-04", time: "00:00", venue: "lincoln"  },
-  { id: 91, round: "R16", date: "2026-07-05", time: "20:00", venue: "metlife"  },
-  { id: 92, round: "R16", date: "2026-07-05", time: "00:00", venue: "azteca"   },
-  { id: 93, round: "R16", date: "2026-07-06", time: "20:00", venue: "att"      },
-  { id: 94, round: "R16", date: "2026-07-06", time: "00:00", venue: "lumen"    },
-  { id: 95, round: "R16", date: "2026-07-07", time: "20:00", venue: "mercedes" },
-  { id: 96, round: "R16", date: "2026-07-07", time: "00:00", venue: "bcplace"  },
+  // R16 — 8 matches, Jul 4 – Jul 7
+  { id: 89, round: "R16", utc: "2026-07-04T21:00:00Z", venue: "nrg",       homeSlot: "W74", awaySlot: "W77" },
+  { id: 90, round: "R16", utc: "2026-07-04T17:00:00Z", venue: "lincoln",   homeSlot: "W73", awaySlot: "W75" },
+  { id: 91, round: "R16", utc: "2026-07-05T20:00:00Z", venue: "metlife",   homeSlot: "W76", awaySlot: "W78" },
+  { id: 92, round: "R16", utc: "2026-07-06T00:00:00Z", venue: "azteca",    homeSlot: "W79", awaySlot: "W80" },
+  { id: 93, round: "R16", utc: "2026-07-06T19:00:00Z", venue: "att",       homeSlot: "W83", awaySlot: "W84" },
+  { id: 94, round: "R16", utc: "2026-07-07T00:00:00Z", venue: "lumen",     homeSlot: "W81", awaySlot: "W82" },
+  { id: 95, round: "R16", utc: "2026-07-07T16:00:00Z", venue: "mercedes",  homeSlot: "W86", awaySlot: "W88" },
+  { id: 96, round: "R16", utc: "2026-07-07T20:00:00Z", venue: "bcplace",   homeSlot: "W85", awaySlot: "W87" },
 
-  // Quarter-finals — 4 matches
-  { id: 97, round: "QF",  date: "2026-07-09", time: "23:00", venue: "gillette" },
-  { id: 98, round: "QF",  date: "2026-07-10", time: "23:00", venue: "sofi"     },
-  { id: 99, round: "QF",  date: "2026-07-11", time: "20:00", venue: "hardrock" },
-  { id: 100,round: "QF",  date: "2026-07-11", time: "23:00", venue: "arrowhead"},
+  // QF — 4 matches, Jul 9 – Jul 12
+  { id: 97,  round: "QF", utc: "2026-07-09T19:00:00Z", venue: "gillette",  homeSlot: "W89", awaySlot: "W90" },
+  { id: 98,  round: "QF", utc: "2026-07-10T18:00:00Z", venue: "sofi",      homeSlot: "W93", awaySlot: "W94" },
+  { id: 99,  round: "QF", utc: "2026-07-11T20:00:00Z", venue: "hardrock",  homeSlot: "W91", awaySlot: "W92" },
+  { id: 100, round: "QF", utc: "2026-07-12T00:00:00Z", venue: "arrowhead", homeSlot: "W95", awaySlot: "W96" },
 
-  // Semi-finals — 2 matches
-  { id: 101,round: "SF",  date: "2026-07-14", time: "23:00", venue: "att"      },
-  { id: 102,round: "SF",  date: "2026-07-15", time: "23:00", venue: "mercedes" },
+  // SF — 2 matches, Jul 14 + 15
+  { id: 101, round: "SF", utc: "2026-07-14T19:00:00Z", venue: "att",       homeSlot: "W97", awaySlot: "W98" },
+  { id: 102, round: "SF", utc: "2026-07-15T19:00:00Z", venue: "mercedes",  homeSlot: "W99", awaySlot: "W100" },
 
-  // Third-place playoff
-  { id: 103,round: "3RD", date: "2026-07-18", time: "20:00", venue: "hardrock" },
+  // Third place playoff
+  { id: 103, round: "3RD", utc: "2026-07-18T19:00:00Z", venue: "hardrock", homeSlot: "L101", awaySlot: "L102" },
 
   // Final
-  { id: 104,round: "FINAL",date: "2026-07-19",time: "19:00", venue: "metlife"  },
+  { id: 104, round: "FINAL", utc: "2026-07-19T19:00:00Z", venue: "metlife", homeSlot: "W101", awaySlot: "W102" },
 ];
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -245,8 +212,9 @@ export const FIXTURES: Fixture[] = [
     return {
       id: r.id,
       stage: { kind: "group", group: r.group, matchday: r.matchday },
-      kickoff: `${r.date}T${r.time}:00Z`,
+      kickoff: r.utc,
       venueId: r.venue,
+      channel: r.channel,
       homeId: home.id,
       awayId: away.id,
     };
@@ -254,8 +222,9 @@ export const FIXTURES: Fixture[] = [
   ...KNOCKOUT_FIXTURES.map<Fixture>((r) => ({
     id: r.id,
     stage: { kind: "knockout", round: r.round },
-    kickoff: `${r.date}T${r.time}:00Z`,
+    kickoff: r.utc,
     venueId: r.venue,
+    channel: r.channel,
     homeSlot: r.homeSlot,
     awaySlot: r.awaySlot,
   })),

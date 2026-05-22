@@ -13,6 +13,7 @@ export function MatchTabs({ matchId }: Props) {
   const base = `/matches/${matchId}`;
   const tabs = [
     { href: base, label: "Overview" },
+    { href: `${base}/stats`, label: "Stats & xG" },
     { href: `${base}/lineups`, label: "Lineups" },
     { href: `${base}/tactics`, label: "Tactics" },
     { href: `${base}/h2h`, label: "H2H" },

@@ -3,6 +3,7 @@ import { Trophy, Users, ChevronRight, LogIn } from "lucide-react";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { CreateLeagueForm, JoinLeagueForm } from "@/components/league/LeagueForms";
 import { LeagueAvatar } from "@/components/league/LeagueAvatar";
+import { DemoLeague } from "@/components/league/DemoLeague";
 import { getDictionary } from "@/lib/i18n";
 
 export default async function LeaguesPage() {
@@ -12,35 +13,9 @@ export default async function LeaguesPage() {
 
   if (!user) {
     return (
-      <div className="px-4 sm:px-6 py-6 max-w-[1100px] mx-auto">
+      <div className="px-4 sm:px-6 py-6 max-w-[1100px] mx-auto space-y-8">
         <Header title={t.leagues.title} subtitle={t.leagues.subtitle} />
-        <div className="card-panel p-6 ring-1 ring-accent-500/20 flex items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <div className="h-10 w-10 rounded-md bg-accent-500/15 flex items-center justify-center">
-              <LogIn size={18} className="text-accent-400" />
-            </div>
-            <div>
-              <div className="text-sm font-semibold">Sign in to create or join a league</div>
-              <div className="text-xs text-pitch-400 mt-0.5">
-                Mini-leagues let you compete against friends with a private leaderboard.
-              </div>
-            </div>
-          </div>
-          <div className="flex items-center gap-2">
-            <Link
-              href="/login"
-              className="rounded-md bg-accent-500 hover:bg-accent-400 text-pitch-950 text-xs font-semibold px-3 py-1.5"
-            >
-              Sign in
-            </Link>
-            <Link
-              href="/register"
-              className="rounded-md bg-pitch-800 hover:bg-pitch-700 text-pitch-100 text-xs font-semibold px-3 py-1.5"
-            >
-              Register
-            </Link>
-          </div>
-        </div>
+        <DemoLeague />
       </div>
     );
   }

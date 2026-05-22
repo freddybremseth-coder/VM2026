@@ -179,13 +179,14 @@ function FixtureTeamRow({
   team,
   align,
 }: {
-  team: { name: string; shortName: string; flag: string; formation: string; manager: string };
+  team: { id: number; name: string; shortName: string; flag: string; formation: string; manager: string };
   align: "left" | "right";
 }) {
   return (
-    <div
+    <Link
+      href={`/teams/${team.id}`}
       className={
-        "flex items-center gap-3 sm:gap-4 min-w-0" +
+        "flex items-center gap-3 sm:gap-4 min-w-0 group rounded-md -mx-2 px-2 py-1 hover:bg-pitch-800/40 transition-colors" +
         (align === "right"
           ? " sm:flex-row sm:justify-end sm:text-right"
           : " sm:flex-row sm:justify-start")
@@ -193,7 +194,9 @@ function FixtureTeamRow({
     >
       <TeamFlag code={team.flag} size="lg" className={align === "right" ? "sm:hidden" : ""} />
       <div className={"min-w-0 flex-1 sm:flex-initial" + (align === "right" ? " sm:text-right" : "")}>
-        <div className="text-lg sm:text-xl font-bold tracking-tight truncate">{team.name}</div>
+        <div className="text-lg sm:text-xl font-bold tracking-tight truncate group-hover:text-accent-200 transition-colors">
+          {team.name}
+        </div>
         <div className="text-[11px] uppercase tracking-widest text-pitch-400 font-mono mt-0.5 truncate">
           {team.formation}
           {team.manager && ` · ${team.manager}`}
@@ -202,7 +205,7 @@ function FixtureTeamRow({
       {align === "right" && (
         <TeamFlag code={team.flag} size="lg" className="hidden sm:inline-block" />
       )}
-    </div>
+    </Link>
   );
 }
 

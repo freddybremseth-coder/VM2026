@@ -27,13 +27,30 @@ export interface Player {
   club: string;
   /** Optional stats — left undefined when not published yet. */
   age?: number;
+  /** International caps (national team appearances). */
   caps?: number;
+  /** International goals scored for the national team. */
   goals?: number;
+  /** International assists. Backfilled where data is available. */
+  assists?: number;
+  /** Total international minutes played. Estimated when not explicit. */
+  minutes?: number;
   /** Where on the pitch they'd start if picked, in percentage coords. */
   startX?: number;
   startY?: number;
   /** Marks the captain. */
   isCaptain?: boolean;
+}
+
+/**
+ * Returns a player's minutes — explicit if set, otherwise estimated
+ * from caps using a position-aware average (GKs play full 90, outfield ~75).
+ */
+export function getPlayerMinutes(p: Player): number {
+  if (typeof p.minutes === "number") return p.minutes;
+  if (typeof p.caps !== "number" || p.caps === 0) return 0;
+  const avg = p.position === "GK" ? 90 : 72;
+  return Math.round(p.caps * avg);
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -57,20 +74,20 @@ const NORWAY: Player[] = [
   // Midfielders (9)
   { id: 2112, teamId: 21, number: 2,  name: "Morten Thorsby",          position: "DM", club: "Cremonese",       age: 30, caps: 19, goals: 1 },
   { id: 2113, teamId: 21, number: 6,  name: "Patrick Berg",            position: "CM", club: "Bodø/Glimt",      age: 28, caps: 21, goals: 0,  startX: 32, startY: 55 },
-  { id: 2114, teamId: 21, number: 8,  name: "Sander Berge",            position: "CM", club: "Fulham",          age: 28, caps: 38, goals: 4,  startX: 50, startY: 60 },
-  { id: 2115, teamId: 21, number: 18, name: "Kristian Thorstvedt",     position: "CM", club: "Sassuolo",        age: 27, caps: 26, goals: 6 },
-  { id: 2116, teamId: 21, number: 22, name: "Oscar Bobb",              position: "RW", club: "Fulham",          age: 22, caps: 9,  goals: 1,  startX: 78, startY: 30 },
+  { id: 2114, teamId: 21, number: 8,  name: "Sander Berge",            position: "CM", club: "Fulham",          age: 28, caps: 38, goals: 4,  assists: 5,  minutes: 2810, startX: 50, startY: 60 },
+  { id: 2115, teamId: 21, number: 18, name: "Kristian Thorstvedt",     position: "CM", club: "Sassuolo",        age: 27, caps: 26, goals: 6,  assists: 4,  minutes: 1640 },
+  { id: 2116, teamId: 21, number: 22, name: "Oscar Bobb",              position: "RW", club: "Fulham",          age: 22, caps: 9,  goals: 1,  assists: 3,  minutes: 520, startX: 78, startY: 30 },
   { id: 2117, teamId: 21, number: 24, name: "Henrik Falchener",        position: "CM", club: "Viking",          age: 23, caps: 1,  goals: 0 },
   { id: 2118, teamId: 21, number: 26, name: "Fredrik Aursnes",         position: "CM", club: "Benfica",         age: 30, caps: 17, goals: 0 },
   { id: 2119, teamId: 21, number: 19, name: "Thelo Aasgaard",          position: "AM", club: "Rangers",         age: 24, caps: 4,  goals: 1 },
-  { id: 2120, teamId: 21, number: 10, name: "Martin Ødegaard",         position: "AM", club: "Arsenal",         age: 27, caps: 50, goals: 11, startX: 68, startY: 48, isCaptain: true },
+  { id: 2120, teamId: 21, number: 10, name: "Martin Ødegaard",         position: "AM", club: "Arsenal",         age: 27, caps: 50, goals: 11, assists: 13, minutes: 4180, startX: 68, startY: 48, isCaptain: true },
   // Forwards (6)
-  { id: 2121, teamId: 21, number: 7,  name: "Alexander Sørloth",       position: "ST", club: "Atlético Madrid", age: 30, caps: 47, goals: 11 },
-  { id: 2122, teamId: 21, number: 9,  name: "Erling Braut Haaland",    position: "ST", club: "Manchester City", age: 25, caps: 36, goals: 36, startX: 50, startY: 18 },
-  { id: 2123, teamId: 21, number: 12, name: "Jens Petter Hauge",       position: "LW", club: "Bodø/Glimt",      age: 26, caps: 14, goals: 3 },
-  { id: 2124, teamId: 21, number: 11, name: "Jørgen Strand Larsen",    position: "ST", club: "Wolves",          age: 26, caps: 11, goals: 2 },
-  { id: 2125, teamId: 21, number: 20, name: "Antonio Nusa",            position: "LW", club: "RB Leipzig",      age: 21, caps: 14, goals: 4,  startX: 22, startY: 30 },
-  { id: 2126, teamId: 21, number: 21, name: "Andreas Schjelderup",     position: "LW", club: "Benfica",         age: 21, caps: 9,  goals: 2 },
+  { id: 2121, teamId: 21, number: 7,  name: "Alexander Sørloth",       position: "ST", club: "Atlético Madrid", age: 30, caps: 47, goals: 11, assists: 6,  minutes: 2640 },
+  { id: 2122, teamId: 21, number: 9,  name: "Erling Braut Haaland",    position: "ST", club: "Manchester City", age: 25, caps: 36, goals: 36, assists: 7,  minutes: 3010, startX: 50, startY: 18 },
+  { id: 2123, teamId: 21, number: 12, name: "Jens Petter Hauge",       position: "LW", club: "Bodø/Glimt",      age: 26, caps: 14, goals: 3,  assists: 4,  minutes: 720 },
+  { id: 2124, teamId: 21, number: 11, name: "Jørgen Strand Larsen",    position: "ST", club: "Wolves",          age: 26, caps: 11, goals: 2,  assists: 2,  minutes: 580 },
+  { id: 2125, teamId: 21, number: 20, name: "Antonio Nusa",            position: "LW", club: "RB Leipzig",      age: 21, caps: 14, goals: 4,  assists: 5,  minutes: 920, startX: 22, startY: 30 },
+  { id: 2126, teamId: 21, number: 21, name: "Andreas Schjelderup",     position: "LW", club: "Benfica",         age: 21, caps: 9,  goals: 2,  assists: 2,  minutes: 480 },
 ];
 
 // ─────────────────────────────────────────────────────────────────────────────

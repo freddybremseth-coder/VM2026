@@ -1,7 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import { ChevronDown, Cpu, Info } from "lucide-react";
+import { ChevronDown, Cpu, Info, Zap, Sparkles } from "lucide-react";
+
+// Detect at runtime whether Claude is configured on this deployment.
+const CLAUDE_ACTIVE = !!(
+  typeof process !== "undefined" && process.env.NEXT_PUBLIC_CLAUDE_ACTIVE === "1"
+);
 
 /**
  * Expandable "Why these odds?" card. Sits at the bottom of any page that
@@ -21,11 +26,20 @@ export function ModelExplainer() {
           <Cpu size={14} className="text-data-300" />
         </div>
         <div className="flex-1 min-w-0">
-          <div className="text-xs font-semibold">Why these odds?</div>
+          <div className="text-xs font-semibold">Hvorfor disse oddsa?</div>
           <div className="text-[10px] uppercase tracking-widest text-pitch-400 font-mono">
-            Model: wcf-baseline-v0.1 · ChatGenius
+            Modell: wcf-baseline-v0.1 · ChatGenius
           </div>
         </div>
+        {CLAUDE_ACTIVE ? (
+          <span className="flex items-center gap-1 text-[10px] font-semibold uppercase tracking-widest bg-win/10 text-win px-2 py-1 rounded-md shrink-0">
+            <Zap size={10} /> Claude live
+          </span>
+        ) : (
+          <span className="flex items-center gap-1 text-[10px] font-semibold uppercase tracking-widest bg-pitch-800 text-pitch-500 px-2 py-1 rounded-md shrink-0">
+            <Sparkles size={10} /> Mal-modus
+          </span>
+        )}
         <ChevronDown
           size={16}
           className={`text-pitch-400 transition-transform ${open ? "rotate-180" : ""}`}

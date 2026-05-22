@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { MapPin, Users, UserCircle2 } from "lucide-react";
 import { TeamFlag } from "@/components/shared/TeamFlag";
 import { cn } from "@/lib/utils";
@@ -88,30 +89,27 @@ function TeamBlock({
   align: "left" | "right";
 }) {
   return (
-    <div
+    <Link
+      href={`/teams/${team.id}`}
       className={cn(
-        // Mobile: each team row left-aligned on its own line with flag + name.
-        // Desktop: home pinned right, away pinned left, around the centre score.
-        "flex items-center gap-3 sm:gap-4 min-w-0",
+        "flex items-center gap-3 sm:gap-4 min-w-0 group rounded-md -mx-2 px-2 py-1 hover:bg-pitch-800/40 transition-colors",
         align === "right"
           ? "sm:justify-end sm:text-right sm:flex-row"
           : "sm:justify-start sm:flex-row",
       )}
     >
-      {/* On mobile both teams render flag-first for a consistent left-anchored row */}
       <TeamFlag code={team.flag} size="lg" className={cn(align === "right" && "sm:hidden")} />
       <div className={cn("min-w-0 flex-1 sm:flex-initial", align === "right" && "sm:text-right")}>
-        <div className="text-lg sm:text-xl font-bold tracking-tight truncate">
+        <div className="text-lg sm:text-xl font-bold tracking-tight truncate group-hover:text-accent-200 transition-colors">
           {team.name}
         </div>
         <div className="text-[11px] uppercase tracking-widest text-pitch-400 font-mono mt-0.5 truncate">
           {team.formation} · {team.manager}
         </div>
       </div>
-      {/* Desktop-only mirrored flag for the right-aligned home block */}
       {align === "right" && (
         <TeamFlag code={team.flag} size="lg" className="hidden sm:inline-block" />
       )}
-    </div>
+    </Link>
   );
 }

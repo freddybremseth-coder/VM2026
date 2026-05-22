@@ -1,0 +1,76 @@
+import Link from "next/link";
+import { Trophy, Sparkles } from "lucide-react";
+import { TeamFlag } from "./TeamFlag";
+import { teamById } from "@/lib/wc26-data";
+import type { TournamentLeader } from "@/lib/team-stats";
+
+interface Props {
+  title: string;
+  leaders: TournamentLeader[];
+  /** "goals" → trophy icon, "assists" → sparkles icon */
+  metric: "goals" | "assists";
+  /** Optional subtitle / scope note */
+  subtitle?: string;
+}
+
+/**
+ * Sortable top-N leaderboard. Each row links to the player; team flag links to the team.
+ * Use the same component for all-time international goals/assists, or for club-season stats.
+ */
+export function TopScorersList({ title, leaders, metric, subtitle }: Props) {
+  if (leaders.length === 0) return null;
+
+  const Icon = metric === "goals" ? Trophy : Sparkles;
+  const tone = metric === "goals" ? "text-accent-400" : "text-data-400";
+  const valueTone = metric === "goals" ? "text-accent-300" : "text-data-300";
+
+  return (
+    <div className="card-panel p-5">
+      <div className="flex items-start justify-between mb-3">
+        <div className="flex items-center gap-2">
+          <Icon size={12} className={tone} />
+          <h2 className="text-xs uppercase tracking-widest font-semibold text-pitch-200">
+            {title}
+          </h2>
+        </div>
+        {subtitle && (
+          <span className="text-[10px] text-pitch-500 font-mono">{subtitle}</span>
+        )}
+      </div>
+
+      <ol className="space-y-1.5">
+        {leaders.map((leader, i) => {
+          const team = teamById(leader.teamId);
+          return (
+            <li key={leader.player.id} className="flex items-center gap-2.5 text-sm">
+              <span className="font-mono text-pitch-500 w-5 text-right stat-num shrink-0">
+                {i + 1}
+              </span>
+              {team && (
+                <Link
+                  href={`/teams/${team.id}`}
+                  title={team.name}
+                  className="shrink-0 hover:opacity-80"
+                >
+                  <TeamFlag code={team.flag} size="sm" />
+                </Link>
+              )}
+              <Link
+                href={`/players/${leader.player.id}`}
+                className="flex-1 min-w-0 truncate text-pitch-100 hover:text-accent-300 transition-colors"
+              >
+                {leader.player.name}
+              </Link>
+              <span className="text-[10px] text-pitch-500 font-mono shrink-0 hidden sm:inline">
+                {leader.player.position}
+              </span>
+              <span className={`font-mono font-bold stat-num shrink-0 ${valueTone}`}>
+                {leader.value}
+              </span>
+            </li>
+          );
+        })}
+      </ol>
+    </div>
+  );
+}

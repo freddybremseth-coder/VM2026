@@ -1,5 +1,6 @@
-import { Activity } from "lucide-react";
-import { getRecentForm, type Result } from "@/lib/recent-form";
+import { Activity, Database, Sparkles } from "lucide-react";
+import { getRecentForm, type Result, type FormEntry } from "@/lib/recent-form";
+import { getTeamForm, type TeamFormData, type FormMatch } from "@/lib/team-form";
 import type { WCTeam } from "@/lib/wc26-data";
 
 interface Props {
@@ -8,69 +9,123 @@ interface Props {
 }
 
 /**
- * Two team rows. Each row shows the team's most recent 5 results as
- * colour-coded W/D/L pills (newest right-most, like ESPN/FotMob).
- * If the team has no curated form data yet we say so honestly.
+ * Two-team form card.
+ *
+ * Tries API-Football first for each team (server-side, ISR cached 6h).
+ * Falls back to the static hand-curated data in lib/recent-form.ts when:
+ *   - API key not set
+ *   - Team ID not mapped yet
+ *   - API request fails
+ *
+ * Shows a live/mock badge so users know the data provenance.
  */
-export function FormCard({ home, away }: Props) {
+export async function FormCard({ home, away }: Props) {
+  // Fetch both teams in parallel
+  const [homeForm, awayForm] = await Promise.all([
+    getTeamForm(home.id),
+    getTeamForm(away.id),
+  ]);
+
+  const anyLive = homeForm.source === "api-football" || awayForm.source === "api-football";
+
   return (
     <div className="card-panel p-4">
-      <div className="flex items-center gap-2 text-[10px] uppercase tracking-widest text-pitch-300 font-semibold mb-3">
-        <Activity size={14} className="text-data-400" />
-        Last 5 matches
+      <div className="flex items-center justify-between text-[10px] uppercase tracking-widest font-semibold mb-3">
+        <div className="flex items-center gap-2 text-pitch-300">
+          <Activity size={14} className="text-data-400" />
+          Siste 5 kamper
+        </div>
+        <span
+          className={`flex items-center gap-1 px-1.5 py-0.5 rounded ${
+            anyLive ? "bg-data-500/10 text-data-300" : "bg-pitch-800 text-pitch-500"
+          }`}
+        >
+          {anyLive ? <Database size={8} /> : <Sparkles size={8} />}
+          {anyLive ? "live" : "mock"}
+        </span>
       </div>
+
       <div className="space-y-2.5">
-        <TeamFormRow team={home} />
-        <TeamFormRow team={away} />
+        <TeamFormRow team={home} apiForm={homeForm} />
+        <TeamFormRow team={away} apiForm={awayForm} />
       </div>
-      <div className="mt-3 pt-3 border-t border-pitch-700/60 text-[10px] uppercase tracking-widest text-pitch-500 font-mono">
-        Source: official UEFA / CONCACAF / AFC / CONMEBOL — May 2026
+
+      <div className="mt-3 pt-3 border-t border-pitch-700/60 text-[10px] text-pitch-500 font-mono">
+        {anyLive
+          ? "Kilde: API-Football · sist oppdatert " + homeForm.fetchedAt.slice(0, 10)
+          : "Kilde: UEFA / CONMEBOL / AFC — mai 2026"}
       </div>
     </div>
   );
 }
 
-function TeamFormRow({ team }: { team: WCTeam }) {
-  const form = getRecentForm(team.id);
+// ─────────────────────────────────────────────────────────────────────────────
+
+function TeamFormRow({ team, apiForm }: { team: WCTeam; apiForm: TeamFormData }) {
+  // Prefer API-Football data; fall back to static
+  const useApi = apiForm.matches.length > 0;
+  const staticForm = getRecentForm(team.id);
+  const showStatic = !useApi && staticForm.length > 0;
+
   return (
-    <div className="flex items-center gap-3">
-      <div className="w-12 text-[11px] uppercase tracking-widest text-pitch-300 font-mono">
+    <div className="flex items-center gap-2">
+      <div className="w-10 text-[11px] uppercase tracking-widest text-pitch-300 font-mono shrink-0">
         {team.shortName}
       </div>
-      {form.length === 0 ? (
-        <span className="text-[11px] text-pitch-500 italic">
-          Form not loaded yet for {team.name}.
-        </span>
+      {useApi ? (
+        <ApiFormPills matches={apiForm.matches} />
+      ) : showStatic ? (
+        <StaticFormPills entries={staticForm} />
       ) : (
-        <div className="flex gap-1 flex-1">
-          {form.slice(0, 5).reverse().map((entry, i) => (
-            <ResultPill key={`${entry.date}-${i}`} result={entry.result} entry={entry} />
-          ))}
-        </div>
+        <span className="text-[11px] text-pitch-500 italic">Ingen data ennå</span>
       )}
     </div>
   );
 }
 
-function ResultPill({
-  result,
-  entry,
-}: {
-  result: Result;
-  entry: ReturnType<typeof getRecentForm>[number];
-}) {
-  const tone = {
-    W: "bg-win/20 text-win ring-win/40",
-    D: "bg-draw/15 text-draw ring-draw/40",
-    L: "bg-loss/15 text-loss ring-loss/40",
-  }[result];
+function ApiFormPills({ matches }: { matches: FormMatch[] }) {
+  return (
+    <div className="flex gap-1 flex-1">
+      {matches.map((m, i) => {
+        const tone =
+          m.result === "W"
+            ? "bg-win/20 text-win ring-win/40"
+            : m.result === "D"
+            ? "bg-draw/15 text-draw ring-draw/40"
+            : "bg-loss/15 text-loss ring-loss/40";
+        return (
+          <span
+            key={i}
+            title={`${m.goalsFor}–${m.goalsAgainst} vs ${m.opponent} · ${m.competition} · ${m.date}`}
+            className={`h-7 w-7 inline-flex items-center justify-center rounded-md text-[11px] font-bold font-mono ring-1 ${tone}`}
+          >
+            {m.result}
+          </span>
+        );
+      })}
+    </div>
+  );
+}
+
+function StaticFormPills({ entries }: { entries: FormEntry[] }) {
+  const tone = (r: Result) =>
+    r === "W"
+      ? "bg-win/20 text-win ring-win/40"
+      : r === "D"
+      ? "bg-draw/15 text-draw ring-draw/40"
+      : "bg-loss/15 text-loss ring-loss/40";
 
   return (
-    <span
-      title={`${entry.scoreFor}–${entry.scoreAgainst} vs ${entry.opponent} · ${entry.competition} · ${entry.date}`}
-      className={`h-7 w-7 inline-flex items-center justify-center rounded-md text-[11px] font-bold font-mono ring-1 ${tone}`}
-    >
-      {result}
-    </span>
+    <div className="flex gap-1 flex-1">
+      {entries.slice(0, 5).reverse().map((entry, i) => (
+        <span
+          key={`${entry.date}-${i}`}
+          title={`${entry.scoreFor}–${entry.scoreAgainst} vs ${entry.opponent} · ${entry.competition} · ${entry.date}`}
+          className={`h-7 w-7 inline-flex items-center justify-center rounded-md text-[11px] font-bold font-mono ring-1 ${tone(entry.result)}`}
+        >
+          {entry.result}
+        </span>
+      ))}
+    </div>
   );
 }
