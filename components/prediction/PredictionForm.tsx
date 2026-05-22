@@ -65,11 +65,13 @@ export function PredictionForm({
         </span>
       </div>
 
-      <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-4">
+      {/* Mobile: stacked rows (home / score / away) so long country names fit.
+          Desktop (sm+): 3-col grid keeps the compact horizontal form. */}
+      <div className="flex flex-col sm:grid sm:grid-cols-[1fr_auto_1fr] sm:items-center gap-3 sm:gap-4">
         <TeamSide team={home} align="right" />
-        <div className="flex items-center gap-2">
+        <div className="flex items-center justify-center gap-2">
           <ScoreInput ref={homeRef} name="homeScore" defaultValue={existing?.home_score ?? 0} />
-          <span className="text-pitch-600 font-mono">·</span>
+          <span className="text-pitch-500 font-mono">·</span>
           <ScoreInput ref={awayRef} name="awayScore" defaultValue={existing?.away_score ?? 0} />
         </div>
         <TeamSide team={away} align="left" />
@@ -109,16 +111,21 @@ function TeamSide({
   team: TeamRef;
   align: "left" | "right";
 }) {
+  // On mobile: always left-anchored (flag → name), full width.
+  // On desktop: home pinned right (flag flips to the right of the name).
   return (
     <div
-      className={`flex items-center gap-2.5 min-w-0 ${
-        align === "right" ? "flex-row-reverse text-right" : ""
-      }`}
+      className={
+        "flex items-center gap-2.5 min-w-0" +
+        (align === "right"
+          ? " sm:flex-row-reverse sm:text-right"
+          : "")
+      }
     >
       <TeamFlag code={team.flag} size="md" />
-      <div className="min-w-0">
+      <div className="min-w-0 flex-1 sm:flex-initial">
         <div className="font-semibold text-sm truncate">{team.name}</div>
-        <div className="text-[10px] uppercase tracking-widest text-pitch-500 font-mono">
+        <div className="text-[10px] uppercase tracking-widest text-pitch-400 font-mono">
           {team.shortName}
         </div>
       </div>

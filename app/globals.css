@@ -4,15 +4,18 @@
 
 @layer base {
   :root {
-    --pitch-50: 240 6% 96%;
-    --pitch-100: 240 5% 88%;
-    --pitch-200: 240 5% 75%;
-    --pitch-300: 240 5% 60%;
-    --pitch-400: 240 5% 45%;
-    --pitch-500: 240 5% 32%;
-    --pitch-600: 240 6% 22%;
-    --pitch-700: 240 7% 15%;
-    --pitch-800: 240 8% 10%;
+    /* Text-on-dark contrast (WCAG AA needs ~4.5:1 for normal body text).
+       Bumped pitch-300/400/500 from their old too-dim values so secondary
+       and tertiary labels stay readable on the pitch-900/950 bg. */
+    --pitch-50: 240 6% 98%;
+    --pitch-100: 240 5% 92%;
+    --pitch-200: 240 5% 82%;
+    --pitch-300: 240 5% 70%;
+    --pitch-400: 240 5% 58%;
+    --pitch-500: 240 5% 46%;
+    --pitch-600: 240 6% 30%;
+    --pitch-700: 240 7% 18%;
+    --pitch-800: 240 8% 11%;
     --pitch-900: 240 9% 7%;
     --pitch-950: 240 10% 4%;
 
