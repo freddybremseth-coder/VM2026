@@ -1,8 +1,8 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { Shuffle, Crown, ArrowRight, Flag, Share2 } from "lucide-react";
+import { Shuffle, Crown, ArrowRight, Flag, Share2, Cpu } from "lucide-react";
 import { TeamFlag } from "@/components/shared/TeamFlag";
 import {
   modeLabel,
@@ -109,31 +109,37 @@ export function BracketSimulator() {
       </div>
 
       {champion && (
-        <div className="card-panel p-5 ring-1 ring-accent-500/30 flex items-center gap-4 bg-gradient-to-r from-accent-500/10 via-transparent to-transparent">
-          <div className="h-12 w-12 rounded-md bg-accent-500/15 flex items-center justify-center shrink-0">
-            <Crown size={22} className="text-draw" />
-          </div>
-          <div className="flex-1">
-            <div className="text-[10px] uppercase tracking-widest text-accent-400 font-semibold">
-              Your predicted champion
+        <>
+          <div className="card-panel p-4 sm:p-5 ring-1 ring-accent-500/30 flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4 bg-gradient-to-r from-accent-500/10 via-transparent to-transparent">
+            <div className="flex items-center gap-3 flex-1 min-w-0">
+              <div className="h-12 w-12 rounded-md bg-accent-500/15 flex items-center justify-center shrink-0">
+                <Crown size={22} className="text-draw" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="text-[10px] uppercase tracking-widest text-accent-400 font-semibold">
+                  Your predicted champion
+                </div>
+                <div className="text-xl sm:text-2xl font-bold tracking-tight mt-0.5 flex items-center gap-2">
+                  <TeamFlag code={champion.flag} size="md" />
+                  <span className="truncate">{champion.name}</span>
+                </div>
+              </div>
             </div>
-            <div className="text-2xl font-bold tracking-tight mt-0.5 flex items-center gap-2">
-              <TeamFlag code={champion.flag} size="md" />
-              {champion.name}
+            <div className="flex items-center gap-2 sm:shrink-0">
+              <div className="text-[11px] uppercase tracking-widest font-mono text-pitch-400 hidden sm:block">
+                {modeLabel(mode)}
+              </div>
+              <Link
+                href={`/share/bracket/${champion.shortName}`}
+                className="flex-1 sm:flex-initial text-center rounded-md bg-accent-500 hover:bg-accent-400 text-pitch-950 text-xs font-semibold px-3 py-1.5 flex items-center justify-center gap-1.5"
+              >
+                <Share2 size={12} /> Share
+              </Link>
             </div>
           </div>
-          <div className="flex items-center gap-2 shrink-0">
-            <div className="text-[11px] uppercase tracking-widest font-mono text-pitch-400 hidden sm:block">
-              {modeLabel(mode)}
-            </div>
-            <Link
-              href={`/share/bracket/${champion.shortName}`}
-              className="rounded-md bg-accent-500 hover:bg-accent-400 text-pitch-950 text-xs font-semibold px-3 py-1.5 flex items-center gap-1.5"
-            >
-              <Share2 size={12} /> Share
-            </Link>
-          </div>
-        </div>
+
+          <CoachLine championShort={champion.shortName} mode={mode} />
+        </>
       )}
 
       <div className="card-panel p-5 overflow-x-auto">
@@ -175,6 +181,73 @@ export function BracketSimulator() {
               </div>
             </div>
           ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Calls /api/bracket-coach whenever the user finishes a bracket. Refetches
+ * when the champion or mode changes, with a small debounce so rapid clicks
+ * don't fire a request per pick.
+ */
+function CoachLine({
+  championShort,
+  mode,
+}: {
+  championShort: string;
+  mode: SimulatorMode;
+}) {
+  const [text, setText] = useState<string | null>(null);
+  const [model, setModel] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    setLoading(true);
+    const t = setTimeout(() => {
+      fetch(`/api/bracket-coach?champion=${encodeURIComponent(championShort)}&mode=${mode}`)
+        .then((r) => r.json())
+        .then((data) => {
+          if (cancelled) return;
+          setText(data.coach ?? null);
+          setModel(data.model ?? null);
+          setLoading(false);
+        })
+        .catch(() => {
+          if (cancelled) return;
+          setText(null);
+          setLoading(false);
+        });
+    }, 250);
+    return () => {
+      cancelled = true;
+      clearTimeout(t);
+    };
+  }, [championShort, mode]);
+
+  return (
+    <div className="card-panel p-4 sm:p-5 ring-1 ring-data-500/20 relative overflow-hidden">
+      <div className="absolute inset-0 opacity-[0.04] grid-lines pointer-events-none" />
+      <div className="relative flex items-start gap-3">
+        <div className="h-9 w-9 rounded-md bg-data-500/15 flex items-center justify-center shrink-0">
+          <Cpu size={16} className="text-data-300" />
+        </div>
+        <div className="min-w-0">
+          <div className="flex items-center gap-2 mb-1.5">
+            <div className="text-xs font-semibold">AI bracket coach</div>
+            <span className="text-[10px] uppercase tracking-widest text-pitch-500 font-mono truncate">
+              ChatGenius{model ? ` · ${model}` : ""}
+            </span>
+          </div>
+          <div className="text-sm text-pitch-200 leading-relaxed">
+            {loading && !text ? (
+              <span className="text-pitch-500 italic">Thinking…</span>
+            ) : (
+              text ?? "—"
+            )}
+          </div>
         </div>
       </div>
     </div>
