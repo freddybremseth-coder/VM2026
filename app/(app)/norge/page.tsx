@@ -48,24 +48,43 @@ export default async function NorgePage() {
   // Placeholder qualification odds — replace when sim backend lands.
   const qualOdds = 41;
 
-  // Placeholder standings — replace with live MD aggregation. Order matches
-  // current FIFA-rank-driven expectation; signal is the visual hierarchy.
+  // Group I standings — pre-tournament view (FIFA-rank-driven expected order,
+  // zero points across the board). Live MD aggregation will overwrite once
+  // matchday 1 is played.
+  const tournamentStarted =
+    new Date() >= new Date("2026-06-11T00:00:00Z");
   const standings: Array<{ teamId: number; gd: string; pts: number }> = [
-    { teamId: 21, gd: "+2", pts: 3 },
-    { teamId: 14, gd: "+2", pts: 3 },
-    { teamId: 8, gd: "-1", pts: 0 },
-    { teamId: 27, gd: "-3", pts: 0 },
+    { teamId: 14, gd: "—", pts: 0 },
+    { teamId: 21, gd: "—", pts: 0 },
+    { teamId: 8, gd: "—", pts: 0 },
+    { teamId: 27, gd: "—", pts: 0 },
   ];
 
   return (
     <div className="min-h-screen">
       {/* ── 1. Cinematic flag hero ──────────────────────────────── */}
       <section className="relative h-[480px] md:h-[640px] overflow-hidden">
+        {/* Norwegian atmosphere photo (aurora/landscape) — sits beneath the
+            blurred flag for depth and a sense of place. */}
+        <div
+          aria-hidden
+          className="absolute inset-0 pointer-events-none"
+          style={{
+            backgroundImage:
+              "url(https://images.unsplash.com/photo-1531366936337-7c912a4589a7?w=1800&q=80&auto=format&fit=crop)",
+            backgroundSize: "cover",
+            backgroundPosition: "center 40%",
+            opacity: 0.45,
+            filter: "saturate(0.95) brightness(0.7)",
+          }}
+        />
         <div
           className="absolute pointer-events-none"
           style={{
             inset: "-25%",
             filter: "blur(36px) saturate(1.2) brightness(.55)",
+            mixBlendMode: "screen",
+            opacity: 0.85,
           }}
         >
           <HoloFlag code="no" w={800} radius={0} shimmer="strong" />
@@ -74,7 +93,7 @@ export default async function NorgePage() {
           className="absolute inset-0 pointer-events-none"
           style={{
             background:
-              "radial-gradient(ellipse at 50% 110%, rgba(0,0,0,0) 0%, hsl(var(--canvas)) 60%), linear-gradient(180deg, rgba(0,0,0,.4) 0%, transparent 30%)",
+              "radial-gradient(ellipse at 50% 110%, rgba(0,0,0,0) 0%, hsl(var(--canvas)) 60%), linear-gradient(180deg, rgba(0,0,0,.45) 0%, transparent 30%)",
           }}
         />
         <div className="relative h-full px-5 md:px-10 py-6 flex flex-col">
@@ -102,7 +121,7 @@ export default async function NorgePage() {
 
       {/* ── 2. Qualification matrix (Tactician) ─────────────────── */}
       <section className="px-5 md:px-10 mt-8">
-        <Kicker>Kvalifiseringsmatrix</Kicker>
+        <Kicker>Pre-VM prognose</Kicker>
         <Headline rank="h2">Veien til R32.</Headline>
 
         <div className="mt-4 surface">
@@ -111,7 +130,7 @@ export default async function NorgePage() {
               {qualOdds}%
             </span>
             <div className="flex-1">
-              <Kicker tone="muted">10.000 simuleringer · v0.1</Kicker>
+              <Kicker tone="muted">10.000 simuleringer · v0.1 · før avspark</Kicker>
               <div className="h-1 bg-cream/14 mt-2 relative">
                 <div
                   className="absolute left-0 top-0 bottom-0 bg-signal"
@@ -147,13 +166,20 @@ export default async function NorgePage() {
       {/* ── 3. Group I standings (editorial) ────────────────────── */}
       <section className="px-5 md:px-10 mt-8">
         <Kicker>Gruppe I · stilling</Kicker>
-        <Headline rank="h2">Marsjordre.</Headline>
+        <Headline rank="h2">
+          {tournamentStarted ? "Marsjordre." : "Forventet rekkefølge."}
+        </Headline>
+        {!tournamentStarted && (
+          <p className="text-xs text-cream/55 mt-2 font-mono">
+            Tabellen oppdateres automatisk etter første matchday · 11. juni.
+            Foreløpig sortert etter FIFA-rang.
+          </p>
+        )}
         <div className="mt-3">
           {standings.map((row, i) => {
             const team = teamById(row.teamId);
             if (!team) return null;
             const isNorway = team.id === NORWAY_ID;
-            const teamForm = formMap.get(team.id);
             return (
               <Link
                 key={team.id}
@@ -184,14 +210,22 @@ export default async function NorgePage() {
                 </span>
                 <span
                   className={`font-mono text-[11px] text-right font-semibold stat-num ${
-                    row.gd.startsWith("+") ? "text-win" : "text-loss"
+                    row.gd === "—"
+                      ? "text-cream/35"
+                      : row.gd.startsWith("+")
+                      ? "text-win"
+                      : "text-loss"
                   }`}
                 >
                   {row.gd}
                 </span>
                 <span
                   className={`font-serif text-xl font-semibold text-right stat-num ${
-                    isNorway ? "text-signal" : "text-cream"
+                    row.pts === 0
+                      ? "text-cream/35"
+                      : isNorway
+                      ? "text-signal"
+                      : "text-cream"
                   }`}
                 >
                   {row.pts}

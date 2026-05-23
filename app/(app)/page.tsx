@@ -5,7 +5,7 @@ import { Kicker, Headline } from "@/components/shared/EditorialKicker";
 import { LiveTicker, type TickerItem } from "@/components/shared/LiveTicker";
 import { StadiumBackdrop } from "@/components/shared/StadiumBackdrop";
 import { teamById, TOURNAMENT } from "@/lib/wc26-data";
-import { FIXTURES, nextFixtures, fixturesOn } from "@/lib/wc26-fixtures";
+import { nextFixtures, fixturesOn } from "@/lib/wc26-fixtures";
 import { formatKickoff, formatDateLabel } from "@/lib/utils";
 import { getDictionary } from "@/lib/i18n";
 
@@ -43,8 +43,14 @@ export default function DashboardPage() {
     <div className="min-h-screen">
       <LiveTicker items={tickerItems} />
 
-      {/* Cinematic hero */}
-      <StadiumBackdrop height={400} className="md:h-[460px]">
+      {/* Cinematic hero — football crowd photo behind the editorial atmosphere */}
+      <StadiumBackdrop
+        height={400}
+        className="md:h-[460px]"
+        photoSrc="https://images.unsplash.com/photo-1522778034537-20a2486be803?w=1800&q=80&auto=format&fit=crop"
+        photoPosition="center 40%"
+        photoOpacity={0.5}
+      >
         <div className="px-5 md:px-10 py-4 h-full flex flex-col">
           <header className="flex items-center justify-between">
             <Link href="/" className="flex items-center gap-2.5">
@@ -99,12 +105,37 @@ export default function DashboardPage() {
         <NorgePin />
       </section>
 
-      {/* Top performers — editorial portrait carousel */}
-      <section className="px-5 md:px-10 mt-9">
-        <Kicker tone="amber">Hovedpersoner</Kicker>
-        <Headline rank="h3">De som leverte i MD1.</Headline>
-      </section>
-      <TopScorersStrip />
+      {/* Top performers — placeholder until the tournament starts */}
+      {tournamentLive ? (
+        <>
+          <section className="px-5 md:px-10 mt-9">
+            <Kicker tone="amber">Hovedpersoner</Kicker>
+            <Headline rank="h3">De som leverte i siste runde.</Headline>
+          </section>
+          <TopScorersStrip />
+        </>
+      ) : (
+        <section className="px-5 md:px-10 mt-9 mb-12">
+          <Kicker tone="amber">Hovedpersoner</Kicker>
+          <Headline rank="h3">VM-toppscorerne kommer her.</Headline>
+          <div className="mt-4 surface p-5 sm:p-6 flex items-start gap-4">
+            <div className="h-10 w-10 bg-amber/15 flex items-center justify-center shrink-0">
+              <span className="font-serif text-amber text-lg font-semibold leading-none">⚽</span>
+            </div>
+            <div className="min-w-0">
+              <div className="font-serif text-lg font-semibold tracking-editorial text-cream">
+                Listen åpner 11. juni.
+              </div>
+              <p className="text-sm text-cream/55 mt-2 leading-relaxed max-w-2xl">
+                Toppscorerne, assist-kongene og hovedpersonene fra hver
+                matchday rangeres her så snart første kamp er ferdigspilt.
+                Inntil da: følg landslagene under <Link href="/teams" className="text-signal hover:underline">Lag</Link>,
+                eller pek ut din egen mester i <Link href="/bracket" className="text-signal hover:underline">turneringstreet</Link>.
+              </p>
+            </div>
+          </div>
+        </section>
+      )}
     </div>
   );
 }
