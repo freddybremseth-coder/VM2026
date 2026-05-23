@@ -75,7 +75,7 @@ export default async function NorgePage() {
             backgroundImage: "url(/hero/norge-alt-for-norge.jpg)",
             backgroundSize: "cover",
             backgroundPosition: "center 38%",
-            filter: "blur(4px) saturate(1.05) brightness(.75)",
+            filter: "blur(2px) saturate(1.05) brightness(.75)",
             transform: "scale(1.03)",
           }}
         />
