@@ -18,7 +18,18 @@ import { refreshFinishedMatches } from "@/lib/cron/refresh-matches";
 import { checkSquadAnnouncements } from "@/lib/cron/check-squads";
 import { refreshFormAndDetectNews } from "@/lib/cron/news-feed";
 import { setLastCronRun } from "@/lib/cron/store";
+import { getPhase } from "@/lib/cron/phase";
 import type { CronRunReport, CronTaskResult } from "@/lib/cron/types";
+
+// Worst-case calls per run, by phase, given the current caps:
+//   pre    → 0 match + 3 squad + 3 form = 6 calls/run × 4 runs/day = 24/day
+//   during → 15 match + 0 squad + 0 form = 15 calls/run × 4 runs/day = 60/day
+//   post   → 0 (everything skipped)
+const DAILY_BUDGET: Record<"pre" | "during" | "post", number> = {
+  pre: 24,
+  during: 60,
+  post: 0,
+};
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -71,6 +82,13 @@ export async function GET(req: NextRequest) {
 
   const tasks = [matches, squads, news];
   const ok = tasks.every((t) => t.status !== "failed");
+  const phase = getPhase();
+
+  // Sum up the per-task `callsMade` value if present in detail.
+  const callsMade = tasks.reduce((sum, t) => {
+    const d = t.detail as { callsMade?: number } | undefined;
+    return sum + (typeof d?.callsMade === "number" ? d.callsMade : 0);
+  }, 0);
 
   const report: CronRunReport = {
     startedAt,
@@ -78,6 +96,9 @@ export async function GET(req: NextRequest) {
     durationMs: Math.round(performance.now() - t0),
     tasks,
     ok,
+    phase,
+    callsMade,
+    dailyBudgetEstimate: DAILY_BUDGET[phase],
   };
 
   setLastCronRun(report);
@@ -85,6 +106,9 @@ export async function GET(req: NextRequest) {
   // Log a structured line so Vercel's log explorer can filter on it.
   console.log("[cron/refresh]", JSON.stringify({
     ok,
+    phase,
+    callsMade,
+    dailyBudgetEstimate: DAILY_BUDGET[phase],
     durationMs: report.durationMs,
     summaries: tasks.map((t) => `${t.task}: ${t.status} — ${t.summary ?? ""}`),
   }));

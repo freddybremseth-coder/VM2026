@@ -1,30 +1,26 @@
 /**
- * Cron task #3 — refresh team international form + surface "news".
+ * Cron task #3 — refresh team international form + detect news.
  *
- * "News" in v1 means: any team where the most-recent international match
- * post-dates the timestamp we previously cached. We refresh the form data
- * for the 48 WC teams (mapped to API-Football IDs) and detect which teams
- * have a new result since the last cron run.
+ * Phase-aware:
+ *   pre    → 3 teams/run rotated → all 48 teams covered every 4 days
+ *   during → SKIPPED. Result data comes via match-refresh instead.
+ *   post   → SKIPPED.
  *
- * The detected results are returned as the report and also pushed into
- * revalidatePath so the home / norge / team pages serve the fresh form.
- *
- * Quota note: 48 teams ÷ 4 candidates per run = 12 runs / day = full cycle
- * every 24h. We rotate the candidate window by hour-of-day so every team
- * eventually gets refreshed without burning the 100-req daily budget.
+ * Per run: max 3 API calls. Pre-WC: 4 runs/day × 3 = 12 calls/day.
  */
 
 import { revalidatePath, revalidateTag } from "next/cache";
 import { TEAMS } from "@/lib/wc26-data";
 import { getTeamForm } from "@/lib/team-form";
 import { getAFTeamId } from "@/lib/api-football-ids";
+import { getPhase } from "./phase";
 import type { CronTaskResult } from "./types";
 
-const TEAMS_PER_RUN = 4;
+const TEAMS_PER_RUN = 3;
+const CALLS_PER_TEAM = 1;
 
-// Track latest fetched-match per team across instances (in-memory, best-effort)
 const globalForNews = globalThis as unknown as {
-  __lastSeenMatch?: Record<number, string>; // teamId -> ISO date
+  __lastSeenMatch?: Record<number, string>;
 };
 
 export async function refreshFormAndDetectNews(): Promise<CronTaskResult> {
@@ -40,13 +36,24 @@ export async function refreshFormAndDetectNews(): Promise<CronTaskResult> {
     };
   }
 
-  // Rotate which teams to probe based on hour-of-day so we cover all 48
-  // teams in a 24-hour cycle without exceeding the free-tier quota.
+  const phase = getPhase();
+  if (phase !== "pre") {
+    return {
+      task,
+      status: "skipped",
+      summary: `Phase=${phase} — formdata kommer fra match-refresh`,
+      detail: { phase, callsMade: 0 },
+      durationMs: Math.round(performance.now() - startedAt),
+    };
+  }
+
+  // Rotate teams by hour-of-day so we cover all 48 in ~4 days at 4 runs/day.
   const mappableTeams = TEAMS.filter((t) => getAFTeamId(t.id) !== undefined);
-  const hour = new Date().getUTCHours(); // 0..23
-  // Two runs per hour (every 2h = 12 runs/day). With 4 teams each = 48 / day.
-  const slot = Math.floor(hour / 2);
-  const offset = (slot * TEAMS_PER_RUN) % mappableTeams.length;
+  const hour = new Date().getUTCHours();
+  const slot = Math.floor(hour / 6);                            // 0..3
+  const dayOffset = Math.floor(Date.now() / 86400_000) % 4;     // 0..3 — staggers across days
+  const baseSlot = (dayOffset * 4 + slot) * TEAMS_PER_RUN;
+  const offset = baseSlot % Math.max(mappableTeams.length, 1);
   const batch = mappableTeams.slice(offset, offset + TEAMS_PER_RUN);
 
   const news: Array<{
@@ -62,16 +69,17 @@ export async function refreshFormAndDetectNews(): Promise<CronTaskResult> {
   }> = [];
 
   const lastSeen = (globalForNews.__lastSeenMatch ??= {});
+  let callsMade = 0;
 
   for (const team of batch) {
     try {
       const form = await getTeamForm(team.id);
+      callsMade += CALLS_PER_TEAM;
       if (form.source !== "api-football" || form.matches.length === 0) continue;
 
-      const latest = form.matches[0]; // most-recent first
+      const latest = form.matches[0];
       const prevSeen = lastSeen[team.id];
 
-      // New match detected → it's news.
       if (!prevSeen || latest.date > prevSeen) {
         news.push({
           teamId: team.id,
@@ -89,7 +97,7 @@ export async function refreshFormAndDetectNews(): Promise<CronTaskResult> {
 
       lastSeen[team.id] = latest.date;
     } catch {
-      // Swallow per-team errors so one bad fetch doesn't kill the whole run.
+      // continue on per-team errors
     }
   }
 
@@ -106,7 +114,15 @@ export async function refreshFormAndDetectNews(): Promise<CronTaskResult> {
       news.length === 0
         ? `Form refreshet for ${batch.length} lag — ingen nye resultater`
         : `${news.length} nye landskampresultater oppdaget`,
-    detail: { news, probed: batch.map((t) => t.shortName), slot },
+    detail: {
+      phase,
+      news,
+      probed: batch.map(t => t.shortName),
+      slot,
+      dayOffset,
+      callsMade,
+      capPerRun: TEAMS_PER_RUN * CALLS_PER_TEAM,
+    },
     durationMs: Math.round(performance.now() - startedAt),
   };
 }

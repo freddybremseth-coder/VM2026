@@ -1,21 +1,24 @@
 /**
  * Cron task #1 — refresh recently-finished matches.
  *
- * For each fixture in our schedule whose kickoff is within the last 36 hours
- * (i.e. plausibly finished or live recently), call the API-Football events
- * endpoint to refresh the cached stat snapshot, then invalidate the Next.js
- * cache for that match page so visitors see fresh data on the next load.
+ * Phase-aware: only runs during the tournament. Before kickoff there are no
+ * WC fixtures to refresh — international friendlies & qualifiers are handled
+ * by the form-news task instead.
  *
- * Returns a CronTaskResult with the IDs that were refreshed.
+ * Per run we refresh at most 5 fixtures (3 API calls each = 15 calls/run).
+ * With the 6-hour cron schedule = 4 runs/day → max 60 match calls/day.
  */
 
 import { revalidatePath, revalidateTag } from "next/cache";
 import { FIXTURES } from "@/lib/wc26-fixtures";
 import { getMatchEvents } from "@/lib/match-events/provider";
+import { getPhase } from "./phase";
 import type { CronTaskResult } from "./types";
 
-const LOOKBACK_HOURS = 36;
-const LOOKAHEAD_HOURS = 2; // pick up matches that just kicked off too
+const LOOKBACK_HOURS = 30;   // catch matches that just finished
+const LOOKAHEAD_HOURS = 1;   // and the one currently in progress
+const MAX_FIXTURES_PER_RUN = 5;
+const CALLS_PER_FIXTURE = 3; // fixtures + events + statistics
 
 export async function refreshFinishedMatches(): Promise<CronTaskResult> {
   const startedAt = performance.now();
@@ -25,7 +28,18 @@ export async function refreshFinishedMatches(): Promise<CronTaskResult> {
     return {
       task,
       status: "skipped",
-      summary: "API_FOOTBALL_KEY not set — skipping live refresh",
+      summary: "API_FOOTBALL_KEY not set",
+      durationMs: Math.round(performance.now() - startedAt),
+    };
+  }
+
+  const phase = getPhase();
+  if (phase !== "during") {
+    return {
+      task,
+      status: "skipped",
+      summary: `Phase=${phase} — ingen WC-kamper å oppdatere`,
+      detail: { phase, callsMade: 0 },
       durationMs: Math.round(performance.now() - startedAt),
     };
   }
@@ -42,19 +56,12 @@ export async function refreshFinishedMatches(): Promise<CronTaskResult> {
   const refreshed: Array<{ id: number; status: string; minute?: number }> = [];
   const errors: Array<{ id: number; error: string }> = [];
 
-  // Sequential with a small cap — the API-Football free tier is 100 req/day
-  // and we want to stay polite. 10 matches per run × 12 runs/day = 120 req.
-  const cap = Math.min(candidates.length, 10);
+  const cap = Math.min(candidates.length, MAX_FIXTURES_PER_RUN);
   for (let i = 0; i < cap; i++) {
     const fx = candidates[i];
     try {
       const data = await getMatchEvents(fx.id);
-      refreshed.push({
-        id: fx.id,
-        status: data.status,
-        minute: data.minute,
-      });
-      // Invalidate the cached SSR snapshot for that match page
+      refreshed.push({ id: fx.id, status: data.status, minute: data.minute });
       revalidatePath(`/matches/${fx.id}/stats`);
       revalidatePath(`/matches/${fx.id}`);
     } catch (err) {
@@ -62,18 +69,23 @@ export async function refreshFinishedMatches(): Promise<CronTaskResult> {
     }
   }
 
-  // Tag-based invalidation so any component that opts in via `next.tags`
-  // also rebuilds on the next request.
   revalidateTag("matches");
 
-  const failedCount = errors.length;
   const okCount = refreshed.length;
+  const failedCount = errors.length;
+  const callsMade = (okCount + failedCount) * CALLS_PER_FIXTURE;
 
   return {
     task,
     status: failedCount > 0 && okCount === 0 ? "failed" : "ok",
-    summary: `${okCount} kamper refreshet${failedCount ? `, ${failedCount} feilet` : ""} (vindu: ±${LOOKBACK_HOURS}t)`,
-    detail: { refreshed, errors, considered: candidates.length },
+    summary: `${okCount} kamper refreshet${failedCount ? `, ${failedCount} feilet` : ""} · ~${callsMade} API-calls`,
+    detail: {
+      refreshed,
+      errors,
+      considered: candidates.length,
+      callsMade,
+      capPerRun: MAX_FIXTURES_PER_RUN * CALLS_PER_FIXTURE,
+    },
     durationMs: Math.round(performance.now() - startedAt),
   };
 }

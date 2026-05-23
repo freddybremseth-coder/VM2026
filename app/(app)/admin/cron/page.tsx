@@ -11,8 +11,10 @@
  */
 
 import { useEffect, useState } from "react";
-import { CheckCircle2, AlertTriangle, Clock, RefreshCw, Cpu } from "lucide-react";
+import { CheckCircle2, AlertTriangle, Clock, RefreshCw, Cpu, Activity } from "lucide-react";
 import type { CronRunReport, CronTaskResult } from "@/lib/cron/types";
+
+const PHASE_LABEL = { pre: "Før VM", during: "Under VM", post: "Etter VM" } as const;
 
 interface StatusResponse {
   ok: boolean;
@@ -53,9 +55,9 @@ export default function CronStatusPage() {
           </div>
           <h1 className="text-2xl font-bold tracking-tight">Cron status</h1>
           <p className="text-sm text-pitch-400 mt-1">
-            Periodisk refresh kjører <span className="font-mono">hver 2. time</span>{" "}
-            (00:00, 02:00, 04:00 UTC …). Henter kampresultater, sjekker
-            troppendringer og oppdaterer landslagsform.
+            Periodisk refresh kjører <span className="font-mono">hver 6. time</span>{" "}
+            (00:00, 06:00, 12:00, 18:00 UTC). Hva som kjøres avhenger av VM-fase
+            — målet er &lt; 100 API-calls/dag (free-tier-grensen).
           </p>
         </div>
         <button
@@ -105,8 +107,53 @@ function ReportView({ report }: { report: CronRunReport }) {
   const finishedDate = new Date(report.finishedAt);
   const minutesAgo = Math.floor((Date.now() - finishedDate.getTime()) / 60000);
 
+  // Defensive: phase + budget may be undefined on a report stored before the upgrade.
+  const phase = report.phase ?? "pre";
+  const callsMade = report.callsMade ?? 0;
+  const dailyBudget = report.dailyBudgetEstimate ?? 0;
+  const utilization = dailyBudget > 0 ? Math.round((dailyBudget / 100) * 100) : 0;
+  const budgetTone =
+    dailyBudget < 50 ? "text-win" : dailyBudget < 90 ? "text-draw" : "text-loss";
+
   return (
     <div className="space-y-4">
+      {/* Phase banner */}
+      <div className="card-panel p-4 ring-1 ring-accent-500/20">
+        <div className="flex items-center gap-3 flex-wrap">
+          <div className="flex items-center gap-2 px-3 py-1.5 rounded-md bg-accent-500/10 text-accent-300">
+            <Activity size={12} />
+            <span className="text-xs font-semibold uppercase tracking-widest font-mono">
+              {PHASE_LABEL[phase]}
+            </span>
+          </div>
+          <div className="flex-1 min-w-[160px]">
+            <div className="text-[10px] uppercase tracking-widest text-pitch-500 font-mono mb-0.5">
+              Daglig budsjett (estimat)
+            </div>
+            <div className={`font-mono text-lg font-bold stat-num ${budgetTone}`}>
+              ~{dailyBudget} <span className="text-pitch-500 text-xs font-normal">/ 100 calls</span>
+            </div>
+          </div>
+          <div>
+            <div className="text-[10px] uppercase tracking-widest text-pitch-500 font-mono mb-0.5">
+              Denne kjøringen
+            </div>
+            <div className="font-mono text-lg font-bold stat-num text-pitch-100">
+              {callsMade} <span className="text-pitch-500 text-xs font-normal">calls</span>
+            </div>
+          </div>
+        </div>
+        {/* Budget bar */}
+        <div className="mt-3 h-1.5 rounded-full bg-pitch-800 overflow-hidden">
+          <div
+            className={`h-full ${
+              dailyBudget < 50 ? "bg-win" : dailyBudget < 90 ? "bg-draw" : "bg-loss"
+            }`}
+            style={{ width: `${utilization}%` }}
+          />
+        </div>
+      </div>
+
       <div className="card-panel p-5">
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2">

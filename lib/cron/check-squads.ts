@@ -1,24 +1,24 @@
 /**
  * Cron task #2 — detect squad announcement updates.
  *
- * We have a static squad-status field per team ("pending" / "preliminary" /
- * "official"). API-Football's `/players/squads?team={afId}` returns the
- * federation's published roster when available.
+ * Phase-aware: only runs in "pre" phase. Once the WC starts every team has
+ * announced their squad and there's nothing left to detect. After the WC
+ * starts this task is skipped entirely.
  *
- * Strategy: for every team whose squad isn't already marked "official", probe
- * the API and check whether the roster size has changed (a delta usually means
- * a new announcement). We don't mutate our static data — instead we log the
- * delta so the curator can refresh `lib/wc26-squads.ts` manually.
- *
- * This keeps the data layer stable and reviewable while still surfacing fresh
- * announcements within 2 hours of publication.
+ * Per run we probe at most 3 teams (3 calls/run). Pre-WC: 4 runs/day × 3
+ * calls = 12 calls/day for squad checks. With ~15 teams not yet "official"
+ * we cycle through everyone in ~5 days, well before the deadline.
  */
 
+import { revalidatePath, revalidateTag } from "next/cache";
 import { TEAMS } from "@/lib/wc26-data";
 import { getSquad } from "@/lib/wc26-squads";
 import { getAFTeamId } from "@/lib/api-football-ids";
-import { revalidatePath, revalidateTag } from "next/cache";
+import { getPhase } from "./phase";
 import type { CronTaskResult } from "./types";
+
+const MAX_TEAMS_PER_RUN = 3;
+const CALLS_PER_TEAM = 1;
 
 interface AFPlayer { id: number; name: string; position?: string }
 interface AFSquadResponse {
@@ -58,8 +58,34 @@ export async function checkSquadAnnouncements(): Promise<CronTaskResult> {
     };
   }
 
-  // Only probe teams not yet marked official — saves API quota.
+  const phase = getPhase();
+  if (phase !== "pre") {
+    return {
+      task,
+      status: "skipped",
+      summary: `Phase=${phase} — alle tropper er annonsert`,
+      detail: { phase, callsMade: 0 },
+      durationMs: Math.round(performance.now() - startedAt),
+    };
+  }
+
+  // Rotate the slice of "not yet official" teams we probe each run, keyed on
+  // hour-of-day so every team gets a turn over the day.
   const candidates = TEAMS.filter((t) => t.squadStatus !== "official");
+  if (candidates.length === 0) {
+    return {
+      task,
+      status: "ok",
+      summary: "Alle lag allerede markert official",
+      detail: { phase, callsMade: 0 },
+      durationMs: Math.round(performance.now() - startedAt),
+    };
+  }
+
+  const hour = new Date().getUTCHours(); // 0..23
+  const slot = Math.floor(hour / 6);     // 0..3 (matches 6h cron interval)
+  const offset = (slot * MAX_TEAMS_PER_RUN) % Math.max(candidates.length, 1);
+  const batch = candidates.slice(offset, offset + MAX_TEAMS_PER_RUN);
 
   const changes: Array<{
     teamId: number;
@@ -69,22 +95,19 @@ export async function checkSquadAnnouncements(): Promise<CronTaskResult> {
     ourSize: number;
     delta: number;
   }> = [];
+  let callsMade = 0;
 
-  // Cap to 8 teams per run to stay under quota (8 × 12 runs/day = 96 req)
-  const cap = Math.min(candidates.length, 8);
-  for (let i = 0; i < cap; i++) {
-    const team = candidates[i];
+  for (const team of batch) {
     const afId = getAFTeamId(team.id);
     if (!afId) continue;
 
     const afSquad = await fetchAFSquad(afId);
+    callsMade += CALLS_PER_TEAM;
     if (!afSquad) continue;
 
     const ourSize = getSquad(team.id).length;
     if (afSquad.length === 0) continue;
 
-    // Flag if API has materially more players than we do, or if we had no
-    // roster at all (pending → preliminary).
     if (ourSize === 0 && afSquad.length >= 20) {
       changes.push({
         teamId: team.id,
@@ -106,7 +129,6 @@ export async function checkSquadAnnouncements(): Promise<CronTaskResult> {
     }
   }
 
-  // If anything changed, invalidate team pages so the UI re-renders next visit.
   if (changes.length > 0) {
     for (const c of changes) revalidatePath(`/teams/${c.teamId}`);
     revalidatePath("/teams");
@@ -118,9 +140,9 @@ export async function checkSquadAnnouncements(): Promise<CronTaskResult> {
     status: "ok",
     summary:
       changes.length === 0
-        ? `Ingen nye troppendringer (sjekket ${cap}/${candidates.length} lag)`
+        ? `Sjekket ${batch.length}/${candidates.length} ufullstendige lag — ingen endringer`
         : `${changes.length} lag har endret troppstørrelse — manuell oppdatering anbefales`,
-    detail: { changes, probed: cap, candidates: candidates.length },
+    detail: { phase, changes, probed: batch.map(t => t.shortName), candidates: candidates.length, callsMade, capPerRun: MAX_TEAMS_PER_RUN * CALLS_PER_TEAM },
     durationMs: Math.round(performance.now() - startedAt),
   };
 }

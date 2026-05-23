@@ -30,4 +30,10 @@ export interface CronRunReport {
   tasks: CronTaskResult[];
   /** True when every task returned "ok" or "skipped". */
   ok: boolean;
+  /** Tournament phase at run time (pre/during/post). */
+  phase: "pre" | "during" | "post";
+  /** Total estimated API-Football calls made this run. */
+  callsMade: number;
+  /** Projected daily ceiling based on the cron schedule × the cap per run. */
+  dailyBudgetEstimate: number;
 }
