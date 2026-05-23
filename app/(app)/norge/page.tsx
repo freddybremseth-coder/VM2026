@@ -71,12 +71,12 @@ export default async function NorgePage() {
           aria-hidden
           className="absolute pointer-events-none"
           style={{
-            inset: "-6%",
+            inset: "-3%",
             backgroundImage: "url(/hero/norge-alt-for-norge.jpg)",
             backgroundSize: "cover",
             backgroundPosition: "center 38%",
-            filter: "blur(14px) saturate(1.1) brightness(.7)",
-            transform: "scale(1.06)",
+            filter: "blur(4px) saturate(1.05) brightness(.75)",
+            transform: "scale(1.03)",
           }}
         />
         {/* Aurora wash — soft green/violet diagonal sweep adds a Nordic
