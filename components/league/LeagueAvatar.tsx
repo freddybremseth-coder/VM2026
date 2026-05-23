@@ -14,7 +14,7 @@ export function LeagueAvatar({ seed, name, size = 40, className }: Props) {
 
   return (
     <div
-      className={"rounded-md flex items-center justify-center font-mono font-bold tracking-tight text-pitch-950 shrink-0 " + (className ?? "")}
+      className={"flex items-center justify-center font-mono font-bold tracking-tight text-canvas shrink-0 " + (className ?? "")}
       style={{
         width: size,
         height: size,

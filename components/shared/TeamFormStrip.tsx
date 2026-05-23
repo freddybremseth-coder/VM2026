@@ -26,20 +26,20 @@ import { Database, Sparkles } from "lucide-react";
 function ResultDot({ result, match }: { result: FormResult; match: FormMatch }) {
   const colorClass =
     result === "W"
-      ? "bg-win text-pitch-950"
+      ? "bg-win text-canvas"
       : result === "D"
-      ? "bg-draw text-pitch-950"
-      : "bg-loss text-white";
+      ? "bg-amber text-canvas"
+      : "bg-loss text-cream";
 
   const label =
-    result === "W" ? "S" : result === "D" ? "U" : "T"; // Seier / Uavgjort / Tap
+    result === "W" ? "S" : result === "D" ? "U" : "T";
 
   const tooltip = `${match.opponent} ${match.goalsFor}–${match.goalsAgainst} (${match.competition})`;
 
   return (
     <span
       title={tooltip}
-      className={`inline-flex items-center justify-center w-6 h-6 rounded-full text-[10px] font-bold leading-none ${colorClass} cursor-default`}
+      className={`inline-flex items-center justify-center w-5 h-5 text-[10px] font-bold leading-none ${colorClass} cursor-default`}
     >
       {label}
     </span>
@@ -81,12 +81,9 @@ export function TeamFormStrip({
 
   if (loading) {
     return (
-      <div className="flex items-center gap-1.5">
+      <div className="flex items-center gap-1">
         {[...Array(5)].map((_, i) => (
-          <span
-            key={i}
-            className="w-6 h-6 rounded-full bg-pitch-700 animate-pulse"
-          />
+          <span key={i} className="w-5 h-5 bg-paper animate-pulse" />
         ))}
       </div>
     );
@@ -107,11 +104,15 @@ export function TeamFormStrip({
 
       {/* Source badge */}
       <span
-        title={isMock ? "Eksempeldata — sett API_FOOTBALL_KEY for ekte kampdata" : `API-Football · ${form.fetchedAt.slice(0,10)}`}
-        className={`flex items-center gap-1 text-[9px] font-mono uppercase tracking-widest px-1.5 py-0.5 rounded ${
+        title={
           isMock
-            ? "bg-pitch-800 text-pitch-500"
-            : "bg-data-500/10 text-data-300"
+            ? "Eksempeldata — sett API_FOOTBALL_KEY for ekte kampdata"
+            : `API-Football · ${form.fetchedAt.slice(0, 10)}`
+        }
+        className={`flex items-center gap-1 text-[9px] font-mono uppercase tracking-kicker px-1.5 py-0.5 ${
+          isMock
+            ? "bg-paper text-cream/45 border border-cream/8"
+            : "bg-amber/10 text-amber"
         }`}
       >
         {isMock ? <Sparkles size={8} /> : <Database size={8} />}
@@ -120,10 +121,10 @@ export function TeamFormStrip({
 
       {/* Last match detail (optional) */}
       {showLastMatch && form.matches[0] && (
-        <div className="text-[10px] text-pitch-400 font-mono">
+        <div className="text-[10px] text-cream/55 font-mono">
           Sist: {form.matches[0].opponent}{" "}
           {form.matches[0].goalsFor}–{form.matches[0].goalsAgainst}{" "}
-          <span className="text-pitch-600">({form.matches[0].date.slice(0, 7)})</span>
+          <span className="text-cream/35">({form.matches[0].date.slice(0, 7)})</span>
         </div>
       )}
     </div>
@@ -144,8 +145,10 @@ export function TeamFormStripStatic({ form }: { form: TeamFormData }) {
         ))}
       </div>
       <span
-        className={`text-[9px] font-mono uppercase tracking-widest px-1.5 py-0.5 rounded ${
-          isMock ? "bg-pitch-800 text-pitch-500" : "bg-data-500/10 text-data-300"
+        className={`text-[9px] font-mono uppercase tracking-kicker px-1.5 py-0.5 ${
+          isMock
+            ? "bg-paper text-cream/45 border border-cream/8"
+            : "bg-amber/10 text-amber"
         }`}
       >
         {isMock ? "mock" : "live"}

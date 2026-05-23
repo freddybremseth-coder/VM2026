@@ -18,14 +18,16 @@ export function Sidebar({ labels }: { labels?: Partial<NavLabels> }) {
   const resolved: NavLabels = { ...DEFAULT_NAV_LABELS, ...(labels ?? {}) };
 
   return (
-    <aside className="hidden lg:flex w-60 shrink-0 flex-col border-r border-pitch-800 bg-pitch-900/40 px-3 py-5">
+    <aside className="hidden lg:flex w-60 shrink-0 flex-col border-r border-cream/8 bg-paper/40 px-3 py-5">
       <Link href="/" className="px-2 mb-6 flex items-center gap-2.5 group">
-        <AppLogo size={36} className="group-hover:scale-105 transition-transform" />
+        <div className="w-9 h-9 bg-signal flex items-center justify-center font-serif font-bold text-cream text-base tracking-tight">
+          26
+        </div>
         <div className="leading-tight">
-          <div className="text-sm font-bold tracking-tight bg-gradient-to-r from-[#ff5cc8] via-[#a78bfa] to-[#22d3ee] bg-clip-text text-transparent">
-            WC26
+          <div className="font-serif text-base font-semibold tracking-editorial text-cream">
+            VM 2026
           </div>
-          <div className="text-[10px] uppercase tracking-widest text-pitch-300">
+          <div className="text-[10px] uppercase tracking-kicker font-mono text-cream/55">
             Stats · Predictions
           </div>
         </div>
@@ -39,38 +41,47 @@ export function Sidebar({ labels }: { labels?: Partial<NavLabels> }) {
               key={href}
               href={href}
               className={cn(
-                "group flex items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors",
+                "group relative flex items-center gap-3 px-3 py-2 text-sm transition-colors",
                 active
-                  ? "bg-pitch-800 text-accent-300 font-semibold"
-                  : "text-pitch-200 hover:bg-pitch-800/60 hover:text-white",
+                  ? "text-cream font-semibold"
+                  : "text-cream/65 hover:text-cream",
               )}
             >
+              {/* Signal underline on active */}
+              {active && (
+                <span
+                  aria-hidden
+                  className="absolute left-0 top-1/2 -translate-y-1/2 h-5 w-[2px] bg-signal"
+                />
+              )}
               <Icon
                 size={16}
                 className={cn(
                   "shrink-0",
-                  active ? "text-accent-400" : "text-pitch-300 group-hover:text-pitch-100",
+                  active ? "text-signal" : "text-cream/55 group-hover:text-cream",
                 )}
               />
-              <span>{resolved[key]}</span>
+              <span className={active ? "font-serif tracking-editorial" : ""}>
+                {resolved[key]}
+              </span>
             </Link>
           );
         })}
       </nav>
 
-      <div className="mt-auto pt-4 border-t border-pitch-800 space-y-3">
-        <div className="rounded-md bg-pitch-800/60 p-3">
-          <div className="text-[10px] uppercase tracking-widest text-pitch-300">
+      <div className="mt-auto pt-4 border-t border-cream/8 space-y-3">
+        <div className="surface px-3 py-2.5">
+          <div className="text-[10px] uppercase tracking-kicker font-mono text-cream/55">
             Live model
           </div>
-          <div className="mt-1 font-mono text-xs text-accent-300">
+          <div className="mt-1 font-mono text-xs text-signal">
             wcf-baseline-v0.1
           </div>
         </div>
         <div className="px-2">
           <ChatGeniusBadge />
         </div>
-        <div className="px-2 pt-2 border-t border-pitch-800/60">
+        <div className="px-2 pt-2 border-t border-cream/8">
           <CreditsBadge />
         </div>
       </div>

@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useTransition } from "react";
 import { Sparkles, Check, X } from "lucide-react";
+import { Kicker } from "@/components/shared/EditorialKicker";
 import {
   getAllGuestPredictions,
   clearGuestPredictions,
@@ -30,22 +31,23 @@ export function GuestMigrationPrompt() {
   if (guestCount === 0 && !done) return null;
   if (done) {
     return (
-      <div className="card-panel p-4 ring-1 ring-accent-500/30 flex items-center gap-3 text-sm">
-        <Check size={16} className="text-accent-400 shrink-0" />
-        <div className="flex-1 text-pitch-200">
-          Imported <span className="font-semibold text-accent-300">{done.imported}</span>{" "}
-          guest tip{done.imported === 1 ? "" : "s"} into your account.
+      <div className="surface p-4 ring-1 ring-signal/30 flex items-center gap-3 text-sm">
+        <Check size={16} className="text-signal shrink-0" />
+        <div className="flex-1 text-cream/85">
+          Importerte{" "}
+          <span className="font-semibold text-signal stat-num">{done.imported}</span>{" "}
+          gjeste-tips inn på kontoen din.
           {done.skipped > 0 && (
-            <span className="text-pitch-500 ml-2">
-              ({done.skipped} skipped — already tipped or kicked off)
+            <span className="text-cream/45 ml-2 font-mono text-xs">
+              ({done.skipped} hoppet over — allerede tippet eller startet)
             </span>
           )}
         </div>
         <button
           type="button"
           onClick={() => setDone(null)}
-          className="text-pitch-400 hover:text-pitch-100"
-          aria-label="Dismiss"
+          className="text-cream/55 hover:text-cream"
+          aria-label="Lukk"
         >
           <X size={14} />
         </button>
@@ -77,17 +79,18 @@ export function GuestMigrationPrompt() {
   }
 
   return (
-    <div className="card-panel p-5 ring-1 ring-accent-500/30 flex items-center justify-between gap-4 bg-gradient-to-r from-accent-500/10 via-transparent to-transparent">
+    <div className="surface p-5 ring-1 ring-signal/30 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 bg-gradient-to-r from-signal/10 via-transparent to-transparent">
       <div className="flex items-center gap-3 min-w-0">
-        <div className="h-10 w-10 rounded-md bg-accent-500/15 flex items-center justify-center shrink-0">
-          <Sparkles size={18} className="text-accent-400" />
+        <div className="h-10 w-10 bg-signal/15 flex items-center justify-center shrink-0">
+          <Sparkles size={18} className="text-amber" />
         </div>
         <div className="min-w-0">
-          <div className="text-sm font-semibold">
-            {guestCount} guest tip{guestCount === 1 ? "" : "s"} found on this device
+          <Kicker tone="signal">Gjeste-tips funnet</Kicker>
+          <div className="font-serif text-base font-semibold tracking-editorial text-cream mt-0.5">
+            {guestCount} gjeste-tips{guestCount === 1 ? "" : ""} på denne enheten
           </div>
-          <div className="text-xs text-pitch-400 mt-0.5">
-            Import them into your account so they earn points when the matches finish.
+          <div className="text-xs text-cream/55 mt-1 leading-relaxed">
+            Importer dem inn på kontoen så de gir poeng når kampene er ferdige.
           </div>
         </div>
       </div>
@@ -96,17 +99,17 @@ export function GuestMigrationPrompt() {
           type="button"
           onClick={migrate}
           disabled={pending}
-          className="rounded-md bg-accent-500 hover:bg-accent-400 disabled:bg-pitch-700 text-pitch-950 text-xs font-semibold px-3 py-1.5 transition-colors"
+          className="bg-signal hover:bg-signalD disabled:bg-paper disabled:text-cream/35 text-cream text-xs font-semibold px-3 py-1.5 transition-colors"
         >
-          {pending ? "Importing…" : "Import"}
+          {pending ? "Importerer…" : "Importer"}
         </button>
         <button
           type="button"
           onClick={discard}
           disabled={pending}
-          className="rounded-md bg-pitch-800 hover:bg-pitch-700 text-pitch-300 text-xs font-semibold px-3 py-1.5 transition-colors"
+          className="bg-paper hover:bg-paperHi border border-cream/8 text-cream/70 text-xs font-semibold px-3 py-1.5 transition-colors"
         >
-          Discard
+          Forkast
         </button>
       </div>
     </div>

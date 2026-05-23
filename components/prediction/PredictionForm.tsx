@@ -5,7 +5,7 @@ import { useRef, useState } from "react";
 import { useFormState, useFormStatus } from "react-dom";
 import Link from "next/link";
 import { Check, Save, MapPin, Cpu, Share2 } from "lucide-react";
-import { TeamFlag } from "@/components/shared/TeamFlag";
+import { HoloFlag } from "@/components/shared/HoloFlag";
 import { formatKickoff, formatDateLabel } from "@/lib/utils";
 import {
   savePredictionAction,
@@ -56,12 +56,14 @@ export function PredictionForm({
   }
 
   return (
-    <form action={formAction} className="card-panel p-4">
+    <form action={formAction} className="surface p-4">
       <input type="hidden" name="matchId" value={matchId} />
 
-      <div className="flex items-center justify-between text-[11px] uppercase tracking-widest text-pitch-400 mb-3">
-        <span>{stageLabel}</span>
-        <span className="font-mono text-pitch-300">
+      <div className="flex items-center justify-between mb-3">
+        <span className="text-[10px] font-mono uppercase tracking-kicker text-cream/55">
+          {stageLabel}
+        </span>
+        <span className="font-mono text-[11px] text-cream/70 stat-num">
           {formatDateLabel(kickoff).split(",")[0]} · {formatKickoff(kickoff)}
         </span>
       </div>
@@ -72,7 +74,7 @@ export function PredictionForm({
         <TeamSide team={home} align="right" />
         <div className="flex items-center justify-center gap-2">
           <ScoreInput ref={homeRef} name="homeScore" defaultValue={existing?.home_score ?? 0} />
-          <span className="text-pitch-500 font-mono">·</span>
+          <span className="text-cream/35 font-serif italic">·</span>
           <ScoreInput ref={awayRef} name="awayScore" defaultValue={existing?.away_score ?? 0} />
         </div>
         <TeamSide team={away} align="left" />
@@ -80,21 +82,21 @@ export function PredictionForm({
 
       <AITipBar onPick={fillAITip} hint={aiHint} />
 
-      <div className="mt-4 pt-3 border-t border-pitch-700/60 flex items-center justify-between gap-3">
+      <div className="mt-4 pt-3 border-t border-cream/8 flex items-center justify-between gap-3">
         <div className="min-h-[18px] text-[11px] flex items-center gap-1.5">
-          {state.error && <span className="text-loss">{state.error}</span>}
+          {state.error && <span className="text-loss font-mono">{state.error}</span>}
           {state.ok && (
-            <span className="text-accent-300 flex items-center gap-1">
-              <Check size={11} /> Saved
+            <span className="text-signal font-mono flex items-center gap-1">
+              <Check size={11} /> Lagret
             </span>
           )}
           {!state.error && !state.ok && existing && (
-            <span className="text-pitch-400">
-              Saved: {existing.home_score}–{existing.away_score}
+            <span className="text-cream/55 font-mono stat-num">
+              Lagret: {existing.home_score}–{existing.away_score}
             </span>
           )}
           {!state.error && !state.ok && !existing && (
-            <span className="text-pitch-400 flex items-center gap-1">
+            <span className="text-cream/55 font-mono flex items-center gap-1">
               <MapPin size={10} /> {venueLabel}
             </span>
           )}
@@ -103,11 +105,11 @@ export function PredictionForm({
           {existing && (
             <Link
               href={`/share/tip/${matchId}/${existing.home_score}-${existing.away_score}`}
-              className="rounded-md bg-pitch-800 hover:bg-pitch-700 text-pitch-200 text-xs font-semibold px-2.5 py-1.5 transition-colors flex items-center gap-1.5"
-              aria-label="Share my tip"
+              className="bg-paper hover:bg-paperHi border border-cream/8 text-cream/85 text-xs font-semibold px-2.5 py-1.5 transition-colors flex items-center gap-1.5"
+              aria-label="Del mitt tips"
             >
               <Share2 size={12} />
-              <span className="hidden sm:inline">Share</span>
+              <span className="hidden sm:inline">Del</span>
             </Link>
           )}
           <SubmitButton hasExisting={!!existing} />
@@ -135,10 +137,12 @@ function TeamSide({
           : "")
       }
     >
-      <TeamFlag code={team.flag} size="md" />
+      <HoloFlag code={team.flag} w={22} radius={2} />
       <div className="min-w-0 flex-1 sm:flex-initial">
-        <div className="font-semibold text-sm truncate">{team.name}</div>
-        <div className="text-[10px] uppercase tracking-widest text-pitch-400 font-mono">
+        <div className="font-serif text-sm font-semibold tracking-editorial text-cream truncate">
+          {team.name}
+        </div>
+        <div className="text-[10px] uppercase tracking-kicker text-cream/45 font-mono">
           {team.shortName}
         </div>
       </div>
@@ -162,7 +166,7 @@ const ScoreInput = React.forwardRef<
       // typing "2" into a field showing "0" produces "20").
       onFocus={(e) => e.currentTarget.select()}
       onClick={(e) => e.currentTarget.select()}
-      className="w-14 h-12 text-center font-mono text-xl font-bold stat-num bg-pitch-900 border border-pitch-700 rounded-md focus:outline-none focus:ring-2 focus:ring-accent-500/50 focus:border-accent-500/50 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+      className="w-14 h-12 text-center font-serif text-2xl font-semibold stat-num text-cream bg-canvas border border-cream/8 focus:outline-none focus:border-signal/50 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
       required
     />
   );
@@ -180,11 +184,11 @@ export function AITipBar({
   hint: string | null;
 }) {
   return (
-    <div className="mt-3 pt-3 border-t border-pitch-700/60">
+    <div className="mt-3 pt-3 border-t border-cream/8">
       <div className="flex items-center gap-2 mb-1.5">
-        <Cpu size={11} className="text-accent-400" />
-        <span className="text-[10px] uppercase tracking-widest text-pitch-400 font-mono">
-          AI tip
+        <Cpu size={11} className="text-amber" />
+        <span className="text-[10px] uppercase tracking-kicker text-cream/55 font-mono">
+          AI tippehjelp
         </span>
         <div className="flex gap-1 ml-auto">
           {(Object.keys(TIP_MODE_META) as TipMode[]).map((m) => {
@@ -194,7 +198,7 @@ export function AITipBar({
                 key={m}
                 type="button"
                 onClick={() => onPick(m)}
-                className={`flex items-center gap-1 px-2 py-1 rounded-md text-[10px] uppercase tracking-widest font-mono font-semibold ring-1 ${meta.tone} hover:brightness-125 transition`}
+                className={`flex items-center gap-1 px-2 py-1 text-[10px] uppercase tracking-kicker font-mono font-semibold ring-1 ${meta.tone} hover:brightness-125 transition`}
               >
                 <span>{meta.icon}</span>
                 {meta.label}
@@ -203,7 +207,9 @@ export function AITipBar({
           })}
         </div>
       </div>
-      {hint && <div className="text-[11px] text-pitch-300 italic">{hint}</div>}
+      {hint && (
+        <div className="text-[11px] text-cream/70 italic font-serif">{hint}</div>
+      )}
     </div>
   );
 }
@@ -214,10 +220,10 @@ function SubmitButton({ hasExisting }: { hasExisting: boolean }) {
     <button
       type="submit"
       disabled={pending}
-      className="flex items-center gap-1.5 rounded-md bg-accent-500 hover:bg-accent-400 disabled:bg-pitch-700 disabled:text-pitch-500 text-pitch-950 text-xs font-semibold px-3 py-1.5 transition-colors"
+      className="flex items-center gap-1.5 bg-signal hover:bg-signalD disabled:bg-paper disabled:text-cream/35 text-cream text-xs font-semibold px-3 py-1.5 transition-colors"
     >
       <Save size={12} />
-      {pending ? "Saving…" : hasExisting ? "Update tip" : "Save tip"}
+      {pending ? "Lagrer…" : hasExisting ? "Oppdater" : "Lagre tips"}
     </button>
   );
 }

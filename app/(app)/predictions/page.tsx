@@ -4,23 +4,24 @@ import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { PredictionForm } from "@/components/prediction/PredictionForm";
 import { GuestPredictionForm } from "@/components/prediction/GuestPredictionForm";
 import { GuestMigrationPrompt } from "@/components/prediction/GuestMigrationPrompt";
+import { Kicker, Headline } from "@/components/shared/EditorialKicker";
 import { formatDateLabel } from "@/lib/utils";
 import { nextFixtures, type Fixture } from "@/lib/wc26-fixtures";
 import { teamById, venueById } from "@/lib/wc26-data";
 import { getDictionary } from "@/lib/i18n";
 
 const STAGE_LABEL_KO: Record<string, string> = {
-  R32: "Round of 32",
-  R16: "Round of 16",
-  QF: "Quarter-final",
-  SF: "Semi-final",
-  "3RD": "Third place",
-  FINAL: "Final",
+  R32: "Runde av 32",
+  R16: "Runde av 16",
+  QF: "Kvartfinale",
+  SF: "Semifinale",
+  "3RD": "Bronsefinale",
+  FINAL: "Finale",
 };
 
 function stageLabel(f: Fixture): string {
   return f.stage.kind === "group"
-    ? `Group ${f.stage.group} · MD${f.stage.matchday}`
+    ? `Gruppe ${f.stage.group} · MD${f.stage.matchday}`
     : STAGE_LABEL_KO[f.stage.round];
 }
 
@@ -34,12 +35,10 @@ export default async function PredictionsPage() {
   const t = getDictionary();
 
   const now = new Date();
-  // No limit — give every future fixture with a known pairing.
   const open = nextFixtures(now.toISOString(), 200).filter(
     (f) => f.homeId && f.awayId,
   );
 
-  // Group fixtures by date so the page stays scannable when there are 50+ of them.
   const byDay = new Map<string, Fixture[]>();
   for (const f of open) {
     const k = dayKey(f.kickoff);
@@ -64,31 +63,40 @@ export default async function PredictionsPage() {
   }
 
   return (
-    <div className="px-6 py-6 max-w-[1100px] mx-auto space-y-8">
+    <div className="px-5 md:px-10 py-8 max-w-[1100px] mx-auto space-y-8">
       <header>
-        <div className="flex items-center gap-2 text-[10px] uppercase tracking-widest text-accent-400 font-semibold mb-1">
-          <Target size={12} />
-          Predictions
-        </div>
-        <h1 className="text-2xl md:text-3xl font-bold tracking-tight">
+        <Kicker tone="signal">
+          <span className="inline-flex items-center gap-2">
+            <Target size={11} /> Tippe
+          </span>
+        </Kicker>
+        <Headline rank="h1" className="mt-2">
           {t.predictions.title}
-        </h1>
-        <p className="text-sm text-pitch-400 mt-1">{t.predictions.subtitle}</p>
+        </Headline>
+        <p className="text-sm text-cream/55 mt-3 max-w-2xl leading-relaxed">
+          {t.predictions.subtitle}
+        </p>
       </header>
 
-      {!user && <GuestBanner labels={t.predictions.guestBanner} signInLabel={t.common.signIn} registerLabel={t.common.register} />}
+      {!user && (
+        <GuestBanner
+          labels={t.predictions.guestBanner}
+          signInLabel={t.common.signIn}
+          registerLabel={t.common.register}
+        />
+      )}
       {user && <GuestMigrationPrompt />}
 
       <section className="space-y-3">
-        <h2 className="text-xs uppercase tracking-widest font-semibold text-pitch-200">
+        <div className="text-[10px] uppercase tracking-kicker font-mono font-semibold text-cream/70">
           {t.predictions.open(open.length)}
-        </h2>
+        </div>
         {open.length === 0 ? (
-          <div className="card-panel p-6 text-center text-sm text-pitch-500">
+          <div className="surface p-6 text-center text-sm text-cream/55 italic font-serif">
             {t.predictions.none}
           </div>
         ) : (
-          <div className="space-y-6">
+          <div className="space-y-8">
             {days.map(([day, fixtures]) => (
               <DaySection
                 key={day}
@@ -102,9 +110,9 @@ export default async function PredictionsPage() {
         )}
       </section>
 
-      <section className="card-panel p-4 flex items-start gap-3">
-        <Lock size={14} className="text-pitch-500 shrink-0 mt-0.5" />
-        <p className="text-xs text-pitch-400 leading-relaxed">
+      <section className="surface p-4 flex items-start gap-3">
+        <Lock size={14} className="text-cream/45 shrink-0 mt-0.5" />
+        <p className="text-xs text-cream/55 leading-relaxed">
           {t.predictions.knockoutNote}
         </p>
       </section>
@@ -125,13 +133,13 @@ function DaySection({
 }) {
   return (
     <div>
-      <div className="sticky top-[57px] z-10 bg-pitch-950/85 backdrop-blur py-2 mb-3 flex items-center gap-2 border-b border-pitch-800/60">
-        <Calendar size={12} className="text-accent-400" />
-        <h3 className="text-xs uppercase tracking-widest font-semibold text-accent-300 font-mono">
+      <div className="sticky top-[57px] z-10 bg-canvas/85 backdrop-blur py-2 mb-3 flex items-center gap-3 border-b border-cream/8">
+        <Calendar size={11} className="text-signal" />
+        <span className="text-[10px] uppercase tracking-kicker font-semibold text-cream font-mono">
           {formatDateLabel(day + "T12:00:00Z")}
-        </h3>
-        <span className="text-[10px] font-mono text-pitch-500">
-          {fixtures.length} {fixtures.length === 1 ? "match" : "matches"}
+        </span>
+        <span className="text-[10px] font-mono text-cream/45 stat-num">
+          {fixtures.length} {fixtures.length === 1 ? "kamp" : "kamper"}
         </span>
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -172,9 +180,8 @@ function DaySection({
 }
 
 /**
- * Guest-tipping banner. Replaces the old "Sign in first" prompt — the user
- * can now tip 3 matches before being asked to sign up, so the messaging is
- * "you can try, but to keep going you'll need an account".
+ * Guest-tipping banner. Tip 3 matches before being asked to sign up — the
+ * messaging is "you can try, but to keep going you'll need an account".
  */
 function GuestBanner({
   labels,
@@ -186,26 +193,29 @@ function GuestBanner({
   registerLabel: string;
 }) {
   return (
-    <div className="card-panel p-5 ring-1 ring-accent-500/20 flex items-center justify-between gap-4">
-      <div className="flex items-center gap-3">
-        <div className="h-10 w-10 rounded-md bg-accent-500/15 flex items-center justify-center">
-          <Sparkles size={18} className="text-accent-400" />
+    <div className="surface p-5 ring-1 ring-signal/30 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 bg-gradient-to-r from-signal/10 via-transparent to-transparent">
+      <div className="flex items-center gap-3 min-w-0">
+        <div className="h-10 w-10 bg-signal/15 flex items-center justify-center shrink-0">
+          <Sparkles size={18} className="text-amber" />
         </div>
-        <div>
-          <div className="text-sm font-semibold">{labels.title}</div>
-          <div className="text-xs text-pitch-400 mt-0.5">{labels.body}</div>
+        <div className="min-w-0">
+          <Kicker tone="signal">Gjeste-tipping</Kicker>
+          <div className="font-serif text-base font-semibold tracking-editorial text-cream mt-0.5">
+            {labels.title}
+          </div>
+          <div className="text-xs text-cream/55 mt-1 leading-relaxed">{labels.body}</div>
         </div>
       </div>
       <div className="flex items-center gap-2 shrink-0">
         <Link
           href="/login"
-          className="rounded-md bg-accent-500 hover:bg-accent-400 text-pitch-950 text-xs font-semibold px-3 py-1.5 flex items-center gap-1.5"
+          className="bg-signal hover:bg-signalD text-cream text-xs font-semibold px-3 py-1.5 flex items-center gap-1.5 transition-colors"
         >
           <LogIn size={12} /> {signInLabel}
         </Link>
         <Link
           href="/register"
-          className="rounded-md bg-pitch-800 hover:bg-pitch-700 text-pitch-100 text-xs font-semibold px-3 py-1.5"
+          className="bg-paper hover:bg-paperHi border border-cream/8 text-cream/85 text-xs font-semibold px-3 py-1.5 transition-colors"
         >
           {registerLabel}
         </Link>

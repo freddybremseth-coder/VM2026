@@ -1,59 +1,47 @@
 import Link from "next/link";
 import { Users } from "lucide-react";
-import { TeamFlag } from "@/components/shared/TeamFlag";
+import { HoloFlag } from "@/components/shared/HoloFlag";
+import { Kicker, Headline } from "@/components/shared/EditorialKicker";
 import { DataSourceBanner } from "@/components/shared/DataSourceBanner";
 import { TEAMS, GROUPS } from "@/lib/wc26-data";
 
 export default function TeamsPage() {
   return (
-    <div className="px-6 py-6 max-w-[1400px] mx-auto">
+    <div className="px-5 md:px-10 py-8 max-w-[1400px] mx-auto">
       <header className="mb-6">
-        <div className="flex items-center gap-2 text-[10px] uppercase tracking-widest text-accent-400 font-semibold mb-1">
-          <Users size={12} />
-          Teams
-        </div>
-        <h1 className="text-2xl md:text-3xl font-bold tracking-tight">
-          All 48 nations
-        </h1>
-        <p className="text-sm text-pitch-400 mt-1">
-          Grouped by their first-round group. Click any team to see squad details.
+        <Kicker tone="signal">
+          <span className="inline-flex items-center gap-2">
+            <Users size={11} /> Lag
+          </span>
+        </Kicker>
+        <Headline rank="h1" className="mt-2">
+          Alle 48 nasjoner.
+        </Headline>
+        <p className="text-sm text-cream/55 mt-3 max-w-xl">
+          Sortert etter første-rundes gruppe. Trykk på et lag for å se troppen.
         </p>
       </header>
 
-      <div className="mb-5">
-        <DataSourceBanner caveat="Squad status (Official / Preliminary / Pending) reflects what each federation has published as of the last verification date." />
+      <div className="mb-6">
+        <DataSourceBanner caveat="Trop-status (Official / Preliminær / Pending) gjenspeiler det forbundet har publisert ved siste verifikasjon." />
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-px bg-cream/8">
         {GROUPS.map((g) => (
-          <div key={g} className="card-panel p-4">
-            <div className="text-[10px] uppercase tracking-widest text-accent-400 font-mono font-semibold mb-3">
-              Group {g}
-            </div>
-            <ul className="space-y-2">
+          <div key={g} className="bg-paper p-5">
+            <Kicker tone="signal">Gruppe {g}</Kicker>
+            <ul className="mt-3 space-y-2">
               {TEAMS.filter((t) => t.group === g).map((t) => (
                 <li key={t.id}>
                   <Link
                     href={`/teams/${t.id}`}
-                    className="flex items-center gap-2 text-sm hover:text-accent-300"
+                    className="flex items-center gap-3 py-1 -mx-2 px-2 hover:bg-cream/5 group transition-colors"
                   >
-                    <TeamFlag code={t.flag} size="sm" />
-                    <span className="flex-1 truncate">{t.name}</span>
-                    <span
-                      className={`text-[9px] uppercase tracking-widest font-mono px-1.5 py-0.5 rounded ${
-                        t.squadStatus === "preliminary"
-                          ? "bg-draw/15 text-draw"
-                          : t.squadStatus === "official"
-                            ? "bg-accent-500/15 text-accent-300"
-                            : "bg-pitch-800 text-pitch-500"
-                      }`}
-                    >
-                      {t.squadStatus === "preliminary"
-                        ? "Prelim"
-                        : t.squadStatus === "official"
-                          ? "Official"
-                          : "Pending"}
+                    <HoloFlag code={t.flag} w={20} radius={2} />
+                    <span className="font-serif text-base tracking-editorial flex-1 truncate group-hover:text-amber transition-colors">
+                      {t.name}
                     </span>
+                    <SquadBadge status={t.squadStatus} />
                   </Link>
                 </li>
               ))}
@@ -62,5 +50,21 @@ export default function TeamsPage() {
         ))}
       </div>
     </div>
+  );
+}
+
+function SquadBadge({ status }: { status: "official" | "preliminary" | "pending" }) {
+  const styles = {
+    official: "bg-win/15 text-win",
+    preliminary: "bg-amber/15 text-amber",
+    pending: "bg-paper text-cream/55 border border-cream/8",
+  }[status];
+  const label = status === "preliminary" ? "Prelim" : status === "official" ? "Official" : "Pending";
+  return (
+    <span
+      className={`text-[9px] uppercase tracking-kicker font-mono px-1.5 py-0.5 ${styles}`}
+    >
+      {label}
+    </span>
   );
 }

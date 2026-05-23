@@ -21,7 +21,7 @@ export function MatchTabs({ matchId }: Props) {
   ];
 
   return (
-    <div className="border-b border-pitch-700/60">
+    <div className="border-b border-cream/8">
       <nav className="flex gap-1 -mb-px overflow-x-auto scrollbar-thin">
         {tabs.map((t) => {
           const active = t.href === base ? pathname === base : pathname === t.href;
@@ -32,8 +32,8 @@ export function MatchTabs({ matchId }: Props) {
               className={cn(
                 "px-4 py-2.5 text-sm border-b-2 transition-colors whitespace-nowrap",
                 active
-                  ? "border-accent-500 text-accent-300"
-                  : "border-transparent text-pitch-400 hover:text-pitch-100 hover:border-pitch-600",
+                  ? "border-signal text-cream font-serif font-semibold tracking-editorial"
+                  : "border-transparent text-cream/55 hover:text-cream hover:border-cream/30",
               )}
             >
               {t.label}

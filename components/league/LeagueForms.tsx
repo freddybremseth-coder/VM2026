@@ -15,34 +15,36 @@ export function CreateLeagueForm() {
   );
 
   return (
-    <form action={formAction} className="card-panel p-5">
+    <form action={formAction} className="surface p-5">
       <div className="flex items-center gap-2 mb-4">
-        <Plus size={14} className="text-accent-400" />
-        <h2 className="text-sm font-semibold">Create a mini-league</h2>
+        <Plus size={14} className="text-signal" />
+        <h2 className="text-[10px] uppercase tracking-kicker font-mono font-semibold text-cream/85">
+          Lag en mini-liga
+        </h2>
       </div>
 
       <div className="flex flex-col gap-3">
-        <Field name="name" label="League name" placeholder="Office Predictions" required />
+        <Field name="name" label="Liga-navn" placeholder="Kontortipping" required />
         <Field
           name="description"
-          label="Description (optional)"
-          placeholder="Friendly tipping among colleagues"
+          label="Beskrivelse (valgfritt)"
+          placeholder="Vennskapelig tipping blant kolleger"
         />
-        <label className="flex items-center gap-2 text-xs text-pitch-300">
+        <label className="flex items-center gap-2 text-xs text-cream/70">
           <input
             type="checkbox"
             name="isPrivate"
             defaultChecked
-            className="rounded border-pitch-600 bg-pitch-900 accent-accent-500"
+            className="border-cream/14 bg-canvas accent-signal"
           />
-          Private — only people with the invite code can join
+          Privat — bare folk med invitasjonskoden kan bli med
         </label>
         {state.error && (
-          <div className="text-xs text-loss bg-loss/10 border border-loss/30 rounded-md px-3 py-2">
+          <div className="text-xs text-loss bg-loss/10 border border-loss/30 px-3 py-2 font-mono">
             {state.error}
           </div>
         )}
-        <Submit label="Create league" />
+        <Submit label="Opprett liga" />
       </div>
     </form>
   );
@@ -52,25 +54,27 @@ export function JoinLeagueForm() {
   const [state, formAction] = useFormState<LeagueResult, FormData>(joinLeagueAction, {});
 
   return (
-    <form action={formAction} className="card-panel p-5">
+    <form action={formAction} className="surface p-5">
       <div className="flex items-center gap-2 mb-4">
-        <Hash size={14} className="text-data-400" />
-        <h2 className="text-sm font-semibold">Join with invite code</h2>
+        <Hash size={14} className="text-amber" />
+        <h2 className="text-[10px] uppercase tracking-kicker font-mono font-semibold text-cream/85">
+          Bli med via invitasjonskode
+        </h2>
       </div>
 
       <div className="flex flex-col gap-3">
         <Field
           name="inviteCode"
-          label="Invite code"
-          placeholder="e.g. a1b2c3d4"
+          label="Invitasjonskode"
+          placeholder="f.eks. a1b2c3d4"
           required
         />
         {state.error && (
-          <div className="text-xs text-loss bg-loss/10 border border-loss/30 rounded-md px-3 py-2">
+          <div className="text-xs text-loss bg-loss/10 border border-loss/30 px-3 py-2 font-mono">
             {state.error}
           </div>
         )}
-        <Submit label="Join league" tone="data" />
+        <Submit label="Bli med" tone="amber" />
       </div>
     </form>
   );
@@ -83,26 +87,29 @@ function Field({
 }: React.InputHTMLAttributes<HTMLInputElement> & { name: string; label: string }) {
   return (
     <label className="block">
-      <span className="text-[10px] uppercase tracking-widest text-pitch-400 font-mono">
+      <span className="text-[10px] uppercase tracking-kicker text-cream/55 font-mono">
         {label}
       </span>
       <input
         name={name}
-        className="mt-1 w-full rounded-md bg-pitch-900/80 border border-pitch-700 px-3 py-2 text-sm placeholder:text-pitch-500 focus:outline-none focus:ring-2 focus:ring-accent-500/40 focus:border-accent-500/40"
+        className="mt-1 w-full bg-canvas border border-cream/8 px-3 py-2 text-sm text-cream placeholder:text-cream/45 focus:outline-none focus:border-signal/50"
         {...rest}
       />
     </label>
   );
 }
 
-function Submit({ label, tone = "accent" }: { label: string; tone?: "accent" | "data" }) {
+function Submit({ label, tone = "signal" }: { label: string; tone?: "signal" | "amber" }) {
   const { pending } = useFormStatus();
-  const bg = tone === "accent" ? "bg-accent-500 hover:bg-accent-400" : "bg-data-500 hover:bg-data-400";
+  const bg =
+    tone === "signal"
+      ? "bg-signal hover:bg-signalD text-cream"
+      : "bg-amber hover:bg-amber/85 text-canvas";
   return (
     <button
       type="submit"
       disabled={pending}
-      className={`${bg} disabled:bg-pitch-700 disabled:text-pitch-500 text-pitch-950 text-xs font-semibold px-4 py-2 rounded-md mt-1 transition-colors`}
+      className={`${bg} disabled:bg-paper disabled:text-cream/35 text-xs font-semibold px-4 py-2 mt-1 transition-colors`}
     >
       {pending ? "…" : label}
     </button>

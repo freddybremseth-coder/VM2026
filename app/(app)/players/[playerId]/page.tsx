@@ -1,7 +1,8 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft, Cpu, TrendingUp, Trophy, Crown, Clock, Sparkles, Target } from "lucide-react";
-import { TeamFlag } from "@/components/shared/TeamFlag";
+import { HoloFlag } from "@/components/shared/HoloFlag";
+import { Kicker } from "@/components/shared/EditorialKicker";
 import { DataSourceBanner } from "@/components/shared/DataSourceBanner";
 import { getAllPlayers, getSquad, getPlayerMinutes } from "@/lib/wc26-squads";
 import { teamById } from "@/lib/wc26-data";
@@ -9,6 +10,13 @@ import { getPlayerForm, type ClubOutcome } from "@/lib/player-form";
 import { getPlayerEventData } from "@/lib/match-events/provider";
 import { PlayerMatchData } from "@/components/match/PlayerMatchData";
 
+/**
+ * Player profile — editorial portrait card + tactician stats grid.
+ *
+ * Number tile in amber/signal radial, serif name, mono kicker for team/position.
+ * Six-stat international block (alder · caps · mål · assists · minutter · G+A)
+ * with a minutes-per-goal sentence underneath when applicable.
+ */
 export default async function PlayerProfilePage({
   params,
 }: {
@@ -26,7 +34,6 @@ export default async function PlayerProfilePage({
     : [];
   const eventData = await getPlayerEventData(player.id);
 
-  // Derived stats
   const intMinutes = getPlayerMinutes(player);
   const goalsPerCap =
     player.caps && player.caps > 0 ? (player.goals ?? 0) / player.caps : null;
@@ -35,48 +42,55 @@ export default async function PlayerProfilePage({
   const goalsPlusAssists = (player.goals ?? 0) + (player.assists ?? 0);
 
   return (
-    <div className="px-4 sm:px-6 py-6 max-w-[1100px] mx-auto space-y-5">
+    <div className="px-4 sm:px-6 md:px-10 py-8 max-w-[1100px] mx-auto space-y-5">
       <Link
         href="/players"
-        className="inline-flex items-center gap-1.5 text-xs text-pitch-400 hover:text-accent-300 transition-colors"
+        className="inline-flex items-center gap-1.5 text-[10px] uppercase tracking-kicker font-mono text-cream/55 hover:text-signal transition-colors"
       >
-        <ArrowLeft size={12} /> All players
+        <ArrowLeft size={11} /> Alle spillere
       </Link>
 
-      <div className="card-panel p-5 sm:p-6 relative overflow-hidden">
-        <div className="absolute inset-0 opacity-[0.04] grid-lines pointer-events-none" />
+      <div className="surface p-5 sm:p-6 relative overflow-hidden">
         <div className="relative flex flex-col sm:flex-row items-start gap-5">
-          <div className="h-20 w-20 rounded-md bg-gradient-to-br from-accent-400 to-accent-600 flex items-center justify-center text-pitch-950 font-mono font-bold text-2xl stat-num shrink-0">
+          <div
+            className="h-24 w-24 flex items-center justify-center font-serif font-semibold text-canvas text-3xl tracking-[-0.04em] shrink-0"
+            style={{
+              background:
+                "radial-gradient(circle at 40% 40%, hsl(var(--amber)) 0%, hsl(var(--signal-deep)) 100%)",
+            }}
+          >
             {player.number || "—"}
           </div>
           <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2 text-[11px] uppercase tracking-widest text-pitch-300 font-mono mb-1 flex-wrap">
+            <div className="flex items-center gap-2 text-[10px] uppercase tracking-kicker font-mono text-cream/55 flex-wrap mb-2">
               {team && (
                 <Link
                   href={`/teams/${team.id}`}
-                  className="flex items-center gap-1.5 hover:text-accent-300"
+                  className="flex items-center gap-1.5 hover:text-amber transition-colors"
                 >
-                  <TeamFlag code={team.flag} size="sm" /> {team.name}
+                  <HoloFlag code={team.flag} w={18} radius={2} /> {team.name}
                 </Link>
               )}
-              <span>·</span>
+              <span className="text-cream/35">·</span>
               <span>{player.position}</span>
-              {player.isCaptain && <span className="text-accent-400">· (C)</span>}
+              {player.isCaptain && <span className="text-signal">· (C)</span>}
             </div>
-            <h1 className="text-2xl md:text-3xl font-bold tracking-tight">
+            <h1 className="font-serif text-3xl md:text-4xl font-semibold tracking-editorial leading-[1.02]">
               {player.name}
             </h1>
-            <p className="text-sm text-pitch-400 mt-1">{player.club}</p>
+            <p className="text-sm text-cream/55 mt-1.5 font-mono">{player.club}</p>
           </div>
         </div>
 
-        {/* International stats — 2 rows on mobile, single row from sm */}
-        <div className="mt-5 pt-4 border-t border-pitch-700/60">
-          <div className="text-[10px] uppercase tracking-widest text-pitch-500 font-mono mb-3 flex items-center gap-1.5">
-            <Target size={10} className="text-accent-400" />
-            Landslagsstatistikk
-          </div>
-          <div className="grid grid-cols-3 sm:grid-cols-6 gap-3 sm:gap-4">
+        {/* International stats */}
+        <div className="mt-6 pt-4 border-t border-cream/8">
+          <Kicker tone="muted">
+            <span className="inline-flex items-center gap-1.5">
+              <Target size={10} className="text-signal" />
+              Landslagsstatistikk
+            </span>
+          </Kicker>
+          <div className="grid grid-cols-3 sm:grid-cols-6 gap-3 sm:gap-4 mt-3">
             <Stat label="Alder" value={player.age ?? "—"} />
             <Stat
               icon={<Crown size={10} />}
@@ -93,7 +107,7 @@ export default async function PlayerProfilePage({
               icon={<Sparkles size={10} />}
               label="Assists"
               value={player.assists ?? "—"}
-              data
+              amber
             />
             <Stat
               icon={<Clock size={10} />}
@@ -110,8 +124,8 @@ export default async function PlayerProfilePage({
             />
           </div>
           {minutesPerGoal && (
-            <p className="mt-3 text-[11px] text-pitch-500">
-              <span className="font-mono stat-num text-pitch-300">
+            <p className="mt-3 text-[11px] text-cream/55 font-mono">
+              <span className="stat-num text-cream">
                 {minutesPerGoal.toLocaleString("nb-NO")}
               </span>{" "}
               minutter per mål for landslaget
@@ -121,23 +135,23 @@ export default async function PlayerProfilePage({
       </div>
 
       {form && (
-        <section className="card-panel p-5">
+        <section className="surface p-5">
           <div className="flex items-center gap-2 mb-3">
-            <TrendingUp size={14} className="text-data-400" />
-            <h2 className="text-xs uppercase tracking-widest font-semibold text-pitch-200">
-              Club form · {form.season}
+            <TrendingUp size={12} className="text-amber" />
+            <h2 className="text-[10px] uppercase tracking-kicker font-mono font-semibold text-cream/70">
+              Klubbform · {form.season}
             </h2>
           </div>
 
           <div className="grid grid-cols-3 gap-4 mb-4">
-            <Stat label="Appearances" value={form.apps} />
-            <Stat label="Goals" value={form.goals} accent />
-            <Stat label="Assists" value={form.assists} />
+            <Stat label="Kamper" value={form.apps} />
+            <Stat label="Mål" value={form.goals} accent />
+            <Stat label="Assists" value={form.assists} amber />
           </div>
 
           <div className="flex items-center gap-2">
-            <span className="text-[10px] uppercase tracking-widest text-pitch-400 font-mono">
-              Last 5
+            <span className="text-[10px] uppercase tracking-kicker text-cream/55 font-mono">
+              Siste 5
             </span>
             <div className="flex items-center gap-1">
               {form.last5.map((o, i) => (
@@ -147,7 +161,7 @@ export default async function PlayerProfilePage({
           </div>
 
           {form.note && (
-            <p className="mt-3 text-xs text-pitch-400 italic leading-relaxed">
+            <p className="mt-3 text-xs text-cream/55 italic leading-relaxed font-serif">
               {form.note}
             </p>
           )}
@@ -155,21 +169,21 @@ export default async function PlayerProfilePage({
       )}
 
       {teammates.length > 0 && (
-        <section className="card-panel p-5">
-          <h2 className="text-xs uppercase tracking-widest font-semibold text-pitch-200 mb-3">
-            Other {player.position}s in this squad
-          </h2>
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+        <section className="surface p-5">
+          <Kicker tone="muted">Andre {player.position}-er i troppen</Kicker>
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-px bg-cream/8 mt-3">
             {teammates.map((t) => (
               <Link
                 key={t.id}
                 href={`/players/${t.id}`}
-                className="rounded-md bg-pitch-800/50 hover:bg-pitch-800 px-3 py-2 text-sm flex items-center gap-2"
+                className="bg-paper hover:bg-paperHi px-3 py-2 text-sm flex items-center gap-2 transition-colors group"
               >
-                <span className="font-mono text-pitch-400 w-6 text-right stat-num">
+                <span className="font-mono text-cream/55 w-6 text-right stat-num">
                   {t.number || "—"}
                 </span>
-                <span className="flex-1 truncate text-pitch-200">{t.name}</span>
+                <span className="flex-1 truncate font-serif tracking-editorial text-cream group-hover:text-amber transition-colors">
+                  {t.name}
+                </span>
               </Link>
             ))}
           </div>
@@ -184,15 +198,15 @@ export default async function PlayerProfilePage({
           side={team?.id === 21 ? "home" : "away"}
         />
       ) : (
-        <DataSourceBanner
-          caveat="Heatmaps og kampdata aktiveres når turneringen starter og live-feed er koblet til."
-        />
+        <DataSourceBanner caveat="Heatmaps og kampdata aktiveres når turneringen starter og live-feed er koblet til." />
       )}
 
-      <div className="card-panel p-5 flex items-start gap-3">
-        <Cpu size={14} className="text-accent-400 shrink-0 mt-0.5" />
-        <p className="text-xs text-pitch-300 leading-relaxed">
-          <span className="font-semibold text-pitch-100">Kommer:</span>{" "}
+      <div className="surface p-5 flex items-start gap-3">
+        <Cpu size={14} className="text-signal shrink-0 mt-0.5" />
+        <p className="text-xs text-cream/70 leading-relaxed">
+          <span className="font-serif font-semibold text-cream tracking-editorial">
+            Kommer:
+          </span>{" "}
           per-turnering form-sparkline, fantasy/tipping-verdi og AI-skrevet
           &quot;scout-brief&quot;-fane.
         </p>
@@ -205,34 +219,36 @@ function Stat({
   label,
   value,
   accent,
-  data,
+  amber,
   hint,
   icon,
 }: {
   label: string;
   value: number | string;
   accent?: boolean;
-  data?: boolean;
+  amber?: boolean;
   hint?: string;
   icon?: React.ReactNode;
 }) {
   const valueClr = accent
-    ? "text-accent-300"
-    : data
-    ? "text-data-300"
-    : "text-pitch-100";
+    ? "text-signal"
+    : amber
+    ? "text-amber"
+    : "text-cream";
 
   return (
     <div>
-      <div className="text-[10px] uppercase tracking-widest text-pitch-400 mb-1 flex items-center gap-1">
-        {icon && <span className="text-pitch-500">{icon}</span>}
+      <div className="text-[10px] uppercase tracking-kicker text-cream/55 mb-1 flex items-center gap-1 font-mono">
+        {icon && <span className="text-cream/45">{icon}</span>}
         {label}
       </div>
-      <div className={`font-mono text-xl sm:text-2xl font-bold stat-num leading-none ${valueClr}`}>
+      <div
+        className={`font-serif text-2xl sm:text-3xl font-semibold stat-num leading-none tracking-[-0.02em] ${valueClr}`}
+      >
         {value}
       </div>
       {hint && (
-        <div className="text-[10px] uppercase tracking-widest text-pitch-500 mt-1">
+        <div className="text-[9px] uppercase tracking-kicker text-cream/45 mt-1 font-mono">
           {hint}
         </div>
       )}
@@ -243,13 +259,13 @@ function Stat({
 function OutcomeDot({ outcome }: { outcome: ClubOutcome }) {
   const cls = {
     W: "bg-win/30 text-win ring-win/50",
-    D: "bg-draw/15 text-draw ring-draw/40",
+    D: "bg-amber/15 text-amber ring-amber/40",
     L: "bg-loss/15 text-loss ring-loss/40",
-    B: "bg-pitch-800 text-pitch-500 ring-pitch-700",
+    B: "bg-paper text-cream/45 ring-cream/8",
   }[outcome];
   return (
     <span
-      className={`h-6 w-6 inline-flex items-center justify-center rounded-sm text-[10px] font-bold font-mono ring-1 ${cls}`}
+      className={`h-6 w-6 inline-flex items-center justify-center text-[10px] font-bold font-mono ring-1 ${cls}`}
     >
       {outcome}
     </span>

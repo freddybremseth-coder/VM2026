@@ -9,7 +9,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       <Sidebar labels={t.nav} />
       <div className="flex-1 flex flex-col min-w-0">
         <TopBar />
-        <main className="flex-1 grid-lines">{children}</main>
+        <main className="flex-1">{children}</main>
       </div>
     </div>
   );

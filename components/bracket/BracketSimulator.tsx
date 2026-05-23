@@ -3,11 +3,11 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { Shuffle, Crown, ArrowRight, Flag, Share2, Cpu, RotateCcw } from "lucide-react";
-import { TeamFlag } from "@/components/shared/TeamFlag";
+import { HoloFlag } from "@/components/shared/HoloFlag";
+import { Kicker } from "@/components/shared/EditorialKicker";
 import {
   modeLabel,
   modeDescription,
-  pickWinner,
   seedR32,
   simulate,
   type SimulatorMode,
@@ -15,24 +15,18 @@ import {
 } from "@/lib/bracket-simulator";
 
 /**
- * Interactive bracket. User can:
- *   - Pick winners manually by clicking a team
- *   - Auto-fill the whole tree with rank / chaos / norway mode
- *   - Re-roll chaos mode
- *
- * State lives in component memory — user reloads = bracket resets. We can
- * persist to localStorage / Supabase in a later sprint.
+ * Interactive bracket. User can pick winners manually, auto-fill with
+ * rank / norway / chaos mode, share the predicted champion. Persists to
+ * localStorage so reloads keep the bracket.
  */
 const STORAGE_KEY = "wc26.bracket.v1";
 
 export function BracketSimulator() {
   const seed = useMemo(() => seedR32(), []);
   const [mode, setMode] = useState<SimulatorMode>("rank");
-  /** winners[round][tieIndex] — undefined means "not yet picked". */
   const [picks, setPicks] = useState<(WCTeam | undefined)[][]>([[], [], [], [], []]);
   const [hydrated, setHydrated] = useState(false);
 
-  // Restore from localStorage on mount.
   useEffect(() => {
     setHydrated(true);
     try {
@@ -43,20 +37,16 @@ export function BracketSimulator() {
         setMode(parsed.mode);
       }
       if (Array.isArray(parsed.picks)) {
-        // picks are saved as shortNames; resolve back to WCTeam objects.
         const fromCodes: (WCTeam | undefined)[][] = parsed.picks.map((round) =>
-          round.map((code) => seed.find((t) => t.shortName === code))
-            .concat([]), // ensure we don't share references
+          round.map((code) => seed.find((t) => t.shortName === code)).concat([]),
         );
-        // Re-validate by replaying the bracket from R32 seeds.
         setPicks(fromCodes);
       }
     } catch {
-      // Bad cookie / corrupted JSON — ignore and start fresh.
+      // ignore
     }
   }, [seed]);
 
-  // Persist on every change (after hydration so we don't overwrite on mount).
   useEffect(() => {
     if (!hydrated) return;
     try {
@@ -66,7 +56,7 @@ export function BracketSimulator() {
       });
       window.localStorage.setItem(STORAGE_KEY, payload);
     } catch {
-      // out of quota or storage unavailable — silently skip
+      // ignore
     }
   }, [hydrated, mode, picks]);
 
@@ -90,17 +80,15 @@ export function BracketSimulator() {
     setPicks((prev) => {
       const next = prev.map((r) => [...r]);
       next[roundIdx][tieIdx] = team;
-      // Invalidate downstream picks since the tree shape changed.
       for (let r = roundIdx + 1; r < next.length; r++) next[r] = [];
       return next;
     });
   }
 
-  // Build ties per round from current state.
   const rounds = useMemo(() => {
     const rs: { name: string; ties: Array<[WCTeam, WCTeam]>; winners: (WCTeam | undefined)[] }[] = [];
     let current: WCTeam[] = seed;
-    const names = ["Round of 32", "Round of 16", "Quarter-finals", "Semi-finals", "Final"];
+    const names = ["Runde av 32", "Runde av 16", "Kvartfinale", "Semifinale", "Finale"];
     for (let r = 0; r < names.length; r++) {
       const ties: Array<[WCTeam, WCTeam]> = [];
       for (let i = 0; i < current.length; i += 2) {
@@ -108,15 +96,13 @@ export function BracketSimulator() {
       }
       const winners = picks[r] ?? [];
       rs.push({ name: names[r], ties, winners });
-      // Advance only the picked winners to the next round.
       const nextRound: WCTeam[] = [];
       for (let i = 0; i < ties.length; i++) {
         const w = winners[i];
-        if (!w) break; // gap — can't advance further until user picks
+        if (!w) break;
         nextRound.push(w);
       }
       if (nextRound.length !== current.length / 2) {
-        // Round not fully picked — stop building further rounds.
         rs.push(
           ...names.slice(r + 1).map((n) => ({
             name: n,
@@ -135,20 +121,24 @@ export function BracketSimulator() {
 
   return (
     <div className="space-y-5">
-      <div className="card-panel p-4 flex flex-col md:flex-row md:items-center gap-3">
+      <div className="surface p-4 flex flex-col md:flex-row md:items-center gap-3">
         <div className="flex-1">
-          <div className="text-xs font-semibold text-pitch-200 mb-0.5">Auto-fill bracket</div>
-          <div className="text-[11px] text-pitch-500">{modeDescription(mode)}</div>
+          <div className="font-serif text-sm font-semibold text-cream tracking-editorial">
+            Auto-fyll sluttspill
+          </div>
+          <div className="text-[11px] text-cream/55 mt-0.5 font-mono">
+            {modeDescription(mode)}
+          </div>
         </div>
         <div className="flex flex-wrap gap-2">
-          <ModeButton mode="rank"   current={mode} onClick={applyMode} />
+          <ModeButton mode="rank" current={mode} onClick={applyMode} />
           <ModeButton mode="norway" current={mode} onClick={applyMode} icon={<Flag size={12} />} />
-          <ModeButton mode="chaos"  current={mode} onClick={applyMode} icon={<Shuffle size={12} />} />
+          <ModeButton mode="chaos" current={mode} onClick={applyMode} icon={<Shuffle size={12} />} />
           <button
             type="button"
             onClick={clear}
-            className="text-[11px] uppercase tracking-widest font-mono px-3 py-1.5 rounded-md bg-pitch-800 hover:bg-pitch-700 text-pitch-200 flex items-center gap-1.5"
-            title="Reset saved bracket"
+            className="text-[11px] uppercase tracking-kicker font-mono px-3 py-1.5 bg-paper hover:bg-paperHi border border-cream/8 text-cream/70 flex items-center gap-1.5"
+            title="Tilbakestill"
           >
             <RotateCcw size={11} />
             Reset
@@ -158,30 +148,28 @@ export function BracketSimulator() {
 
       {champion && (
         <>
-          <div className="card-panel p-4 sm:p-5 ring-1 ring-accent-500/30 flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4 bg-gradient-to-r from-accent-500/10 via-transparent to-transparent">
+          <div className="surface p-4 sm:p-5 ring-1 ring-signal/30 flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4 bg-gradient-to-r from-signal/10 via-transparent to-transparent">
             <div className="flex items-center gap-3 flex-1 min-w-0">
-              <div className="h-12 w-12 rounded-md bg-accent-500/15 flex items-center justify-center shrink-0">
-                <Crown size={22} className="text-draw" />
+              <div className="h-12 w-12 bg-signal/15 flex items-center justify-center shrink-0">
+                <Crown size={22} className="text-amber" />
               </div>
               <div className="flex-1 min-w-0">
-                <div className="text-[10px] uppercase tracking-widest text-accent-400 font-semibold">
-                  Your predicted champion
-                </div>
-                <div className="text-xl sm:text-2xl font-bold tracking-tight mt-0.5 flex items-center gap-2">
-                  <TeamFlag code={champion.flag} size="md" />
+                <Kicker tone="signal">Din spådde mester</Kicker>
+                <div className="font-serif text-2xl sm:text-3xl font-semibold tracking-editorial mt-1 flex items-center gap-2.5">
+                  <HoloFlag code={champion.flag} w={32} shimmer="strong" />
                   <span className="truncate">{champion.name}</span>
                 </div>
               </div>
             </div>
             <div className="flex items-center gap-2 sm:shrink-0">
-              <div className="text-[11px] uppercase tracking-widest font-mono text-pitch-400 hidden sm:block">
+              <div className="text-[10px] uppercase tracking-kicker font-mono text-cream/55 hidden sm:block">
                 {modeLabel(mode)}
               </div>
               <Link
                 href={`/share/bracket/${champion.shortName}`}
-                className="flex-1 sm:flex-initial text-center rounded-md bg-accent-500 hover:bg-accent-400 text-pitch-950 text-xs font-semibold px-3 py-1.5 flex items-center justify-center gap-1.5"
+                className="flex-1 sm:flex-initial text-center bg-signal hover:bg-signalD text-cream text-xs font-semibold px-3 py-1.5 flex items-center justify-center gap-1.5"
               >
-                <Share2 size={12} /> Share
+                <Share2 size={12} /> Del
               </Link>
             </div>
           </div>
@@ -190,15 +178,19 @@ export function BracketSimulator() {
         </>
       )}
 
-      <div className="card-panel p-5 overflow-x-auto">
+      <div className="surface p-5 overflow-x-auto">
         <div className="flex gap-5 min-w-max">
           {rounds.map((round, ri) => (
             <div key={round.name} className="flex-1 min-w-[220px]">
               <div className="flex items-baseline justify-between mb-3">
-                <span className="text-[10px] uppercase tracking-widest text-accent-400 font-semibold">
+                <span
+                  className={`text-[10px] uppercase tracking-kicker font-mono font-semibold ${
+                    round.name === "Finale" ? "text-signal" : "text-cream/70"
+                  }`}
+                >
                   {round.name}
                 </span>
-                <span className="text-[10px] font-mono text-pitch-500">
+                <span className="text-[10px] font-mono text-cream/45 stat-num">
                   {round.ties.length}
                 </span>
               </div>
@@ -212,8 +204,8 @@ export function BracketSimulator() {
                 }}
               >
                 {round.ties.length === 0 && (
-                  <div className="text-[11px] text-pitch-500 italic">
-                    Pick winners above to unlock this round.
+                  <div className="text-[11px] text-cream/45 italic font-serif">
+                    Velg vinnere over for å låse opp denne runden.
                   </div>
                 )}
                 {round.ties.map((tie, ti) => (
@@ -223,7 +215,7 @@ export function BracketSimulator() {
                     b={tie[1]}
                     winner={round.winners[ti]}
                     onPick={(team) => pick(ri, ti, team)}
-                    isFinal={round.name === "Final"}
+                    isFinal={round.name === "Finale"}
                   />
                 ))}
               </div>
@@ -235,11 +227,6 @@ export function BracketSimulator() {
   );
 }
 
-/**
- * Calls /api/bracket-coach whenever the user finishes a bracket. Refetches
- * when the champion or mode changes, with a small debounce so rapid clicks
- * don't fire a request per pick.
- */
 function CoachLine({
   championShort,
   mode,
@@ -276,22 +263,23 @@ function CoachLine({
   }, [championShort, mode]);
 
   return (
-    <div className="card-panel p-4 sm:p-5 ring-1 ring-data-500/20 relative overflow-hidden">
-      <div className="absolute inset-0 opacity-[0.04] grid-lines pointer-events-none" />
-      <div className="relative flex items-start gap-3">
-        <div className="h-9 w-9 rounded-md bg-data-500/15 flex items-center justify-center shrink-0">
-          <Cpu size={16} className="text-data-300" />
+    <div className="surface p-4 sm:p-5 ring-1 ring-amber/20 relative">
+      <div className="flex items-start gap-3">
+        <div className="h-9 w-9 bg-amber/15 flex items-center justify-center shrink-0">
+          <Cpu size={16} className="text-amber" />
         </div>
         <div className="min-w-0">
           <div className="flex items-center gap-2 mb-1.5">
-            <div className="text-xs font-semibold">AI bracket coach</div>
-            <span className="text-[10px] uppercase tracking-widest text-pitch-500 font-mono truncate">
+            <div className="font-serif text-sm font-semibold tracking-editorial text-cream">
+              AI bracket coach
+            </div>
+            <span className="text-[10px] uppercase tracking-kicker text-cream/45 font-mono truncate">
               ChatGenius{model ? ` · ${model}` : ""}
             </span>
           </div>
-          <div className="text-sm text-pitch-200 leading-relaxed">
+          <div className="text-sm text-cream/85 leading-relaxed">
             {loading && !text ? (
-              <span className="text-pitch-500 italic">Thinking…</span>
+              <span className="text-cream/45 italic font-serif">Tenker…</span>
             ) : (
               text ?? "—"
             )}
@@ -318,10 +306,10 @@ function ModeButton({
     <button
       type="button"
       onClick={() => onClick(mode)}
-      className={`text-[11px] uppercase tracking-widest font-mono px-3 py-1.5 rounded-md transition-colors flex items-center gap-1.5 ${
+      className={`text-[11px] uppercase tracking-kicker font-mono px-3 py-1.5 transition-colors flex items-center gap-1.5 ${
         active
-          ? "bg-accent-500 text-pitch-950 font-semibold"
-          : "bg-pitch-800 hover:bg-pitch-700 text-pitch-300"
+          ? "bg-signal text-cream font-semibold"
+          : "bg-paper hover:bg-paperHi border border-cream/8 text-cream/70"
       }`}
     >
       {icon}
@@ -345,14 +333,14 @@ function TieCard({
 }) {
   return (
     <div
-      className={`rounded-md border px-3 py-2 text-[11px] ${
+      className={`px-3 py-2 text-[11px] ${
         isFinal
-          ? "border-accent-500/40 bg-accent-500/5"
-          : "border-pitch-700/60 bg-pitch-900/40"
+          ? "ring-1 ring-signal/40 bg-signal/5"
+          : "border border-cream/8 bg-paper"
       }`}
     >
       <TeamRow team={a} picked={winner === a} onClick={() => onPick(a)} hasOther={winner === b} />
-      <div className="border-t border-pitch-800 my-1.5" />
+      <div className="border-t border-cream/8 my-1.5" />
       <TeamRow team={b} picked={winner === b} onClick={() => onPick(b)} hasOther={winner === a} />
     </div>
   );
@@ -373,17 +361,19 @@ function TeamRow({
     <button
       type="button"
       onClick={onClick}
-      className={`w-full flex items-center gap-2 py-0.5 px-1 rounded transition-colors ${
+      className={`w-full flex items-center gap-2 py-0.5 px-1 transition-colors ${
         picked
-          ? "text-accent-300 font-semibold"
+          ? "text-signal font-semibold"
           : hasOther
-            ? "text-pitch-500"
-            : "text-pitch-200 hover:bg-pitch-800/60"
+            ? "text-cream/35"
+            : "text-cream hover:bg-cream/5"
       }`}
     >
-      <TeamFlag code={team.flag} size="sm" />
-      <span className="flex-1 text-left truncate">{team.name}</span>
-      {picked && <ArrowRight size={11} className="text-accent-400" />}
+      <HoloFlag code={team.flag} w={18} radius={2} />
+      <span className="flex-1 text-left truncate font-serif tracking-editorial">
+        {team.name}
+      </span>
+      {picked && <ArrowRight size={11} className="text-signal" />}
     </button>
   );
 }

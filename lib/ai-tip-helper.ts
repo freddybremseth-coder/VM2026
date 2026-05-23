@@ -84,7 +84,7 @@ export function suggestTip(matchId: number, mode: TipMode): TipSuggestion | null
 }
 
 export const TIP_MODE_META: Record<TipMode, { label: string; icon: string; tone: string }> = {
-  safe:  { label: "Safe",  icon: "🛡️", tone: "bg-data-500/15 text-data-300 ring-data-500/30" },
-  bold:  { label: "Bold",  icon: "⚡", tone: "bg-accent-500/15 text-accent-300 ring-accent-500/30" },
-  chaos: { label: "Chaos", icon: "🎲", tone: "bg-loss/15 text-loss ring-loss/30" },
+  safe:  { label: "Safe",  icon: "🛡️", tone: "bg-paper text-cream/85 ring-cream/14" },
+  bold:  { label: "Bold",  icon: "⚡", tone: "bg-signal/15 text-signal ring-signal/30" },
+  chaos: { label: "Chaos", icon: "🎲", tone: "bg-amber/15 text-amber ring-amber/30" },
 };

@@ -1,9 +1,10 @@
 import Link from "next/link";
-import { Trophy, Users, ChevronRight, LogIn } from "lucide-react";
+import { Trophy, Users, ChevronRight } from "lucide-react";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { CreateLeagueForm, JoinLeagueForm } from "@/components/league/LeagueForms";
 import { LeagueAvatar } from "@/components/league/LeagueAvatar";
 import { DemoLeague } from "@/components/league/DemoLeague";
+import { Kicker, Headline } from "@/components/shared/EditorialKicker";
 import { getDictionary } from "@/lib/i18n";
 
 export default async function LeaguesPage() {
@@ -13,7 +14,7 @@ export default async function LeaguesPage() {
 
   if (!user) {
     return (
-      <div className="px-4 sm:px-6 py-6 max-w-[1100px] mx-auto space-y-8">
+      <div className="px-5 md:px-10 py-8 max-w-[1100px] mx-auto space-y-8">
         <Header title={t.leagues.title} subtitle={t.leagues.subtitle} />
         <DemoLeague />
       </div>
@@ -41,15 +42,15 @@ export default async function LeaguesPage() {
   const myLeagues = (memberships as Membership[] | null) ?? [];
 
   return (
-    <div className="px-4 sm:px-6 py-6 max-w-[1100px] mx-auto space-y-8">
+    <div className="px-5 md:px-10 py-8 max-w-[1100px] mx-auto space-y-8">
       <Header title={t.leagues.title} subtitle={t.leagues.subtitle} />
 
       <section className="space-y-3">
-        <h2 className="text-xs uppercase tracking-widest font-semibold text-pitch-200">
+        <div className="text-[10px] uppercase tracking-kicker font-mono font-semibold text-cream/70">
           {t.leagues.yours}
-        </h2>
+        </div>
         {myLeagues.length === 0 ? (
-          <div className="card-panel p-6 text-center text-sm text-pitch-500">
+          <div className="surface p-6 text-center text-sm text-cream/55 italic font-serif">
             {t.leagues.none}
           </div>
         ) : (
@@ -58,7 +59,7 @@ export default async function LeaguesPage() {
               <Link
                 key={m.league_id}
                 href={`/leagues/${m.league_id}`}
-                className="card-panel p-4 group hover:border-accent-500/40 transition-colors"
+                className="surface p-4 group hover:bg-paperHi transition-colors"
               >
                 <div className="flex items-start gap-3">
                   <LeagueAvatar
@@ -67,33 +68,33 @@ export default async function LeaguesPage() {
                     size={44}
                   />
                   <div className="flex-1 min-w-0">
-                    <div className="font-semibold text-sm truncate flex items-center gap-2">
+                    <div className="font-serif text-base font-semibold tracking-editorial text-cream truncate flex items-center gap-2">
                       {m.mini_leagues.name}
                       {m.mini_leagues.owner_id === user.id && (
-                        <span className="text-[9px] uppercase tracking-widest font-mono text-accent-400 bg-accent-500/15 px-1.5 py-0.5 rounded">
-                          Owner
+                        <span className="text-[9px] uppercase tracking-kicker font-mono text-signal bg-signal/15 px-1.5 py-0.5">
+                          Eier
                         </span>
                       )}
                     </div>
                     {m.mini_leagues.description && (
-                      <div className="text-xs text-pitch-400 mt-1 truncate">
+                      <div className="text-xs text-cream/55 mt-1 truncate font-mono">
                         {m.mini_leagues.description}
                       </div>
                     )}
-                    <div className="mt-2 flex items-center gap-3 text-[11px] font-mono text-pitch-500">
+                    <div className="mt-2 flex items-center gap-3 text-[11px] font-mono text-cream/45">
                       <span className="flex items-center gap-1">
-                        <Users size={11} /> Members
+                        <Users size={11} /> Deltakere
                       </span>
                       <span>·</span>
                       <span>
-                        Your points:{" "}
-                        <span className="text-accent-300 font-semibold">{m.points}</span>
+                        Dine poeng:{" "}
+                        <span className="text-signal font-semibold stat-num">{m.points}</span>
                       </span>
                     </div>
                   </div>
                   <ChevronRight
                     size={14}
-                    className="text-pitch-500 group-hover:text-accent-300 mt-1 shrink-0"
+                    className="text-cream/45 group-hover:text-signal mt-1 shrink-0 transition-colors"
                   />
                 </div>
               </Link>
@@ -112,13 +113,16 @@ export default async function LeaguesPage() {
 
 function Header({ title, subtitle }: { title: string; subtitle: string }) {
   return (
-    <header className="mb-6">
-      <div className="flex items-center gap-2 text-[10px] uppercase tracking-widest text-accent-400 font-semibold mb-1">
-        <Trophy size={12} />
-        Mini-leagues
-      </div>
-      <h1 className="text-2xl md:text-3xl font-bold tracking-tight">{title}</h1>
-      <p className="text-sm text-pitch-400 mt-1">{subtitle}</p>
+    <header>
+      <Kicker tone="signal">
+        <span className="inline-flex items-center gap-2">
+          <Trophy size={11} /> Mini-ligaer
+        </span>
+      </Kicker>
+      <Headline rank="h1" className="mt-2">
+        {title}
+      </Headline>
+      <p className="text-sm text-cream/55 mt-3 max-w-2xl leading-relaxed">{subtitle}</p>
     </header>
   );
 }

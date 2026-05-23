@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Calendar, MapPin } from "lucide-react";
-import { TeamFlag } from "@/components/shared/TeamFlag";
+import { HoloFlag } from "@/components/shared/HoloFlag";
+import { Kicker, Headline } from "@/components/shared/EditorialKicker";
 import { FIXTURES, type Fixture } from "@/lib/wc26-fixtures";
 import { teamById, venueById } from "@/lib/wc26-data";
 import { formatKickoff, formatDateLabel } from "@/lib/utils";
@@ -16,7 +17,7 @@ const KO_LABELS: Record<string, string> = {
 
 function stageLabel(f: Fixture): string {
   return f.stage.kind === "group"
-    ? `Group ${f.stage.group} · MD${f.stage.matchday}`
+    ? `Gruppe ${f.stage.group} · MD${f.stage.matchday}`
     : KO_LABELS[f.stage.round];
 }
 
@@ -25,7 +26,6 @@ function dayKey(iso: string): string {
 }
 
 export default function MatchesPage() {
-  // Group all 104 fixtures by date
   const byDay = new Map<string, Fixture[]>();
   for (const f of FIXTURES) {
     const k = dayKey(f.kickoff);
@@ -38,21 +38,22 @@ export default function MatchesPage() {
   const koMatches = FIXTURES.length - groupMatches;
 
   return (
-    <div className="px-6 py-6 max-w-[1400px] mx-auto space-y-6">
-      <header>
-        <div className="flex items-center gap-2 text-[10px] uppercase tracking-widest text-accent-400 font-semibold mb-1">
-          <Calendar size={12} />
-          Schedule
-        </div>
-        <h1 className="text-2xl md:text-3xl font-bold tracking-tight">
-          All {FIXTURES.length} matches
-        </h1>
-        <p className="text-sm text-pitch-400 mt-1">
-          {groupMatches} group-stage · {koMatches} knockout · 11 June – 19 July 2026
+    <div className="px-5 md:px-10 py-8 max-w-[1400px] mx-auto">
+      <header className="mb-8">
+        <Kicker tone="signal">
+          <span className="inline-flex items-center gap-2">
+            <Calendar size={11} /> Spillplan
+          </span>
+        </Kicker>
+        <Headline rank="h1" className="mt-2">
+          Alle {FIXTURES.length} kamper.
+        </Headline>
+        <p className="text-sm text-cream/55 mt-3 max-w-xl">
+          {groupMatches} gruppespill · {koMatches} sluttspill · 11. juni – 19. juli 2026
         </p>
       </header>
 
-      <div className="space-y-6">
+      <div className="space-y-10">
         {days.map(([day, fixtures]) => (
           <DaySection key={day} day={day} fixtures={fixtures} />
         ))}
@@ -65,15 +66,15 @@ function DaySection({ day, fixtures }: { day: string; fixtures: Fixture[] }) {
   const dateLabel = formatDateLabel(day + "T12:00:00Z");
   return (
     <section>
-      <div className="flex items-baseline gap-3 mb-3 sticky top-[57px] bg-pitch-950/80 backdrop-blur py-2 z-10">
-        <h2 className="text-xs uppercase tracking-widest font-semibold text-accent-300 font-mono">
+      <div className="flex items-baseline gap-3 mb-3 sticky top-[57px] bg-canvas/85 backdrop-blur py-2 z-10 border-b border-cream/8">
+        <Kicker tone="cream" className="!text-cream">
           {dateLabel}
-        </h2>
-        <span className="text-[10px] font-mono text-pitch-500">
-          {fixtures.length} {fixtures.length === 1 ? "match" : "matches"}
+        </Kicker>
+        <span className="text-[10px] font-mono text-cream/45">
+          {fixtures.length} {fixtures.length === 1 ? "kamp" : "kamper"}
         </span>
       </div>
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-px bg-cream/8">
         {fixtures
           .sort((a, b) => a.kickoff.localeCompare(b.kickoff))
           .map((f) => (
@@ -93,22 +94,26 @@ function FixtureCard({ fixture }: { fixture: Fixture }) {
   return (
     <Link
       href={`/matches/${fixture.id}`}
-      className={`card-panel block p-4 transition-all hover:border-accent-500/40 hover:-translate-y-0.5 ${
-        isKnockout ? "ring-1 ring-data-500/15" : ""
+      className={`block bg-paper p-4 transition-colors hover:bg-paperHi ${
+        isKnockout ? "ring-1 ring-amber/15" : ""
       }`}
     >
-      <div className="flex items-center justify-between text-[11px] uppercase tracking-widest text-pitch-400 mb-3">
-        <span>{stageLabel(fixture)}</span>
-        <span className="font-mono text-pitch-300">{formatKickoff(fixture.kickoff)}</span>
+      <div className="flex items-center justify-between mb-3">
+        <span className="text-[10px] font-mono uppercase tracking-kicker text-cream/55">
+          {stageLabel(fixture)}
+        </span>
+        <span className="font-mono text-[11px] text-cream/70 stat-num">
+          {formatKickoff(fixture.kickoff)}
+        </span>
       </div>
       <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-3">
         <TeamSide team={home} align="right" />
-        <div className="font-mono text-sm text-pitch-400">VS</div>
+        <div className="font-serif text-base text-cream/35 italic">vs</div>
         <TeamSide team={away} align="left" />
       </div>
       {venue && (
-        <div className="mt-3 text-[11px] text-pitch-500 flex items-center gap-1">
-          <MapPin size={11} /> {venue.name} · {venue.city}
+        <div className="mt-3 text-[10px] text-cream/45 font-mono flex items-center gap-1">
+          <MapPin size={10} /> {venue.name} · {venue.city}
         </div>
       )}
     </Link>
@@ -124,7 +129,11 @@ function TeamSide({
 }) {
   if (!team) {
     return (
-      <div className={`text-xs text-pitch-500 font-mono ${align === "right" ? "text-right" : ""}`}>
+      <div
+        className={`font-mono text-xs text-cream/35 ${
+          align === "right" ? "text-right" : ""
+        }`}
+      >
         TBD
       </div>
     );
@@ -135,10 +144,12 @@ function TeamSide({
         align === "right" ? "flex-row-reverse text-right" : ""
       }`}
     >
-      <TeamFlag code={team.flag} size="md" />
+      <HoloFlag code={team.flag} w={26} radius={3} />
       <div className="min-w-0">
-        <div className="font-semibold text-sm truncate">{team.name}</div>
-        <div className="text-[10px] uppercase tracking-widest text-pitch-500 font-mono">
+        <div className="font-serif text-base font-semibold truncate tracking-editorial">
+          {team.name}
+        </div>
+        <div className="text-[10px] uppercase tracking-kicker font-mono text-cream/45">
           {team.shortName}
         </div>
       </div>
