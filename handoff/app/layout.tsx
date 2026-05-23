@@ -16,14 +16,14 @@ const mono = JetBrains_Mono({
 
 // ─── NEW: Fraunces serif display ─────────────────────────────
 // Editorial headlines, scores, team names in cinematic contexts.
-// Variable font: when we use `axes`, next/font fetches the variable
-// build and the full 100–900 weight range is available at runtime —
-// pinning a `weight` array is not permitted then.
+// Optical-size axis lets the same font render tight headlines
+// and elegant body italics from one weight-set.
 const serif = Fraunces({
   subsets: ["latin"],
   variable: "--font-serif",
   display: "swap",
   axes: ["opsz"],
+  weight: ["400", "500", "600", "700"],
   style: ["normal", "italic"],
 });
 

@@ -54,21 +54,6 @@ export default {
         editorial: "-0.02em",
         kicker:    "0.16em",
       },
-      // Extend Tailwind's default opacity scale with the fine-grained values
-      // the new editorial palette needs (cream/4, /8, /12 … /85).
-      opacity: {
-        4:  "0.04",
-        8:  "0.08",
-        12: "0.12",
-        14: "0.14",
-        16: "0.16",
-        35: "0.35",
-        45: "0.45",
-        55: "0.55",
-        65: "0.65",
-        75: "0.75",
-        85: "0.85",
-      },
       keyframes: {
         "pulse-dot": {
           "0%, 100%": { opacity: "1" },
