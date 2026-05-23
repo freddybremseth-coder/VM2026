@@ -64,36 +64,60 @@ export default async function NorgePage() {
     <div className="min-h-screen">
       {/* ── 1. Cinematic flag hero ──────────────────────────────── */}
       <section className="relative h-[480px] md:h-[640px] overflow-hidden">
-        {/* Norwegian atmosphere photo (aurora/landscape) — sits beneath the
-            blurred flag for depth and a sense of place. */}
+        {/* "Alt for Norge" — fans, flags, ball-in-the-net. Heavily blurred
+            so faces dissolve into colour, but you sense the crowd and the
+            red wall. Sits below the flag + aurora overlays. */}
+        <div
+          aria-hidden
+          className="absolute pointer-events-none"
+          style={{
+            inset: "-6%",
+            backgroundImage: "url(/hero/norge-alt-for-norge.jpg)",
+            backgroundSize: "cover",
+            backgroundPosition: "center 38%",
+            filter: "blur(14px) saturate(1.1) brightness(.7)",
+            transform: "scale(1.06)",
+          }}
+        />
+        {/* Aurora wash — soft green/violet diagonal sweep adds a Nordic
+            night-sky shimmer over the crowd photo. */}
         <div
           aria-hidden
           className="absolute inset-0 pointer-events-none"
           style={{
-            backgroundImage:
-              "url(https://images.unsplash.com/photo-1531366936337-7c912a4589a7?w=1800&q=80&auto=format&fit=crop)",
-            backgroundSize: "cover",
-            backgroundPosition: "center 40%",
-            opacity: 0.45,
-            filter: "saturate(0.95) brightness(0.7)",
+            background:
+              "linear-gradient(115deg, rgba(20,80,60,0) 30%, rgba(80,220,170,.22) 48%, rgba(150,120,255,.18) 60%, rgba(20,40,80,0) 78%)",
+            mixBlendMode: "screen",
           }}
         />
+        {/* Subtle conic shimmer reminiscent of the holo-flag treatment */}
+        <div
+          aria-hidden
+          className="absolute inset-0 pointer-events-none"
+          style={{
+            background:
+              "radial-gradient(ellipse at 75% 18%, rgba(120,255,200,.22) 0%, transparent 55%), radial-gradient(ellipse at 18% 30%, rgba(180,140,255,.18) 0%, transparent 50%)",
+            mixBlendMode: "screen",
+          }}
+        />
+        {/* Large blurred flag — Norway-red identity still leads the hero */}
         <div
           className="absolute pointer-events-none"
           style={{
             inset: "-25%",
-            filter: "blur(36px) saturate(1.2) brightness(.55)",
+            filter: "blur(42px) saturate(1.25) brightness(.5)",
             mixBlendMode: "screen",
-            opacity: 0.85,
+            opacity: 0.55,
           }}
         >
           <HoloFlag code="no" w={800} radius={0} shimmer="strong" />
         </div>
+        {/* Bottom fade into canvas + top darkening for text legibility */}
         <div
           className="absolute inset-0 pointer-events-none"
           style={{
             background:
-              "radial-gradient(ellipse at 50% 110%, rgba(0,0,0,0) 0%, hsl(var(--canvas)) 60%), linear-gradient(180deg, rgba(0,0,0,.45) 0%, transparent 30%)",
+              "radial-gradient(ellipse at 50% 110%, rgba(0,0,0,0) 0%, hsl(var(--canvas)) 60%), linear-gradient(180deg, rgba(0,0,0,.55) 0%, rgba(0,0,0,.1) 35%, transparent 55%)",
           }}
         />
         <div className="relative h-full px-5 md:px-10 py-6 flex flex-col">
