@@ -1,9 +1,12 @@
 import Link from "next/link";
 import { Target, LogIn, Lock, Calendar, Sparkles } from "lucide-react";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
-import { PredictionForm } from "@/components/prediction/PredictionForm";
 import { GuestPredictionForm } from "@/components/prediction/GuestPredictionForm";
 import { GuestMigrationPrompt } from "@/components/prediction/GuestMigrationPrompt";
+import {
+  AuthPredictionsBoard,
+  type BoardDay,
+} from "@/components/prediction/AuthPredictionsBoard";
 import { Kicker, Headline } from "@/components/shared/EditorialKicker";
 import { formatDateLabel } from "@/lib/utils";
 import { nextFixtures, type Fixture } from "@/lib/wc26-fixtures";
@@ -95,6 +98,8 @@ export default async function PredictionsPage() {
           <div className="surface p-6 text-center text-sm text-cream/55 italic font-serif">
             {t.predictions.none}
           </div>
+        ) : user ? (
+          <AuthPredictionsBoard days={buildBoardDays(days, existingByMatch)} />
         ) : (
           <div className="space-y-8">
             {days.map(([day, fixtures]) => (
@@ -120,11 +125,45 @@ export default async function PredictionsPage() {
   );
 }
 
+/**
+ * Maps the server-side day groups + existing predictions into the
+ * serializable shape the client board needs.
+ */
+function buildBoardDays(
+  days: Array<[string, Fixture[]]>,
+  existingByMatch: Map<number, { home_score: number; away_score: number }>,
+): BoardDay[] {
+  return days
+    .map(([day, fixtures]) => ({
+      day,
+      fixtures: fixtures
+        .map((f) => {
+          const home = teamById(f.homeId!);
+          const away = teamById(f.awayId!);
+          if (!home || !away) return null;
+          const venue = venueById(f.venueId);
+          const existing = existingByMatch.get(f.id);
+          return {
+            matchId: f.id,
+            stageLabel: stageLabel(f),
+            kickoff: f.kickoff,
+            venueLabel: venue?.city ?? "TBD",
+            home: { id: home.id, name: home.name, shortName: home.shortName, flag: home.flag },
+            away: { id: away.id, name: away.name, shortName: away.shortName, flag: away.flag },
+            existing: existing
+              ? { home: existing.home_score, away: existing.away_score }
+              : undefined,
+          };
+        })
+        .filter((x): x is NonNullable<typeof x> => x !== null),
+    }))
+    .filter((d) => d.fixtures.length > 0);
+}
+
+/** Guest-only day section (guests cap at 3 tips, so no batch save needed). */
 function DaySection({
   day,
   fixtures,
-  user,
-  existingByMatch,
 }: {
   day: string;
   fixtures: Fixture[];
@@ -148,21 +187,8 @@ function DaySection({
           const away = teamById(f.awayId!);
           const venue = venueById(f.venueId);
           if (!home || !away) return null;
-          if (!user) {
-            return (
-              <GuestPredictionForm
-                key={f.id}
-                matchId={f.id}
-                stageLabel={stageLabel(f)}
-                kickoff={f.kickoff}
-                venueLabel={venue?.city ?? "TBD"}
-                home={home}
-                away={away}
-              />
-            );
-          }
           return (
-            <PredictionForm
+            <GuestPredictionForm
               key={f.id}
               matchId={f.id}
               stageLabel={stageLabel(f)}
@@ -170,7 +196,6 @@ function DaySection({
               venueLabel={venue?.city ?? "TBD"}
               home={home}
               away={away}
-              existing={existingByMatch.get(f.id)}
             />
           );
         })}
