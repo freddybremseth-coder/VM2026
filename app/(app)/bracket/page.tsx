@@ -65,10 +65,13 @@ export default function BracketPage() {
         <Headline rank="h3" className="mb-3">
           Hvem tar gullet?
         </Headline>
-        <p className="text-xs text-cream/55 mb-4 max-w-3xl">
+        <p className="text-xs text-cream/55 mb-4 max-w-3xl leading-relaxed">
           Klikk et lag for å la dem gå videre, eller velg en auto-fyll-modus
-          under. Seedet etter FIFA-rang fram til reelle gruppestillinger
-          ferdigstilles 27. juni.
+          under. Lagene er fordelt etter FIFA-trekningen — vinnerne, toerne og
+          de beste 3.-plassene havner i de eksakte R32-slotene FIFA bestemte
+          i desember 2025. Hvilket lag som faktisk vinner hver gruppe er
+          forhåndsforventet etter FIFA-rang fram til gruppespillet er ferdig
+          27. juni.
         </p>
         <BracketSimulator />
       </section>
