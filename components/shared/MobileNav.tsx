@@ -16,7 +16,8 @@ import {
   X,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { AppLogo, ChatGeniusBadge, CreditsBadge } from "./Logo";
+import { ChatGeniusBadge, CreditsBadge } from "./Logo";
+import { SongPlayerCard } from "./SongPlayer";
 import { DEFAULT_NAV_LABELS, type NavLabels } from "@/lib/nav-items";
 
 // Inline NAV items so this component does not depend on a separate file
@@ -74,7 +75,7 @@ export function MobileNav({ labels }: { labels?: Partial<NavLabels> }) {
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="lg:hidden p-1.5 rounded-md text-pitch-200 hover:bg-pitch-800 hover:text-white"
+        className="lg:hidden p-1.5 text-cream/70 hover:bg-paper hover:text-cream"
         aria-label="Open navigation"
       >
         <Menu size={20} />
@@ -91,22 +92,24 @@ export function MobileNav({ labels }: { labels?: Partial<NavLabels> }) {
             type="button"
             aria-label="Close navigation"
             onClick={() => setOpen(false)}
-            className="absolute inset-0 bg-pitch-950/90 backdrop-blur-sm"
+            className="absolute inset-0 bg-canvas/90 backdrop-blur-sm"
           />
 
           {/* Drawer — fixed to the left edge with explicit viewport height. */}
           <aside
-            className="absolute top-0 left-0 w-80 max-w-[88vw] bg-pitch-900 border-r border-pitch-700 shadow-2xl flex flex-col px-3 py-5"
+            className="absolute top-0 left-0 w-80 max-w-[88vw] bg-paper border-r border-cream/8 shadow-2xl flex flex-col px-3 py-5"
             style={{ height: "100dvh" }}
           >
             <div className="px-2 mb-6 flex items-center justify-between shrink-0">
               <Link href="/" className="flex items-center gap-2.5">
-                <AppLogo size={36} />
+                <div className="w-9 h-9 bg-signal flex items-center justify-center font-serif font-bold text-cream text-base tracking-tight">
+                  26
+                </div>
                 <div className="leading-tight">
-                  <div className="text-sm font-bold tracking-tight bg-gradient-to-r from-[#ff5cc8] via-[#a78bfa] to-[#22d3ee] bg-clip-text text-transparent">
-                    WC26
+                  <div className="font-serif text-base font-semibold tracking-editorial text-cream">
+                    VM 2026
                   </div>
-                  <div className="text-[10px] uppercase tracking-widest text-pitch-300">
+                  <div className="text-[10px] uppercase tracking-kicker font-mono text-cream/55">
                     Stats · Predictions
                   </div>
                 </div>
@@ -114,14 +117,14 @@ export function MobileNav({ labels }: { labels?: Partial<NavLabels> }) {
               <button
                 type="button"
                 onClick={() => setOpen(false)}
-                className="p-1.5 rounded-md text-pitch-200 hover:bg-pitch-800 hover:text-white"
+                className="p-1.5 text-cream/70 hover:bg-canvas hover:text-cream"
                 aria-label="Close navigation"
               >
                 <X size={20} />
               </button>
             </div>
 
-            <nav className="flex flex-col gap-1 overflow-y-auto">
+            <nav className="flex flex-col gap-0.5 overflow-y-auto">
               {NAV.map(({ href, key, Icon }) => {
                 const label = resolved[key];
                 const active =
@@ -131,28 +134,39 @@ export function MobileNav({ labels }: { labels?: Partial<NavLabels> }) {
                     key={href}
                     href={href}
                     className={cn(
-                      "flex items-center gap-3 rounded-md px-3 py-3 text-base transition-colors",
+                      "group relative flex items-center gap-3 px-3 py-3 text-base transition-colors",
                       active
-                        ? "bg-pitch-800 text-accent-300 font-semibold"
-                        : "text-pitch-100 hover:bg-pitch-800/60 hover:text-white",
+                        ? "text-cream font-semibold"
+                        : "text-cream/65 hover:text-cream",
                     )}
                   >
+                    {active && (
+                      <span
+                        aria-hidden
+                        className="absolute left-0 top-1/2 -translate-y-1/2 h-6 w-[2px] bg-signal"
+                      />
+                    )}
                     <Icon
                       size={18}
                       className={cn(
                         "shrink-0",
-                        active ? "text-accent-400" : "text-pitch-300",
+                        active ? "text-signal" : "text-cream/55 group-hover:text-cream",
                       )}
                     />
-                    <span>{label}</span>
+                    <span className={active ? "font-serif tracking-editorial" : ""}>
+                      {label}
+                    </span>
                   </Link>
                 );
               })}
             </nav>
 
-            <div className="mt-auto pt-4 border-t border-pitch-700 px-2 space-y-3 shrink-0">
-              <ChatGeniusBadge />
-              <CreditsBadge />
+            <div className="mt-auto pt-4 border-t border-cream/8 space-y-3 shrink-0">
+              <SongPlayerCard />
+              <div className="px-2 space-y-3">
+                <ChatGeniusBadge />
+                <CreditsBadge />
+              </div>
             </div>
           </aside>
         </div>
