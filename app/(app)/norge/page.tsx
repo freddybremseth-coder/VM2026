@@ -3,7 +3,7 @@ import { HoloFlag } from "@/components/shared/HoloFlag";
 import { Kicker, Headline, PullQuote } from "@/components/shared/EditorialKicker";
 import { teamById, teamsByGroup } from "@/lib/wc26-data";
 import { FIXTURES, type Fixture } from "@/lib/wc26-fixtures";
-import { getSquad } from "@/lib/wc26-squads";
+import { getSquad, getPlayerMinutes } from "@/lib/wc26-squads";
 import { getPlayerForm } from "@/lib/player-form";
 import { getTeamFormBatch, type TeamFormData } from "@/lib/team-form";
 import { NorwayScenarioCalculator } from "@/components/norge/NorwayScenarioCalculator";
@@ -36,6 +36,11 @@ export default async function NorgePage() {
   const squad = getSquad(NORWAY_ID);
   const haaland = squad.find((p) => p.id === 2122) ?? null;
   const haalandForm = haaland ? getPlayerForm(haaland.id) : null;
+  const haalandMinutes = haaland ? getPlayerMinutes(haaland) : 0;
+  const haalandMinPerGoal =
+    haaland && haaland.goals && haaland.goals > 0
+      ? Math.round(haalandMinutes / haaland.goals)
+      : null;
 
   // Pre-tournament form for all 4 Group I teams (API-Football / mock)
   const formMap = await getTeamFormBatch(GROUP_I_IDS);
@@ -282,35 +287,119 @@ export default async function NorgePage() {
           <Headline rank="h2">
             Haaland — <em className="text-amber">signalet</em>.
           </Headline>
+
           <Link
             href={`/players/${haaland.id}`}
-            className="mt-4 py-4 border-y border-cream/8 grid grid-cols-[72px_1fr] gap-4 items-center hover:bg-cream/4 transition-colors"
+            className="mt-4 block border-y border-cream/8 hover:bg-cream/4 transition-colors"
           >
-            <div
-              className="w-[72px] h-[72px] rounded-full flex items-center justify-center font-serif text-3xl font-bold text-canvas tracking-tight"
-              style={{
-                background:
-                  "radial-gradient(circle at 40% 40%, hsl(var(--amber)) 0%, hsl(var(--signal-deep)) 100%)",
-              }}
-            >
-              EH
+            {/* Top row: portrait + name + club */}
+            <div className="py-4 grid grid-cols-[72px_1fr_auto] gap-4 items-center">
+              <div
+                className="w-[72px] h-[72px] rounded-full flex items-center justify-center font-serif text-3xl font-bold text-canvas tracking-tight"
+                style={{
+                  background:
+                    "radial-gradient(circle at 40% 40%, hsl(var(--amber)) 0%, hsl(var(--signal-deep)) 100%)",
+                }}
+              >
+                EH
+              </div>
+              <div className="min-w-0">
+                <div className="font-serif text-xl font-semibold tracking-editorial truncate">
+                  {haaland.name}
+                </div>
+                <div className="text-[11px] text-cream/55 mt-0.5 font-mono">
+                  {haaland.club} · #{haaland.number}
+                  {haaland.age ? ` · ${haaland.age} år` : ""}
+                </div>
+                <div className="mt-1 text-[10px] uppercase tracking-kicker font-mono text-amber/85">
+                  VM-debut · Norges første sluttspill siden 1998
+                </div>
+              </div>
             </div>
-            <div>
-              <div className="font-serif text-xl font-semibold tracking-editorial">
-                {haaland.name}
+
+            {/* Landskamp-statistikk grid */}
+            <div className="border-t border-cream/8 pt-4 pb-4">
+              <div className="text-[10px] uppercase tracking-kicker font-mono text-cream/55 mb-3">
+                Landskamp-statistikk
               </div>
-              <div className="text-[11px] text-cream/55 mt-0.5 font-mono">
-                {haaland.club} · #{haaland.number}
-              </div>
-              <div className="flex gap-4 mt-2.5">
-                <Stat label="Mål" value={haaland.goals ?? "—"} />
+              <div className="grid grid-cols-3 sm:grid-cols-6 gap-3 sm:gap-4">
+                <Stat
+                  label="Mål"
+                  value={haaland.goals ?? "—"}
+                  accent="signal"
+                />
                 <Stat label="Caps" value={haaland.caps ?? "—"} />
                 <Stat
-                  label="Klubb 25/26"
-                  value={haalandForm ? `${haalandForm.goals}g · ${haalandForm.assists}a` : "—"}
+                  label="Assists"
+                  value={haaland.assists ?? "—"}
+                  accent="amber"
+                />
+                <Stat
+                  label="Minutter"
+                  value={
+                    haalandMinutes > 0
+                      ? haalandMinutes.toLocaleString("nb-NO")
+                      : "—"
+                  }
+                />
+                <Stat
+                  label="Mål/Kamp"
+                  value={
+                    haaland.caps && haaland.goals
+                      ? (haaland.goals / haaland.caps).toFixed(2)
+                      : "—"
+                  }
+                />
+                <Stat
+                  label="Min/Mål"
+                  value={
+                    haalandMinPerGoal !== null
+                      ? haalandMinPerGoal.toLocaleString("nb-NO")
+                      : "—"
+                  }
                 />
               </div>
+              {haalandMinPerGoal !== null && haaland.goals && (
+                <p className="mt-3 text-[11px] text-cream/55 leading-relaxed font-serif italic">
+                  Ett mål hver{" "}
+                  <span className="stat-num not-italic text-cream font-semibold">
+                    {haalandMinPerGoal}
+                  </span>{" "}
+                  minutt for landslaget — best i Europa blant aktive spillere
+                  under 30, og bare slått av Mbappé i totalbudsjettet.
+                </p>
+              )}
             </div>
+
+            {/* Klubb 25/26 row */}
+            {haalandForm && (
+              <div className="border-t border-cream/8 py-3 grid grid-cols-3 gap-3 sm:gap-4">
+                <div>
+                  <div className="text-[10px] uppercase tracking-kicker font-mono text-cream/55 mb-0.5">
+                    Klubb 25/26 · Mål
+                  </div>
+                  <div className="font-serif text-xl font-semibold stat-num text-cream leading-none">
+                    {haalandForm.goals}
+                  </div>
+                </div>
+                <div>
+                  <div className="text-[10px] uppercase tracking-kicker font-mono text-cream/55 mb-0.5">
+                    Klubb 25/26 · Assists
+                  </div>
+                  <div className="font-serif text-xl font-semibold stat-num text-cream leading-none">
+                    {haalandForm.assists}
+                  </div>
+                </div>
+                <div>
+                  <div className="text-[10px] uppercase tracking-kicker font-mono text-cream/55 mb-0.5">
+                    Kamper
+                  </div>
+                  <div className="font-serif text-xl font-semibold stat-num text-cream leading-none">
+                    {haalandForm.apps}
+                  </div>
+                </div>
+              </div>
+            )}
           </Link>
         </section>
       )}
@@ -342,13 +431,24 @@ export default async function NorgePage() {
 function Stat({
   label,
   value,
+  accent,
 }: {
   label: string;
   value: string | number;
+  /** Highlight the number for a key metric. `signal` = red, `amber` = yellow. */
+  accent?: "signal" | "amber";
 }) {
+  const valueCls =
+    accent === "signal"
+      ? "text-signal"
+      : accent === "amber"
+      ? "text-amber"
+      : "text-cream";
   return (
     <div>
-      <span className="font-serif text-[22px] font-semibold text-cream block leading-none stat-num">
+      <span
+        className={`font-serif text-[22px] font-semibold block leading-none stat-num ${valueCls}`}
+      >
         {value}
       </span>
       <Kicker tone="muted">{label}</Kicker>
