@@ -80,6 +80,39 @@ export async function joinLeagueAction(
   redirect(`/leagues/${league.id}`);
 }
 
+/**
+ * Join an open (non-private) league directly — no invite code needed.
+ * Validates the league is actually public before adding the membership so
+ * this can't be used to slip into a private league by id.
+ */
+export async function joinPublicLeagueAction(formData: FormData) {
+  const leagueId = String(formData.get("leagueId") || "").trim();
+  if (!leagueId) return;
+
+  const supabase = createSupabaseServerClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) redirect("/login");
+
+  const { data: league } = await supabase
+    .from("mini_leagues")
+    .select("id, is_private")
+    .eq("id", leagueId)
+    .maybeSingle();
+
+  // Only open leagues are joinable this way.
+  if (!league || league.is_private) return;
+
+  await supabase
+    .from("league_members")
+    .upsert(
+      { league_id: league.id, user_id: user.id },
+      { onConflict: "league_id,user_id", ignoreDuplicates: true },
+    );
+
+  revalidatePath("/leagues");
+  redirect(`/leagues/${league.id}`);
+}
+
 export async function leaveLeagueAction(formData: FormData) {
   const leagueId = String(formData.get("leagueId") || "");
   if (!leagueId) return;

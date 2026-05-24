@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { AppLogo, ChatGeniusBadge, CreditsBadge } from "./Logo";
+import { SongPlayerCard } from "./SongPlayer";
 import {
   NAV_ITEMS,
   DEFAULT_NAV_LABELS,
@@ -70,6 +71,7 @@ export function Sidebar({ labels }: { labels?: Partial<NavLabels> }) {
       </nav>
 
       <div className="mt-auto pt-4 border-t border-cream/8 space-y-3">
+        <SongPlayerCard />
         <div className="surface px-3 py-2.5">
           <div className="text-[10px] uppercase tracking-kicker font-mono text-cream/55">
             Live model

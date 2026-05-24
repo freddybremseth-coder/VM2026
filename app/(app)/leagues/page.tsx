@@ -1,9 +1,10 @@
 import Link from "next/link";
-import { Trophy, Users, ChevronRight } from "lucide-react";
+import { Trophy, Users, ChevronRight, Globe, LogIn } from "lucide-react";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { CreateLeagueForm, JoinLeagueForm } from "@/components/league/LeagueForms";
 import { LeagueAvatar } from "@/components/league/LeagueAvatar";
 import { DemoLeague } from "@/components/league/DemoLeague";
+import { joinPublicLeagueAction } from "@/app/(app)/leagues/actions";
 import { Kicker, Headline } from "@/components/shared/EditorialKicker";
 import { getDictionary } from "@/lib/i18n";
 
@@ -40,6 +41,27 @@ export default async function LeaguesPage() {
     };
   };
   const myLeagues = (memberships as Membership[] | null) ?? [];
+  const myLeagueIds = new Set(myLeagues.map((m) => m.league_id));
+
+  // Open (non-private) leagues anyone can join without a code. RLS exposes
+  // these via the "not is_private" read policy. Hide ones the user is
+  // already in or owns.
+  const { data: openRaw } = await supabase
+    .from("mini_leagues")
+    .select("id, name, description, owner_id")
+    .eq("is_private", false)
+    .order("created_at", { ascending: false })
+    .limit(24);
+
+  type OpenLeague = {
+    id: string;
+    name: string;
+    description: string | null;
+    owner_id: string;
+  };
+  const openLeagues = ((openRaw as OpenLeague[] | null) ?? []).filter(
+    (l) => !myLeagueIds.has(l.id) && l.owner_id !== user.id,
+  );
 
   return (
     <div className="px-5 md:px-10 py-8 max-w-[1100px] mx-auto space-y-8">
@@ -102,6 +124,50 @@ export default async function LeaguesPage() {
           </div>
         )}
       </section>
+
+      {/* Open leagues — anyone can join, no code needed */}
+      {openLeagues.length > 0 && (
+        <section className="space-y-3">
+          <div className="flex items-center gap-2">
+            <Globe size={12} className="text-amber" />
+            <div className="text-[10px] uppercase tracking-kicker font-mono font-semibold text-cream/70">
+              Åpne ligaer · bli med uten kode
+            </div>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            {openLeagues.map((l) => (
+              <div key={l.id} className="surface p-4 flex items-start gap-3">
+                <LeagueAvatar seed={l.id} name={l.name} size={44} />
+                <div className="flex-1 min-w-0">
+                  <Link
+                    href={`/leagues/${l.id}`}
+                    className="font-serif text-base font-semibold tracking-editorial text-cream truncate hover:text-amber transition-colors block"
+                  >
+                    {l.name}
+                  </Link>
+                  {l.description && (
+                    <div className="text-xs text-cream/55 mt-1 truncate font-mono">
+                      {l.description}
+                    </div>
+                  )}
+                  <div className="mt-1 flex items-center gap-1.5 text-[10px] uppercase tracking-kicker font-mono text-cream/45">
+                    <Globe size={10} /> Åpen liga
+                  </div>
+                </div>
+                <form action={joinPublicLeagueAction} className="shrink-0">
+                  <input type="hidden" name="leagueId" value={l.id} />
+                  <button
+                    type="submit"
+                    className="flex items-center gap-1.5 bg-signal hover:bg-signalD text-cream text-xs font-semibold px-3 py-1.5 transition-colors"
+                  >
+                    <LogIn size={12} /> Bli med
+                  </button>
+                </form>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
 
       <section className="grid grid-cols-1 md:grid-cols-2 gap-5">
         <CreateLeagueForm />

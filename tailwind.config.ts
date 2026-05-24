@@ -84,11 +84,16 @@ export default {
           "0%":   { transform: "translateX(0)" },
           "100%": { transform: "translateX(-50%)" },
         },
+        eq: {
+          "0%, 100%": { transform: "scaleY(0.4)" },
+          "50%":      { transform: "scaleY(1)" },
+        },
       },
       animation: {
         "pulse-dot":    "pulse-dot 1.4s ease-in-out infinite",
         "holo-shimmer": "holo-shimmer 4s ease-in-out infinite",
         marquee:        "marquee 32s linear infinite",
+        eq:             "eq 0.9s ease-in-out infinite",
       },
     },
   },

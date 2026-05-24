@@ -2,6 +2,7 @@ import { Search, Bell } from "lucide-react";
 import { UserMenu } from "./UserMenu";
 import { MobileNav } from "./MobileNav";
 import { LocaleToggle } from "./LocaleToggle";
+import { SongPlayerButton } from "./SongPlayer";
 import { getDictionary, getLocale } from "@/lib/i18n";
 
 export function TopBar() {
@@ -25,6 +26,7 @@ export function TopBar() {
           />
         </label>
       </div>
+      <SongPlayerButton />
       <LocaleToggle current={locale} />
       <button
         className="p-1.5 text-cream/55 hover:bg-paper hover:text-cream hidden sm:inline-flex"
