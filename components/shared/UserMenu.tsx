@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { LogIn, LogOut, User } from "lucide-react";
+import { LogIn, LogOut } from "lucide-react";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { logoutAction } from "@/app/(auth)/actions";
 
@@ -7,10 +7,10 @@ function SignedOutBadge() {
   return (
     <Link
       href="/login"
-      className="flex items-center gap-1.5 rounded-md bg-accent-500/15 text-accent-300 ring-1 ring-accent-500/30 hover:bg-accent-500/25 px-3 py-1.5 text-xs font-semibold transition-colors"
+      className="flex items-center gap-1.5 bg-signal/15 text-signal ring-1 ring-signal/30 hover:bg-signal/25 px-3 py-1.5 text-xs font-semibold transition-colors"
     >
       <LogIn size={13} />
-      Sign in
+      Logg inn
     </Link>
   );
 }
@@ -35,22 +35,29 @@ export async function UserMenu() {
     .eq("id", user.id)
     .maybeSingle();
 
-  const label = profile?.display_name || profile?.username || user.email?.split("@")[0] || "you";
+  const label = profile?.display_name || profile?.username || user.email?.split("@")[0] || "Spiller";
+  const initials = label.slice(0, 2).toUpperCase();
 
   return (
     <div className="flex items-center gap-2">
-      <div className="flex items-center gap-2 rounded-md bg-pitch-800/70 border border-pitch-700 px-2.5 py-1.5">
-        <div className="h-5 w-5 rounded-full bg-gradient-to-br from-data-400 to-data-500 flex items-center justify-center">
-          <User size={11} className="text-pitch-950" />
+      <Link
+        href="/leagues"
+        className="flex items-center gap-2 bg-paper border border-cream/8 hover:border-cream/16 hover:bg-paperHi px-2 py-1.5 transition-colors"
+        title="Mine ligaer"
+      >
+        <div className="h-5 w-5 bg-signal flex items-center justify-center font-serif font-bold text-cream text-[10px] leading-none">
+          {initials}
         </div>
-        <span className="text-xs font-medium">{label}</span>
-      </div>
+        <span className="text-xs font-medium text-cream/85 max-w-[120px] truncate hidden sm:inline">
+          {label}
+        </span>
+      </Link>
       <form action={logoutAction}>
         <button
           type="submit"
-          className="p-1.5 rounded-md text-pitch-400 hover:text-loss hover:bg-pitch-800 transition-colors"
-          aria-label="Sign out"
-          title="Sign out"
+          className="p-1.5 text-cream/55 hover:text-signal hover:bg-paper transition-colors"
+          aria-label="Logg ut"
+          title="Logg ut"
         >
           <LogOut size={14} />
         </button>
