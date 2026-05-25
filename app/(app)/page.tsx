@@ -4,7 +4,7 @@ import { HoloFlag } from "@/components/shared/HoloFlag";
 import { Kicker, Headline } from "@/components/shared/EditorialKicker";
 import { LiveTicker, type TickerItem } from "@/components/shared/LiveTicker";
 import { StadiumBackdrop } from "@/components/shared/StadiumBackdrop";
-import { teamById, TOURNAMENT } from "@/lib/wc26-data";
+import { teamById, teamName, TOURNAMENT } from "@/lib/wc26-data";
 import { nextFixtures, fixturesOn } from "@/lib/wc26-fixtures";
 import { formatKickoff, formatDateLabel } from "@/lib/utils";
 import { getDictionary } from "@/lib/i18n";
@@ -202,9 +202,9 @@ function FixtureRow({
           {live ? "LIVE · 67′" : stageLabel(fixture)}
         </div>
         <div className="font-serif text-base md:text-lg font-semibold leading-tight tracking-editorial mt-0.5">
-          {home?.name ?? "TBD"}
+          {teamName(home)}
           <span className="text-cream/35 mx-2 font-normal">vs</span>
-          {away?.name ?? "TBD"}
+          {teamName(away)}
         </div>
       </div>
 

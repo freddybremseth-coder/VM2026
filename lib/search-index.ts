@@ -5,7 +5,7 @@
  * page's HTML — the client fetches it once on first focus.
  */
 
-import { TEAMS, teamById } from "@/lib/wc26-data";
+import { TEAMS, teamById, teamName } from "@/lib/wc26-data";
 import { getAllPlayers } from "@/lib/wc26-squads";
 
 export interface SearchEntry {
@@ -34,7 +34,7 @@ export function getSearchIndex(): SearchEntry[] {
 
   const teamEntries: SearchEntry[] = TEAMS.map((t) => ({
     type: "team",
-    name: t.name,
+    name: teamName(t),
     sub: `Gruppe ${t.group} · ${CONFED_LABEL[t.confederation] ?? t.confederation}`,
     flag: t.flag,
     href: `/teams/${t.id}`,
@@ -45,7 +45,7 @@ export function getSearchIndex(): SearchEntry[] {
     return {
       type: "player",
       name: p.name,
-      sub: `${team?.name ?? "—"} · ${p.position} · ${p.club}`,
+      sub: `${team ? teamName(team) : "—"} · ${p.position} · ${p.club}`,
       flag: team?.flag ?? "",
       href: `/players/${p.id}`,
     };

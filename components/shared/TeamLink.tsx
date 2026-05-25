@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { TeamFlag } from "./TeamFlag";
-import type { WCTeam } from "@/lib/wc26-data";
+import { teamName, type WCTeam } from "@/lib/wc26-data";
 import { cn } from "@/lib/utils";
 
 interface Props {
@@ -36,7 +36,7 @@ export function TeamLink({
     >
       <TeamFlag code={team.flag} size={size} className="group-hover:ring-accent-400/40" />
       {variant === "full" && (
-        <span className={cn("truncate", bold && "font-semibold")}>{team.name}</span>
+        <span className={cn("truncate", bold && "font-semibold")}>{teamName(team)}</span>
       )}
       {variant === "short" && (
         <span className={cn("font-mono uppercase tracking-widest text-xs", bold && "font-semibold")}>

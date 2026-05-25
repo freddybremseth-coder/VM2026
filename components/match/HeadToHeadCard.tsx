@@ -1,6 +1,6 @@
 import { Trophy } from "lucide-react";
 import { getH2H } from "@/lib/historical-h2h";
-import type { WCTeam } from "@/lib/wc26-data";
+import { teamName, type WCTeam } from "@/lib/wc26-data";
 
 interface Props {
   home: WCTeam;
@@ -23,7 +23,7 @@ export function HeadToHeadCard({ home, away }: Props) {
 
       {!h2h || h2h.total === 0 ? (
         <div className="text-xs text-pitch-500 italic leading-relaxed">
-          Limited or no recorded meetings between {home.name} and {away.name}.
+          Limited or no recorded meetings between {teamName(home)} and {teamName(away)}.
           First competitive fixture in years for these two.
         </div>
       ) : (
@@ -38,7 +38,7 @@ export function HeadToHeadCard({ home, away }: Props) {
             <div
               className="bg-accent-500"
               style={{ width: `${(h2h.teamAWins / h2h.total) * 100}%` }}
-              title={`${home.name} ${h2h.teamAWins} wins`}
+              title={`${teamName(home)} ${h2h.teamAWins} wins`}
             />
             <div
               className="bg-pitch-600"
@@ -48,7 +48,7 @@ export function HeadToHeadCard({ home, away }: Props) {
             <div
               className="bg-data-500"
               style={{ width: `${(h2h.teamBWins / h2h.total) * 100}%` }}
-              title={`${away.name} ${h2h.teamBWins} wins`}
+              title={`${teamName(away)} ${h2h.teamBWins} wins`}
             />
           </div>
           <div className="flex justify-between text-[11px] font-mono">

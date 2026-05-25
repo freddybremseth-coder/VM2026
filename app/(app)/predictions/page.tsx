@@ -10,7 +10,7 @@ import {
 import { Kicker, Headline } from "@/components/shared/EditorialKicker";
 import { formatDateLabel } from "@/lib/utils";
 import { nextFixtures, type Fixture } from "@/lib/wc26-fixtures";
-import { teamById, venueById } from "@/lib/wc26-data";
+import { teamById, teamName, venueById } from "@/lib/wc26-data";
 import { getDictionary } from "@/lib/i18n";
 
 const STAGE_LABEL_KO: Record<string, string> = {
@@ -148,8 +148,8 @@ function buildBoardDays(
             stageLabel: stageLabel(f),
             kickoff: f.kickoff,
             venueLabel: venue?.city ?? "TBD",
-            home: { id: home.id, name: home.name, shortName: home.shortName, flag: home.flag },
-            away: { id: away.id, name: away.name, shortName: away.shortName, flag: away.flag },
+            home: { id: home.id, name: teamName(home), shortName: home.shortName, flag: home.flag },
+            away: { id: away.id, name: teamName(away), shortName: away.shortName, flag: away.flag },
             existing: existing
               ? { home: existing.home_score, away: existing.away_score }
               : undefined,

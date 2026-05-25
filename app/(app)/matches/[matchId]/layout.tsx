@@ -21,7 +21,7 @@ import { ModelExplainer } from "@/components/shared/ModelExplainer";
 import { StickyMobileCTA } from "@/components/match/StickyMobileCTA";
 import { getMatchDetail, getFixtureView } from "@/lib/match-data";
 import { buildPreviewLive } from "@/lib/ai-preview";
-import { teamById } from "@/lib/wc26-data";
+import { teamById, teamName } from "@/lib/wc26-data";
 import { formatKickoff, formatDateLabel } from "@/lib/utils";
 
 export default async function MatchLayout({
@@ -195,7 +195,7 @@ function FixtureTeamRow({
       <HoloFlag code={team.flag} w={42} className={align === "right" ? "sm:hidden" : ""} />
       <div className={"min-w-0 flex-1 sm:flex-initial" + (align === "right" ? " sm:text-right" : "")}>
         <div className="font-serif text-xl sm:text-2xl font-semibold tracking-editorial truncate group-hover:text-amber transition-colors">
-          {team.name}
+          {teamName(team)}
         </div>
         <div className="text-[10px] uppercase tracking-kicker font-mono text-cream/55 mt-0.5 truncate">
           {team.formation}

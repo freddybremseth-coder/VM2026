@@ -1,5 +1,5 @@
 import { ImageResponse } from "next/og";
-import { teamByShortName } from "@/lib/wc26-data";
+import { teamByShortName, teamName } from "@/lib/wc26-data";
 import { OG, OG_SIZE, OG_BG, BrandMark, FlagBlock, Footer, loadFraunces } from "@/lib/og/shared";
 
 export const runtime = "edge";
@@ -57,7 +57,7 @@ export default async function BracketShareImage({
           <FlagBlock code={team?.flag} w={300} h={188} />
 
           <div style={{ fontSize: 100, fontWeight: 700, lineHeight: 1, fontFamily: "Fraunces", letterSpacing: -1 }}>
-            {team?.name ?? "Ukjent"}
+            {team ? teamName(team) : "Ukjent"}
           </div>
 
           {team && (

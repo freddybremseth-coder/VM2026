@@ -1,7 +1,7 @@
 import norwaySpain from "@/mock/matches/norway-spain.json";
 import type { MatchDetail } from "./types";
 import { fixtureById, type Fixture } from "./wc26-fixtures";
-import { teamById, venueById, type WCTeam } from "./wc26-data";
+import { teamById, teamName, venueById, type WCTeam } from "./wc26-data";
 
 export function getMatchDetail(id: string): MatchDetail | null {
   if (id === "1001") return norwaySpain as MatchDetail;
@@ -60,7 +60,7 @@ export function getFixtureView(id: string): FixtureView | null {
 function wrapTeam(t: WCTeam) {
   return {
     id: t.id,
-    name: t.name,
+    name: teamName(t),
     shortName: t.shortName,
     flag: t.flag,
     formation: t.preferredFormation ?? "4-3-3",

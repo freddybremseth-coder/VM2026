@@ -3,7 +3,7 @@ import { Calendar, MapPin } from "lucide-react";
 import { HoloFlag } from "@/components/shared/HoloFlag";
 import { Kicker, Headline } from "@/components/shared/EditorialKicker";
 import { FIXTURES, type Fixture } from "@/lib/wc26-fixtures";
-import { teamById, venueById } from "@/lib/wc26-data";
+import { teamById, teamName, venueById } from "@/lib/wc26-data";
 import { formatKickoff, formatDateLabel } from "@/lib/utils";
 
 const KO_LABELS: Record<string, string> = {
@@ -147,7 +147,7 @@ function TeamSide({
       <HoloFlag code={team.flag} w={26} radius={3} />
       <div className="min-w-0">
         <div className="font-serif text-base font-semibold truncate tracking-editorial">
-          {team.name}
+          {teamName(team)}
         </div>
         <div className="text-[10px] uppercase tracking-kicker font-mono text-cream/45">
           {team.shortName}

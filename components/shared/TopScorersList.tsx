@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { Trophy, Sparkles } from "lucide-react";
 import { HoloFlag } from "./HoloFlag";
-import { teamById } from "@/lib/wc26-data";
+import { teamById, teamName } from "@/lib/wc26-data";
 import type { TournamentLeader } from "@/lib/team-stats";
 
 interface Props {
@@ -50,7 +50,7 @@ export function TopScorersList({ title, leaders, metric, subtitle }: Props) {
               {team && (
                 <Link
                   href={`/teams/${team.id}`}
-                  title={team.name}
+                  title={teamName(team)}
                   className="shrink-0 hover:opacity-80 transition-opacity"
                 >
                   <HoloFlag code={team.flag} w={20} radius={2} />

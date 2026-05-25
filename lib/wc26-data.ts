@@ -162,6 +162,36 @@ export function teamByShortName(short: string): WCTeam | undefined {
   return TEAMS.find((t) => t.shortName === short);
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Norwegian display names. `WCTeam.name` stays English (data fidelity + lookup
+// stability); this is the user-facing label. Keyed by id so the TEAMS array
+// doesn't need touching. Use teamName() everywhere a name is shown to users.
+// ─────────────────────────────────────────────────────────────────────────────
+const TEAM_NAME_NO: Record<number, string> = {
+  1: "Mexico", 48: "Sør-Afrika", 3: "Sør-Korea", 49: "Tsjekkia",
+  5: "Canada", 50: "Bosnia-Hercegovina", 47: "Qatar", 10: "Sveits",
+  13: "Brasil", 12: "Marokko", 51: "Haiti", 52: "Skottland",
+  9: "USA", 43: "Paraguay", 15: "Australia", 45: "Tyrkia",
+  6: "Tyskland", 53: "Curaçao", 32: "Elfenbenskysten", 33: "Ecuador",
+  26: "Nederland", 7: "Japan", 54: "Sverige", 24: "Tunisia",
+  38: "Belgia", 16: "Egypt", 11: "Iran", 39: "New Zealand",
+  22: "Spania", 55: "Kapp Verde", 19: "Saudi-Arabia", 23: "Uruguay",
+  14: "Frankrike", 8: "Senegal", 27: "Irak", 21: "Norge",
+  4: "Argentina", 20: "Algerie", 56: "Østerrike", 35: "Jordan",
+  18: "Portugal", 57: "DR Kongo", 31: "Usbekistan", 37: "Colombia",
+  30: "England", 42: "Kroatia", 28: "Ghana", 25: "Panama",
+};
+
+/**
+ * User-facing team name in Norwegian. Falls back to the English `name`
+ * for any id not in the map, and returns "TBD" for an absent team (knockout
+ * slots that haven't resolved yet) so callers can drop their own `?? "TBD"`.
+ */
+export function teamName(team?: Pick<WCTeam, "id" | "name"> | null): string {
+  if (!team) return "TBD";
+  return TEAM_NAME_NO[team.id] ?? team.name;
+}
+
 export function venueById(id: string): WCVenue | undefined {
   return VENUES.find((v) => v.id === id);
 }

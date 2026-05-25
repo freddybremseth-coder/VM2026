@@ -3,7 +3,7 @@ import { Users } from "lucide-react";
 import { HoloFlag } from "@/components/shared/HoloFlag";
 import { Kicker, Headline } from "@/components/shared/EditorialKicker";
 import { DataSourceBanner } from "@/components/shared/DataSourceBanner";
-import { TEAMS, GROUPS } from "@/lib/wc26-data";
+import { TEAMS, GROUPS, teamName } from "@/lib/wc26-data";
 
 export default function TeamsPage() {
   return (
@@ -39,7 +39,7 @@ export default function TeamsPage() {
                   >
                     <HoloFlag code={t.flag} w={20} radius={2} />
                     <span className="font-serif text-base tracking-editorial flex-1 truncate group-hover:text-amber transition-colors">
-                      {t.name}
+                      {teamName(t)}
                     </span>
                     <SquadBadge status={t.squadStatus} />
                   </Link>

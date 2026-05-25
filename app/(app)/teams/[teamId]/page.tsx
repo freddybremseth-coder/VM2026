@@ -7,7 +7,7 @@ import { Kicker, Headline } from "@/components/shared/EditorialKicker";
 import { TopScorersList } from "@/components/shared/TopScorersList";
 import { TeamStarsCard } from "@/components/team/TeamStarsCard";
 import { TeamFormStripStatic } from "@/components/shared/TeamFormStrip";
-import { teamById } from "@/lib/wc26-data";
+import { teamById, teamName } from "@/lib/wc26-data";
 import { getSquad } from "@/lib/wc26-squads";
 import { SquadList } from "@/components/match/SquadList";
 import { getTopScorers, getTopAssisters } from "@/lib/team-stats";
@@ -48,7 +48,7 @@ export default async function TeamProfilePage({ params }: { params: { teamId: st
                 Gruppe {team.group} · {team.confederation}
               </Kicker>
               <h1 className="font-serif text-3xl md:text-5xl font-semibold tracking-editorial leading-[1.02] mt-1.5 truncate">
-                {team.name}
+                {teamName(team)}
               </h1>
               <div className="mt-3 text-[11px] text-cream/55 flex flex-wrap gap-x-5 gap-y-1 font-mono">
                 {team.manager && <span>Manager: {team.manager}</span>}

@@ -1,6 +1,6 @@
 import { ImageResponse } from "next/og";
 import { fixtureById } from "@/lib/wc26-fixtures";
-import { teamById } from "@/lib/wc26-data";
+import { teamById, teamName } from "@/lib/wc26-data";
 import { OG, OG_SIZE, OG_BG, BrandMark, FlagBlock, Footer, loadFraunces } from "@/lib/og/shared";
 
 export const runtime = "edge";
@@ -68,7 +68,7 @@ export default async function TipShareImage({
           <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "flex-end", textAlign: "right" }}>
             <FlagBlock code={home?.flag} w={130} h={84} />
             <div style={{ fontSize: 48, fontWeight: 600, lineHeight: 1.05, marginTop: 18, fontFamily: "Fraunces" }}>
-              {home?.name ?? "TBD"}
+              {teamName(home)}
             </div>
           </div>
 
@@ -92,7 +92,7 @@ export default async function TipShareImage({
           <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "flex-start" }}>
             <FlagBlock code={away?.flag} w={130} h={84} />
             <div style={{ fontSize: 48, fontWeight: 600, lineHeight: 1.05, marginTop: 18, fontFamily: "Fraunces" }}>
-              {away?.name ?? "TBD"}
+              {teamName(away)}
             </div>
           </div>
         </div>

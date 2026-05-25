@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { Check, Save, Lock, MapPin } from "lucide-react";
 import { HoloFlag } from "@/components/shared/HoloFlag";
+import { teamName } from "@/lib/wc26-data";
 import { formatKickoff, formatDateLabel } from "@/lib/utils";
 import {
   GUEST_LIMIT,
@@ -167,7 +168,7 @@ function TeamSide({
       <HoloFlag code={team.flag} w={22} radius={2} />
       <div className="min-w-0 flex-1 sm:flex-initial">
         <div className="font-serif text-sm font-semibold tracking-editorial text-cream truncate">
-          {team.name}
+          {teamName(team)}
         </div>
         <div className="text-[10px] uppercase tracking-kicker text-cream/45 font-mono">
           {team.shortName}

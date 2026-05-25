@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { Shuffle, Crown, ArrowRight, Flag, Share2, Cpu, RotateCcw } from "lucide-react";
 import { HoloFlag } from "@/components/shared/HoloFlag";
+import { teamName } from "@/lib/wc26-data";
 import { Kicker } from "@/components/shared/EditorialKicker";
 import {
   modeLabel,
@@ -157,7 +158,7 @@ export function BracketSimulator() {
                 <Kicker tone="signal">Din spådde mester</Kicker>
                 <div className="font-serif text-2xl sm:text-3xl font-semibold tracking-editorial mt-1 flex items-center gap-2.5">
                   <HoloFlag code={champion.flag} w={32} shimmer="strong" />
-                  <span className="truncate">{champion.name}</span>
+                  <span className="truncate">{teamName(champion)}</span>
                 </div>
               </div>
             </div>
@@ -371,7 +372,7 @@ function TeamRow({
     >
       <HoloFlag code={team.flag} w={18} radius={2} />
       <span className="flex-1 text-left truncate font-serif tracking-editorial">
-        {team.name}
+        {teamName(team)}
       </span>
       {picked && <ArrowRight size={11} className="text-signal" />}
     </button>

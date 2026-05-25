@@ -4,7 +4,7 @@ import { HoloFlag } from "@/components/shared/HoloFlag";
 import { Kicker, Headline } from "@/components/shared/EditorialKicker";
 import { BracketSimulator } from "@/components/bracket/BracketSimulator";
 import { ModelExplainer } from "@/components/shared/ModelExplainer";
-import { GROUPS, teamsByGroup, venueById, type WCTeam } from "@/lib/wc26-data";
+import { GROUPS, teamName, teamsByGroup, venueById, type WCTeam } from "@/lib/wc26-data";
 import { fixturesByRound } from "@/lib/wc26-fixtures";
 import { formatKickoff } from "@/lib/utils";
 
@@ -237,7 +237,7 @@ function GroupCard({ group, teams }: { group: string; teams: WCTeam[] }) {
               </span>
               <HoloFlag code={t.flag} w={18} radius={2} />
               <span className="font-serif text-sm tracking-editorial text-cream truncate flex-1 group-hover:text-amber transition-colors">
-                {t.name}
+                {teamName(t)}
               </span>
               <span className="font-mono text-cream/45 stat-num text-[10px]">
                 0·0·0·0·0

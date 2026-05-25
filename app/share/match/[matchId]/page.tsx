@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { ArrowRight, Share2 } from "lucide-react";
 import { fixtureById } from "@/lib/wc26-fixtures";
-import { teamById } from "@/lib/wc26-data";
+import { teamById, teamName } from "@/lib/wc26-data";
 import { buildPreview } from "@/lib/ai-preview";
 import { TeamFlag } from "@/components/shared/TeamFlag";
 import { AppLogoWordmark } from "@/components/shared/Logo";
@@ -19,7 +19,7 @@ export async function generateMetadata({ params }: Params): Promise<Metadata> {
   if (!fixture) return { title: "WC26 — Share" };
   const home = fixture.homeId ? teamById(fixture.homeId) : undefined;
   const away = fixture.awayId ? teamById(fixture.awayId) : undefined;
-  const title = home && away ? `${home.name} vs ${away.name} — WC26` : "WC26 match";
+  const title = home && away ? `${teamName(home)} mot ${teamName(away)} — VM 2026` : "WC26 match";
   return {
     title,
     description: "AI-powered World Cup predictions with friends — by ChatGenius.",
@@ -64,7 +64,7 @@ export default function MatchSharePage({ params }: Params) {
             <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-6 mb-6">
               <div className="flex items-center justify-end gap-3 text-right">
                 <div>
-                  <div className="text-2xl font-bold tracking-tight">{home.name}</div>
+                  <div className="text-2xl font-bold tracking-tight">{teamName(home)}</div>
                   <div className="text-[11px] uppercase tracking-widest text-pitch-400 font-mono mt-1">
                     {home.shortName}
                   </div>
@@ -75,7 +75,7 @@ export default function MatchSharePage({ params }: Params) {
               <div className="flex items-center gap-3">
                 <TeamFlag code={away.flag} size="lg" />
                 <div>
-                  <div className="text-2xl font-bold tracking-tight">{away.name}</div>
+                  <div className="text-2xl font-bold tracking-tight">{teamName(away)}</div>
                   <div className="text-[11px] uppercase tracking-widest text-pitch-400 font-mono mt-1">
                     {away.shortName}
                   </div>

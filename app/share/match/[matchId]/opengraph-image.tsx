@@ -1,6 +1,6 @@
 import { ImageResponse } from "next/og";
 import { fixtureById } from "@/lib/wc26-fixtures";
-import { teamById, venueById } from "@/lib/wc26-data";
+import { teamById, teamName, venueById } from "@/lib/wc26-data";
 import { buildPreview } from "@/lib/ai-preview";
 import { OG, OG_SIZE, OG_BG, BrandMark, FlagBlock, Footer, loadFraunces } from "@/lib/og/shared";
 
@@ -81,7 +81,7 @@ export default async function MatchShareImage({
           <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "flex-end", textAlign: "right" }}>
             <FlagBlock code={home?.flag} />
             <div style={{ fontSize: 58, fontWeight: 600, lineHeight: 1, marginTop: 22, fontFamily: "Fraunces" }}>
-              {home?.name ?? "TBD"}
+              {teamName(home)}
             </div>
             <div style={{ fontSize: 20, color: OG.creamDim, marginTop: 8, letterSpacing: 3 }}>
               {home?.shortName ?? ""}
@@ -108,7 +108,7 @@ export default async function MatchShareImage({
           <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "flex-start" }}>
             <FlagBlock code={away?.flag} />
             <div style={{ fontSize: 58, fontWeight: 600, lineHeight: 1, marginTop: 22, fontFamily: "Fraunces" }}>
-              {away?.name ?? "TBD"}
+              {teamName(away)}
             </div>
             <div style={{ fontSize: 20, color: OG.creamDim, marginTop: 8, letterSpacing: 3 }}>
               {away?.shortName ?? ""}

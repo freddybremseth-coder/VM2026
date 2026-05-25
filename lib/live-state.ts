@@ -10,7 +10,7 @@
  */
 
 import { FIXTURES, nextFixtures } from "@/lib/wc26-fixtures";
-import { teamById, TOURNAMENT } from "@/lib/wc26-data";
+import { teamById, teamName, TOURNAMENT } from "@/lib/wc26-data";
 import type { Fixture } from "@/lib/wc26-fixtures";
 
 /** A match is considered "in progress" for this long after kickoff. */
@@ -75,8 +75,8 @@ function toNextMatch(f: Fixture): NextMatch {
   const away = f.awayId ? teamById(f.awayId) : undefined;
   return {
     id: f.id,
-    homeName: home?.name ?? "TBD",
-    awayName: away?.name ?? "TBD",
+    homeName: teamName(home),
+    awayName: teamName(away),
     homeFlag: home?.flag ?? null,
     awayFlag: away?.flag ?? null,
     kickoff: f.kickoff,
@@ -99,8 +99,8 @@ export function computeLiveState(now: Date = new Date()): LiveState {
       const away = f.awayId ? teamById(f.awayId) : undefined;
       return {
         id: f.id,
-        homeName: home?.name ?? "TBD",
-        awayName: away?.name ?? "TBD",
+        homeName: teamName(home),
+        awayName: teamName(away),
         homeFlag: home?.flag ?? null,
         awayFlag: away?.flag ?? null,
         kickoff: f.kickoff,

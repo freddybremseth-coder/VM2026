@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { ArrowRight, Share2 } from "lucide-react";
 import { fixtureById } from "@/lib/wc26-fixtures";
-import { teamById } from "@/lib/wc26-data";
+import { teamById, teamName } from "@/lib/wc26-data";
 import { TeamFlag } from "@/components/shared/TeamFlag";
 import { AppLogoWordmark } from "@/components/shared/Logo";
 import { CopyLinkButton } from "@/components/shared/CopyLinkButton";
@@ -67,7 +67,7 @@ export default function TipSharePage({ params }: Params) {
               <div className="flex flex-col items-end gap-2 text-right">
                 <TeamFlag code={home.flag} size="lg" />
                 <div className="text-base sm:text-lg font-bold tracking-tight">
-                  {home.name}
+                  {teamName(home)}
                 </div>
               </div>
               <div className="flex items-center gap-3 font-mono font-extrabold stat-num text-data-300 text-5xl sm:text-7xl leading-none">
@@ -78,7 +78,7 @@ export default function TipSharePage({ params }: Params) {
               <div className="flex flex-col items-start gap-2">
                 <TeamFlag code={away.flag} size="lg" />
                 <div className="text-base sm:text-lg font-bold tracking-tight">
-                  {away.name}
+                  {teamName(away)}
                 </div>
               </div>
             </div>

@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { HoloFlag } from "@/components/shared/HoloFlag";
 import { Kicker, Headline, PullQuote } from "@/components/shared/EditorialKicker";
-import { teamById, teamsByGroup } from "@/lib/wc26-data";
+import { teamById, teamName, teamsByGroup } from "@/lib/wc26-data";
 import { FIXTURES, type Fixture } from "@/lib/wc26-fixtures";
 import { getSquad, getPlayerMinutes } from "@/lib/wc26-squads";
 import { getPlayerForm } from "@/lib/player-form";
@@ -235,7 +235,7 @@ export default async function NorgePage() {
                     isNorway ? "font-bold" : "font-medium"
                   }`}
                 >
-                  {team.name}
+                  {teamName(team)}
                 </span>
                 <span
                   className={`font-mono text-[11px] text-right font-semibold stat-num ${

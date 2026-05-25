@@ -2,7 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { Crown, ArrowRight, Share2 } from "lucide-react";
-import { teamByShortName } from "@/lib/wc26-data";
+import { teamByShortName, teamName } from "@/lib/wc26-data";
 import { TeamFlag } from "@/components/shared/TeamFlag";
 import { AppLogoWordmark } from "@/components/shared/Logo";
 import { CopyLinkButton } from "@/components/shared/CopyLinkButton";
@@ -13,7 +13,7 @@ interface Params {
 
 export async function generateMetadata({ params }: Params): Promise<Metadata> {
   const team = teamByShortName(params.champion.toUpperCase());
-  const title = team ? `My bracket: ${team.name} wins WC26` : "WC26 bracket";
+  const title = team ? `Min mester: ${teamName(team)} vinner VM 2026` : "WC26 bracket";
   return {
     title,
     description: "Build your own World Cup 2026 bracket with the ChatGenius simulator.",
@@ -49,7 +49,7 @@ export default function BracketSharePage({ params }: Params) {
               My predicted champion
             </div>
             <TeamFlag code={team.flag} size="lg" className="!h-20 !w-32" />
-            <h1 className="text-4xl md:text-5xl font-bold tracking-tight">{team.name}</h1>
+            <h1 className="text-4xl md:text-5xl font-bold tracking-tight">{teamName(team)}</h1>
             <div className="text-xs uppercase tracking-widest text-pitch-400 font-mono px-3 py-1 rounded-full bg-pitch-800/60">
               Group {team.group} · FIFA #{team.fifaRank ?? "—"}
             </div>
