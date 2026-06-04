@@ -8,9 +8,11 @@
  * 48 teams, 12 groups (A–L) of 4. Tournament runs 11 June – 19 July 2026.
  * Top 2 from each group + 8 best third-placed teams advance to the Round of 32.
  *
- * `squadStatus` flags which teams have an illustrative 26-man roster encoded in
- * `wc26-squads.ts`. Most teams have not published final squads yet (typically 7
- * days before kickoff) — those render as "Pending" in the UI.
+ * `squadStatus` flags which teams have a 26-man roster encoded in
+ * `wc26-squads.ts` (+ wave-2/3/4). After the May 2026 announcements all 48
+ * sides have submitted squads — the value differentiates richly-sourced
+ * lineups ("official") from those built before the federation announcement
+ * was public ("preliminary").
  *
  * Team IDs for the six teams with full squad data are stable across changes
  * (Norway 21, Spain 22, Brazil 13, Argentina 4, England 30, France 14).
@@ -76,36 +78,36 @@ export const VENUES: WCVenue[] = [
 export const TEAMS: WCTeam[] = [
   // Group A
   { id: 1,  name: "Mexico",              shortName: "MEX", flag: "mx",     confederation: "CONCACAF", group: "A", fifaRank: 14, squadStatus: "preliminary", manager: "Javier Aguirre",       preferredFormation: "4-3-3" },
-  { id: 48, name: "South Africa",        shortName: "RSA", flag: "za",     confederation: "CAF",      group: "A", fifaRank: 59, squadStatus: "pending",     manager: "Hugo Broos",            preferredFormation: "4-3-3" },
+  { id: 48, name: "South Africa",        shortName: "RSA", flag: "za",     confederation: "CAF",      group: "A", fifaRank: 59, squadStatus: "official",     manager: "Hugo Broos",            preferredFormation: "4-3-3" },
   { id: 3,  name: "South Korea",         shortName: "KOR", flag: "kr",     confederation: "AFC",      group: "A", fifaRank: 23, squadStatus: "official",    manager: "Hong Myung-bo",          preferredFormation: "4-2-3-1" },
   { id: 49, name: "Czechia",             shortName: "CZE", flag: "cz",     confederation: "UEFA",     group: "A", fifaRank: 43, squadStatus: "preliminary", manager: "Miroslav Koubek",        preferredFormation: "3-4-2-1" },
 
   // Group B
-  { id: 5,  name: "Canada",              shortName: "CAN", flag: "ca",     confederation: "CONCACAF", group: "B", fifaRank: 38, squadStatus: "preliminary", manager: "Jesse Marsch",           preferredFormation: "4-3-3" },
+  { id: 5,  name: "Canada",              shortName: "CAN", flag: "ca",     confederation: "CONCACAF", group: "B", fifaRank: 38, squadStatus: "official", manager: "Jesse Marsch",           preferredFormation: "4-3-3" },
   { id: 50, name: "Bosnia & Herzegovina",shortName: "BIH", flag: "ba",     confederation: "UEFA",     group: "B", fifaRank: 76, squadStatus: "official",    manager: "Sergej Barbarez",        preferredFormation: "4-3-3" },
   { id: 47, name: "Qatar",               shortName: "QAT", flag: "qa",     confederation: "AFC",      group: "B", fifaRank: 53, squadStatus: "preliminary", manager: "Julen Lopetegui",        preferredFormation: "5-3-2" },
   { id: 10, name: "Switzerland",         shortName: "SUI", flag: "ch",     confederation: "UEFA",     group: "B", fifaRank: 20, squadStatus: "official",    manager: "Murat Yakın",            preferredFormation: "3-4-2-1" },
 
   // Group C
   { id: 13, name: "Brazil",              shortName: "BRA", flag: "br",     confederation: "CONMEBOL", group: "C", fifaRank: 5,  squadStatus: "official",    manager: "Carlo Ancelotti",        preferredFormation: "4-2-3-1" },
-  { id: 12, name: "Morocco",             shortName: "MAR", flag: "ma",     confederation: "CAF",      group: "C", fifaRank: 13, squadStatus: "preliminary", manager: "Walid Regragui",         preferredFormation: "4-3-3" },
+  { id: 12, name: "Morocco",             shortName: "MAR", flag: "ma",     confederation: "CAF",      group: "C", fifaRank: 13, squadStatus: "official", manager: "Walid Regragui",         preferredFormation: "4-3-3" },
   { id: 51, name: "Haiti",               shortName: "HAI", flag: "ht",     confederation: "CONCACAF", group: "C", fifaRank: 83, squadStatus: "official",    manager: "Sébastien Migné",        preferredFormation: "4-4-2" },
   { id: 52, name: "Scotland",            shortName: "SCO", flag: "gb-sct", confederation: "UEFA",     group: "C", fifaRank: 39, squadStatus: "official",    manager: "Steve Clarke",           preferredFormation: "3-4-2-1" },
 
   // Group D
-  { id: 9,  name: "USA",                 shortName: "USA", flag: "us",     confederation: "CONCACAF", group: "D", fifaRank: 16, squadStatus: "preliminary", manager: "Mauricio Pochettino",    preferredFormation: "4-3-3" },
+  { id: 9,  name: "USA",                 shortName: "USA", flag: "us",     confederation: "CONCACAF", group: "D", fifaRank: 16, squadStatus: "official", manager: "Mauricio Pochettino",    preferredFormation: "4-3-3" },
   { id: 43, name: "Paraguay",            shortName: "PAR", flag: "py",     confederation: "CONMEBOL", group: "D", fifaRank: 45, squadStatus: "preliminary", manager: "Gustavo Alfaro",         preferredFormation: "4-3-3" },
-  { id: 15, name: "Australia",           shortName: "AUS", flag: "au",     confederation: "AFC",      group: "D", fifaRank: 26, squadStatus: "pending",     manager: "Tony Popovic",           preferredFormation: "4-2-3-1" },
+  { id: 15, name: "Australia",           shortName: "AUS", flag: "au",     confederation: "AFC",      group: "D", fifaRank: 26, squadStatus: "official",     manager: "Tony Popovic",           preferredFormation: "4-2-3-1" },
   { id: 45, name: "Türkiye",             shortName: "TUR", flag: "tr",     confederation: "UEFA",     group: "D", fifaRank: 27, squadStatus: "preliminary", manager: "Vincenzo Montella",      preferredFormation: "4-2-3-1" },
 
   // Group E
   { id: 6,  name: "Germany",             shortName: "GER", flag: "de",     confederation: "UEFA",     group: "E", fifaRank: 9,  squadStatus: "official",    manager: "Julian Nagelsmann",      preferredFormation: "4-2-3-1" },
   { id: 53, name: "Curaçao",             shortName: "CUW", flag: "cw",     confederation: "CONCACAF", group: "E", fifaRank: 82, squadStatus: "official",    manager: "Dick Advocaat",          preferredFormation: "4-3-3" },
   { id: 32, name: "Côte d'Ivoire",       shortName: "CIV", flag: "ci",     confederation: "CAF",      group: "E", fifaRank: 42, squadStatus: "official",    manager: "Emerse Faé",             preferredFormation: "4-3-3" },
-  { id: 33, name: "Ecuador",             shortName: "ECU", flag: "ec",     confederation: "CONMEBOL", group: "E", fifaRank: 25, squadStatus: "pending",     manager: "Sebastián Beccacece",    preferredFormation: "4-3-3" },
+  { id: 33, name: "Ecuador",             shortName: "ECU", flag: "ec",     confederation: "CONMEBOL", group: "E", fifaRank: 25, squadStatus: "official",     manager: "Sebastián Beccacece",    preferredFormation: "4-3-3" },
 
   // Group F
-  { id: 26, name: "Netherlands",         shortName: "NED", flag: "nl",     confederation: "UEFA",     group: "F", fifaRank: 7,  squadStatus: "preliminary", manager: "Ronald Koeman",          preferredFormation: "4-3-3" },
+  { id: 26, name: "Netherlands",         shortName: "NED", flag: "nl",     confederation: "UEFA",     group: "F", fifaRank: 7,  squadStatus: "official", manager: "Ronald Koeman",          preferredFormation: "4-3-3" },
   { id: 7,  name: "Japan",               shortName: "JPN", flag: "jp",     confederation: "AFC",      group: "F", fifaRank: 17, squadStatus: "official",    manager: "Hajime Moriyasu",        preferredFormation: "3-4-2-1" },
   { id: 54, name: "Sweden",              shortName: "SWE", flag: "se",     confederation: "UEFA",     group: "F", fifaRank: 35, squadStatus: "official",    manager: "Graham Potter",          preferredFormation: "4-2-3-1" },
   { id: 24, name: "Tunisia",             shortName: "TUN", flag: "tn",     confederation: "CAF",      group: "F", fifaRank: 41, squadStatus: "official",    manager: "Sabri Lamouchi",         preferredFormation: "4-3-3" },
@@ -119,8 +121,8 @@ export const TEAMS: WCTeam[] = [
   // Group H
   { id: 22, name: "Spain",               shortName: "ESP", flag: "es",     confederation: "UEFA",     group: "H", fifaRank: 3,  squadStatus: "preliminary", manager: "Luis de la Fuente",      preferredFormation: "4-3-3" },
   { id: 55, name: "Cape Verde",          shortName: "CPV", flag: "cv",     confederation: "CAF",      group: "H", fifaRank: 70, squadStatus: "official",    manager: "Pedro Leitão Brito",     preferredFormation: "4-3-3" },
-  { id: 19, name: "Saudi Arabia",        shortName: "KSA", flag: "sa",     confederation: "AFC",      group: "H", fifaRank: 56, squadStatus: "pending",     manager: "Hervé Renard",           preferredFormation: "4-2-3-1" },
-  { id: 23, name: "Uruguay",             shortName: "URU", flag: "uy",     confederation: "CONMEBOL", group: "H", fifaRank: 15, squadStatus: "preliminary", manager: "Marcelo Bielsa",         preferredFormation: "3-3-1-3" },
+  { id: 19, name: "Saudi Arabia",        shortName: "KSA", flag: "sa",     confederation: "AFC",      group: "H", fifaRank: 56, squadStatus: "official",     manager: "Hervé Renard",           preferredFormation: "4-2-3-1" },
+  { id: 23, name: "Uruguay",             shortName: "URU", flag: "uy",     confederation: "CONMEBOL", group: "H", fifaRank: 15, squadStatus: "official", manager: "Marcelo Bielsa",         preferredFormation: "3-3-1-3" },
 
   // Group I
   { id: 14, name: "France",              shortName: "FRA", flag: "fr",     confederation: "UEFA",     group: "I", fifaRank: 2,  squadStatus: "official",    manager: "Didier Deschamps",       preferredFormation: "4-2-3-1" },
@@ -130,21 +132,21 @@ export const TEAMS: WCTeam[] = [
 
   // Group J
   { id: 4,  name: "Argentina",           shortName: "ARG", flag: "ar",     confederation: "CONMEBOL", group: "J", fifaRank: 1,  squadStatus: "preliminary", manager: "Lionel Scaloni",         preferredFormation: "4-4-2" },
-  { id: 20, name: "Algeria",             shortName: "ALG", flag: "dz",     confederation: "CAF",      group: "J", fifaRank: 36, squadStatus: "pending",     manager: "Vladimir Petković",      preferredFormation: "4-3-3" },
+  { id: 20, name: "Algeria",             shortName: "ALG", flag: "dz",     confederation: "CAF",      group: "J", fifaRank: 36, squadStatus: "official",     manager: "Vladimir Petković",      preferredFormation: "4-3-3" },
   { id: 56, name: "Austria",             shortName: "AUT", flag: "at",     confederation: "UEFA",     group: "J", fifaRank: 25, squadStatus: "official",    manager: "Ralf Rangnick",          preferredFormation: "4-2-3-1" },
   { id: 35, name: "Jordan",              shortName: "JOR", flag: "jo",     confederation: "AFC",      group: "J", fifaRank: 70, squadStatus: "official",    manager: "Jamal Sellami",          preferredFormation: "4-3-3" },
 
   // Group K
   { id: 18, name: "Portugal",            shortName: "POR", flag: "pt",     confederation: "UEFA",     group: "K", fifaRank: 6,  squadStatus: "official",    manager: "Roberto Martínez",       preferredFormation: "4-3-3" },
   { id: 57, name: "DR Congo",            shortName: "COD", flag: "cd",     confederation: "CAF",      group: "K", fifaRank: 60, squadStatus: "official",    manager: "Sébastien Desabre",      preferredFormation: "4-3-3" },
-  { id: 31, name: "Uzbekistan",          shortName: "UZB", flag: "uz",     confederation: "AFC",      group: "K", fifaRank: 57, squadStatus: "pending",     manager: "Timur Kapadze",          preferredFormation: "4-3-3" },
-  { id: 37, name: "Colombia",            shortName: "COL", flag: "co",     confederation: "CONMEBOL", group: "K", fifaRank: 12, squadStatus: "preliminary", manager: "Néstor Lorenzo",         preferredFormation: "4-2-3-1" },
+  { id: 31, name: "Uzbekistan",          shortName: "UZB", flag: "uz",     confederation: "AFC",      group: "K", fifaRank: 57, squadStatus: "official",     manager: "Timur Kapadze",          preferredFormation: "4-3-3" },
+  { id: 37, name: "Colombia",            shortName: "COL", flag: "co",     confederation: "CONMEBOL", group: "K", fifaRank: 12, squadStatus: "official", manager: "Néstor Lorenzo",         preferredFormation: "4-2-3-1" },
 
   // Group L
   { id: 30, name: "England",             shortName: "ENG", flag: "gb-eng", confederation: "UEFA",     group: "L", fifaRank: 4,  squadStatus: "official",    manager: "Thomas Tuchel",          preferredFormation: "4-2-3-1" },
   { id: 42, name: "Croatia",             shortName: "CRO", flag: "hr",     confederation: "UEFA",     group: "L", fifaRank: 11, squadStatus: "official",    manager: "Zlatko Dalić",           preferredFormation: "4-3-3" },
-  { id: 28, name: "Ghana",               shortName: "GHA", flag: "gh",     confederation: "CAF",      group: "L", fifaRank: 76, squadStatus: "pending",     manager: "Otto Addo",              preferredFormation: "4-3-3" },
-  { id: 25, name: "Panama",              shortName: "PAN", flag: "pa",     confederation: "CONCACAF", group: "L", fifaRank: 40, squadStatus: "pending",     manager: "Thomas Christiansen",    preferredFormation: "4-3-3" },
+  { id: 28, name: "Ghana",               shortName: "GHA", flag: "gh",     confederation: "CAF",      group: "L", fifaRank: 76, squadStatus: "official",     manager: "Otto Addo",              preferredFormation: "4-3-3" },
+  { id: 25, name: "Panama",              shortName: "PAN", flag: "pa",     confederation: "CONCACAF", group: "L", fifaRank: 40, squadStatus: "official",     manager: "Thomas Christiansen",    preferredFormation: "4-3-3" },
 ];
 
 export const GROUPS = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L"] as const;
