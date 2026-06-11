@@ -1,12 +1,16 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
-import { ArrowLeft, Crown, LogOut, Users, Sparkles } from "lucide-react";
+import { ArrowLeft, Crown, LogOut, Users, Sparkles, Activity } from "lucide-react";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { leaveLeagueAction } from "@/app/(app)/leagues/actions";
 import { LeagueAvatar } from "@/components/league/LeagueAvatar";
 import { CopyLinkButton } from "@/components/shared/CopyLinkButton";
+import { HoloFlag } from "@/components/shared/HoloFlag";
 import { Kicker } from "@/components/shared/EditorialKicker";
 import { buildBanterReportLive, type BanterMember } from "@/lib/banter-report";
+import { FIXTURES, type Fixture } from "@/lib/wc26-fixtures";
+import { teamById, teamName } from "@/lib/wc26-data";
+import { formatKickoff } from "@/lib/utils";
 
 interface MemberRow {
   user_id: string;
@@ -52,6 +56,34 @@ export default async function LeagueDetailPage({
 
   const rows = (members as MemberRow[] | null) ?? [];
   const isOwner = league.owner_id === user.id;
+
+  // ─── Live + recent matches with members' tips ─────────────────────────
+  // Surface what everyone tipped once kickoff has passed — the privacy line
+  // the user asked for. (RLS on predictions is `using (true)`, so this is a
+  // straight SELECT; the kickoff filter lives in app code.)
+  const RECENT_MS = 36 * 60 * 60 * 1000; // 36h: enough to cover yesterday's full slate
+  const nowMs = Date.now();
+  const liveOrRecent: Fixture[] = FIXTURES.filter((f) => {
+    if (!f.homeId || !f.awayId) return false;
+    const ko = new Date(f.kickoff).getTime();
+    return ko <= nowMs && ko >= nowMs - RECENT_MS;
+  }).sort((a, b) => b.kickoff.localeCompare(a.kickoff));
+
+  const memberIds = rows.map((m) => m.user_id);
+  const matchIds = liveOrRecent.map((f) => f.id);
+  type TipRow = { user_id: string; match_id: number; home_score: number; away_score: number };
+  let tipsByMatch = new Map<number, Map<string, { home: number; away: number }>>();
+  if (memberIds.length > 0 && matchIds.length > 0) {
+    const { data: tips } = await supabase
+      .from("predictions")
+      .select("user_id, match_id, home_score, away_score")
+      .in("user_id", memberIds)
+      .in("match_id", matchIds);
+    for (const t of (tips as TipRow[] | null) ?? []) {
+      if (!tipsByMatch.has(t.match_id)) tipsByMatch.set(t.match_id, new Map());
+      tipsByMatch.get(t.match_id)!.set(t.user_id, { home: t.home_score, away: t.away_score });
+    }
+  }
 
   const banterMembers: BanterMember[] = rows.map((m) => ({
     username: m.profiles?.display_name || m.profiles?.username || "(anonym)",
@@ -155,6 +187,26 @@ export default async function LeagueDetailPage({
         </section>
       )}
 
+      {liveOrRecent.length > 0 && (
+        <section>
+          <div className="flex items-center gap-2 mb-3">
+            <Activity size={11} className="text-signal" />
+            <Kicker tone="signal">Tippsammenligning · pågående &amp; siste kamper</Kicker>
+          </div>
+          <div className="space-y-3">
+            {liveOrRecent.map((f) => (
+              <MatchTipsCard
+                key={f.id}
+                fixture={f}
+                members={rows}
+                tips={tipsByMatch.get(f.id) ?? new Map()}
+                youId={user.id}
+              />
+            ))}
+          </div>
+        </section>
+      )}
+
       <section>
         <Kicker tone="muted">Ledertavle</Kicker>
         <div className="surface overflow-hidden mt-3">
@@ -217,5 +269,102 @@ export default async function LeagueDetailPage({
         </p>
       </section>
     </div>
+  );
+}
+
+/**
+ * One match card with every league member's locked tip side by side.
+ * Renders only matches that have already kicked off (caller filters).
+ */
+function MatchTipsCard({
+  fixture,
+  members,
+  tips,
+  youId,
+}: {
+  fixture: Fixture;
+  members: MemberRow[];
+  tips: Map<string, { home: number; away: number }>;
+  youId: string;
+}) {
+  const home = fixture.homeId ? teamById(fixture.homeId) : undefined;
+  const away = fixture.awayId ? teamById(fixture.awayId) : undefined;
+  const stageLabel =
+    fixture.stage.kind === "group"
+      ? `Gruppe ${fixture.stage.group} · MD${fixture.stage.matchday}`
+      : "Sluttspill";
+
+  // Aggregate count of distinct score-tips for a quick "how many agree" hint.
+  const scoreCounts = new Map<string, number>();
+  for (const t of tips.values()) {
+    const k = `${t.home}-${t.away}`;
+    scoreCounts.set(k, (scoreCounts.get(k) ?? 0) + 1);
+  }
+
+  return (
+    <Link
+      href={`/matches/${fixture.id}`}
+      className="block surface p-4 hover:bg-paperHi transition-colors group"
+    >
+      <div className="flex items-center justify-between mb-3">
+        <span className="text-[10px] font-mono uppercase tracking-kicker text-cream/55">
+          {stageLabel}
+        </span>
+        <span className="text-[10px] font-mono text-cream/45 stat-num">
+          {formatKickoff(fixture.kickoff)}
+        </span>
+      </div>
+      <div className="flex items-center gap-3 mb-4">
+        {home && <HoloFlag code={home.flag} w={22} radius={2} />}
+        <span className="font-serif text-base font-semibold tracking-editorial text-cream truncate">
+          {teamName(home)}
+        </span>
+        <span className="text-cream/35 font-serif italic text-sm">vs</span>
+        <span className="font-serif text-base font-semibold tracking-editorial text-cream truncate">
+          {teamName(away)}
+        </span>
+        {away && <HoloFlag code={away.flag} w={22} radius={2} />}
+      </div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-1.5">
+        {members.map((m) => {
+          const label =
+            m.profiles?.display_name || m.profiles?.username || "(anonym)";
+          const isYou = m.user_id === youId;
+          const tip = tips.get(m.user_id);
+          const agree = tip ? scoreCounts.get(`${tip.home}-${tip.away}`) ?? 1 : 0;
+          return (
+            <div
+              key={m.user_id}
+              className={`flex items-center justify-between text-xs py-1 ${
+                isYou ? "ring-1 ring-signal/30 bg-signal/5 px-2" : "px-2"
+              }`}
+            >
+              <span className="font-serif text-cream/85 truncate">
+                {label}
+                {isYou && (
+                  <span className="ml-1.5 text-[9px] uppercase tracking-kicker font-mono text-signal">
+                    deg
+                  </span>
+                )}
+              </span>
+              {tip ? (
+                <span className="font-mono font-semibold stat-num text-amber shrink-0 flex items-center gap-1.5">
+                  {tip.home}–{tip.away}
+                  {agree > 1 && (
+                    <span className="text-[9px] font-mono text-cream/45 uppercase tracking-kicker">
+                      ×{agree}
+                    </span>
+                  )}
+                </span>
+              ) : (
+                <span className="font-mono text-cream/35 text-[11px] italic shrink-0">
+                  tippet ikke
+                </span>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    </Link>
   );
 }
