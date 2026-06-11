@@ -38,7 +38,14 @@ export default async function PredictionsPage() {
   const t = getDictionary();
 
   const now = new Date();
-  const open = nextFixtures(now.toISOString(), 200).filter(
+  // Authed users see a 6-hour lookback window so the live + just-finished
+  // matches stay on the board (rendered locked) — you need to see what you
+  // tipped on the match that's playing right now. Guests see only future
+  // fixtures so their server-side tip submissions never bounce on lock.
+  const cutoffIso = user
+    ? new Date(now.getTime() - 6 * 60 * 60 * 1000).toISOString()
+    : now.toISOString();
+  const open = nextFixtures(cutoffIso, 200).filter(
     (f) => f.homeId && f.awayId,
   );
 
@@ -148,6 +155,9 @@ function buildBoardDays(
             stageLabel: stageLabel(f),
             kickoff: f.kickoff,
             venueLabel: venue?.city ?? "TBD",
+            // Lock once kickoff has passed — the card becomes read-only and
+            // the saved tip is the headline rather than score inputs.
+            locked: new Date(f.kickoff).getTime() <= Date.now(),
             home: { id: home.id, name: teamName(home), shortName: home.shortName, flag: home.flag },
             away: { id: away.id, name: teamName(away), shortName: away.shortName, flag: away.flag },
             existing: existing

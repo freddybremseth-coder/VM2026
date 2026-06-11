@@ -3,7 +3,7 @@
 import * as React from "react";
 import { useEffect, useMemo, useState, useTransition } from "react";
 import Link from "next/link";
-import { Check, Save, MapPin, Calendar, Share2, Cpu } from "lucide-react";
+import { Check, Save, MapPin, Calendar, Share2, Cpu, Lock } from "lucide-react";
 import { HoloFlag } from "@/components/shared/HoloFlag";
 import { formatKickoff, formatDateLabel } from "@/lib/utils";
 import { suggestTip, TIP_MODE_META, type TipMode } from "@/lib/ai-tip-helper";
@@ -24,6 +24,8 @@ export interface BoardFixture {
   stageLabel: string;
   kickoff: string;
   venueLabel: string;
+  /** True once kickoff has passed — card renders read-only. */
+  locked: boolean;
   home: BoardTeam;
   away: BoardTeam;
   existing?: { home: number; away: number };
@@ -143,17 +145,25 @@ export function AuthPredictionsBoard({ days }: { days: BoardDay[] }) {
               </span>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              {d.fixtures.map((f) => (
-                <PredictionRow
-                  key={f.matchId}
-                  fixture={f}
-                  value={valueFor(f.matchId)}
-                  savedValue={saved[f.matchId]}
-                  isDirty={dirtyIds.includes(f.matchId)}
-                  onScore={(side, n) => setScore(f.matchId, side, n)}
-                  onAITip={(mode) => applyAITip(f.matchId, mode)}
-                />
-              ))}
+              {d.fixtures.map((f) =>
+                f.locked ? (
+                  <LockedRow
+                    key={f.matchId}
+                    fixture={f}
+                    savedValue={saved[f.matchId]}
+                  />
+                ) : (
+                  <PredictionRow
+                    key={f.matchId}
+                    fixture={f}
+                    value={valueFor(f.matchId)}
+                    savedValue={saved[f.matchId]}
+                    isDirty={dirtyIds.includes(f.matchId)}
+                    onScore={(side, n) => setScore(f.matchId, side, n)}
+                    onAITip={(mode) => applyAITip(f.matchId, mode)}
+                  />
+                ),
+              )}
             </div>
           </div>
         ))}
@@ -255,6 +265,78 @@ function PredictionRow({
           )}
         </div>
         {savedValue && !isDirty && (
+          <Link
+            href={`/share/tip/${matchId}/${savedValue.home}-${savedValue.away}`}
+            className="bg-paper hover:bg-paperHi border border-cream/8 text-cream/85 text-xs font-semibold px-2.5 py-1.5 transition-colors flex items-center gap-1.5"
+            aria-label="Del mitt tips"
+          >
+            <Share2 size={12} />
+            <span className="hidden sm:inline">Del</span>
+          </Link>
+        )}
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Read-only card for a match where kickoff has passed. The saved tip is
+ * the headline so the user can immediately see what they predicted on the
+ * match that's playing right now (or just finished). No inputs, no AI
+ * helper, no save. Share is still allowed.
+ */
+function LockedRow({
+  fixture,
+  savedValue,
+}: {
+  fixture: BoardFixture;
+  savedValue?: Score;
+}) {
+  const { home, away, stageLabel, kickoff, matchId } = fixture;
+  return (
+    <div className="surface p-4 ring-1 ring-cream/8 bg-paper/70">
+      <div className="flex items-center justify-between mb-3">
+        <span className="text-[10px] font-mono uppercase tracking-kicker text-cream/55">
+          {stageLabel}
+        </span>
+        <span className="flex items-center gap-1 text-[10px] font-mono uppercase tracking-kicker text-signal bg-signal/12 px-1.5 py-0.5">
+          <Lock size={10} /> Låst
+        </span>
+      </div>
+
+      <div className="flex flex-col sm:grid sm:grid-cols-[1fr_auto_1fr] sm:items-center gap-3 sm:gap-4">
+        <TeamSide team={home} align="right" />
+        <div className="flex items-center justify-center gap-2">
+          {savedValue ? (
+            <>
+              <div className="w-14 h-12 flex items-center justify-center font-serif text-2xl font-semibold stat-num text-amber bg-canvas border border-cream/8">
+                {savedValue.home}
+              </div>
+              <span className="text-cream/35 font-serif italic">·</span>
+              <div className="w-14 h-12 flex items-center justify-center font-serif text-2xl font-semibold stat-num text-amber bg-canvas border border-cream/8">
+                {savedValue.away}
+              </div>
+            </>
+          ) : (
+            <span className="text-[11px] font-mono text-cream/45 italic max-w-[10rem] text-center leading-snug">
+              Du tippet ikke denne kampen
+            </span>
+          )}
+        </div>
+        <TeamSide team={away} align="left" />
+      </div>
+
+      <div className="mt-4 pt-3 border-t border-cream/8 flex items-center justify-between gap-3">
+        <div className="text-[11px] font-mono text-cream/55">
+          {savedValue ? (
+            <span className="flex items-center gap-1">
+              <Check size={11} className="text-signal" /> Ditt tips: {savedValue.home}–{savedValue.away}
+            </span>
+          ) : (
+            <span>Kickoff har vært — kan ikke endres</span>
+          )}
+        </div>
+        {savedValue && (
           <Link
             href={`/share/tip/${matchId}/${savedValue.home}-${savedValue.away}`}
             className="bg-paper hover:bg-paperHi border border-cream/8 text-cream/85 text-xs font-semibold px-2.5 py-1.5 transition-colors flex items-center gap-1.5"
