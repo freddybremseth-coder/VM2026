@@ -37,6 +37,8 @@ interface AFFixture {
     home: { id: number; name: string };
     away: { id: number; name: string };
   };
+  // Final / current goals. `null` for unstarted matches.
+  goals: { home: number | null; away: number | null };
 }
 
 interface AFEvent {
@@ -165,3 +167,29 @@ export async function fetchApiFootballEvents(matchId: number): Promise<MatchEven
     generatedAt: new Date().toISOString(),
   };
 }
+
+/**
+ * Lightweight fixture-score fetch. One API call per match — used by the
+ * grading cron path which only needs score + status, not events/stats.
+ */
+export interface FixtureScore {
+  matchId: number;
+  status: MatchEventData["status"];
+  minute: number | null;
+  homeScore: number | null;
+  awayScore: number | null;
+}
+
+export async function fetchApiFootballScore(matchId: number): Promise<FixtureScore> {
+  const fixtures = await apiFetch<AFFixture[]>(`/fixtures?id=${matchId}`);
+  const fx = fixtures[0];
+  if (!fx) throw new Error(`No fixture found for id ${matchId}`);
+  return {
+    matchId,
+    status: mapStatus(fx.fixture.status.short),
+    minute: fx.fixture.status.elapsed,
+    homeScore: fx.goals.home,
+    awayScore: fx.goals.away,
+  };
+}
+

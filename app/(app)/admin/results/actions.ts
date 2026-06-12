@@ -1,0 +1,111 @@
+"use server";
+
+import { revalidatePath } from "next/cache";
+import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { createSupabaseAdminClient } from "@/lib/supabase/admin";
+import { fixtureById } from "@/lib/wc26-fixtures";
+import { fetchAndStoreResults } from "@/lib/cron/fetch-results";
+import type { CronTaskResult } from "@/lib/cron/types";
+
+export interface RecordResultResponse {
+  ok?: true;
+  error?: string;
+}
+
+function isAdmin(userId: string): boolean {
+  const allow = (process.env.ADMIN_USER_IDS ?? "")
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean);
+  // No allowlist set → any signed-in user is allowed (same convention as
+  // /admin/cron). When you want to lock it down, set ADMIN_USER_IDS.
+  if (allow.length === 0) return true;
+  return allow.includes(userId);
+}
+
+/**
+ * Upsert a final score for a match. The grading trigger awards points and
+ * updates league_members.points automatically.
+ *
+ * `status` defaults to "finished" — that's what fires the grading. Pass
+ * "live" to set a provisional score that won't grade until you flip the
+ * status. Most admin entries are end-of-match, so "finished" is the default.
+ */
+export async function recordMatchResultAction(
+  matchId: number,
+  homeScore: number,
+  awayScore: number,
+  status: "finished" | "live" | "halftime" = "finished",
+): Promise<RecordResultResponse> {
+  if (!Number.isInteger(matchId)) return { error: "Ugyldig kamp-ID." };
+  if (!Number.isInteger(homeScore) || homeScore < 0 || homeScore > 20) {
+    return { error: "Hjemme-mål må være 0–20." };
+  }
+  if (!Number.isInteger(awayScore) || awayScore < 0 || awayScore > 20) {
+    return { error: "Borte-mål må være 0–20." };
+  }
+
+  const fixture = fixtureById(matchId);
+  if (!fixture) return { error: "Fant ikke kampen." };
+  // Allow recording even on knockout pairings without resolved teams — the
+  // result table is keyed by matchId, and the kickoff/teams won't actually
+  // appear in the admin UI until they're known.
+
+  const supabase = createSupabaseServerClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { error: "Du må være innlogget." };
+  if (!isAdmin(user.id)) return { error: "Mangler admin-tilgang." };
+
+  // Service-role client because the RLS policy on match_results denies all
+  // public writes.
+  const admin = createSupabaseAdminClient();
+  const { error } = await admin
+    .from("match_results")
+    .upsert(
+      {
+        match_id: matchId,
+        home_score: homeScore,
+        away_score: awayScore,
+        status,
+        minute: status === "finished" ? 90 : null,
+      },
+      { onConflict: "match_id" },
+    );
+
+  if (error) return { error: error.message };
+
+  // Invalidate downstream surfaces that read from match_results.
+  revalidatePath("/admin/results");
+  revalidatePath("/leagues", "layout");
+  revalidatePath("/", "layout");
+  return { ok: true };
+}
+
+/**
+ * Manual trigger for the fetch-results cron task. Lets the admin pull a
+ * fresh round of scores from API-Football without waiting for the daily
+ * cron. Returns the same shape as a cron task result so the UI can show it.
+ */
+export async function triggerFetchResultsAction(): Promise<CronTaskResult> {
+  const supabase = createSupabaseServerClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) {
+    return {
+      task: "fetch-results",
+      status: "failed",
+      summary: "Du må være innlogget.",
+      durationMs: 0,
+    };
+  }
+  if (!isAdmin(user.id)) {
+    return {
+      task: "fetch-results",
+      status: "failed",
+      summary: "Mangler admin-tilgang.",
+      durationMs: 0,
+    };
+  }
+  const result = await fetchAndStoreResults();
+  revalidatePath("/admin/results");
+  return result;
+}

@@ -10,8 +10,9 @@ import { computeLiveState } from "@/lib/live-state";
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
-export function GET() {
-  return NextResponse.json(computeLiveState(), {
+export async function GET() {
+  const state = await computeLiveState();
+  return NextResponse.json(state, {
     headers: { "Cache-Control": "no-store" },
   });
 }

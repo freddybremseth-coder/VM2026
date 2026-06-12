@@ -12,6 +12,7 @@
 import { FIXTURES, nextFixtures } from "@/lib/wc26-fixtures";
 import { teamById, teamName, TOURNAMENT } from "@/lib/wc26-data";
 import type { Fixture } from "@/lib/wc26-fixtures";
+import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 /** A match is considered "in progress" for this long after kickoff. */
 const LIVE_WINDOW_MIN = 120;
@@ -84,32 +85,59 @@ function toNextMatch(f: Fixture): NextMatch {
   };
 }
 
-export function computeLiveState(now: Date = new Date()): LiveState {
+interface ResultRow {
+  match_id: number;
+  home_score: number;
+  away_score: number;
+  status: string;
+  minute: number | null;
+}
+
+export async function computeLiveState(now: Date = new Date()): Promise<LiveState> {
   const nowMs = now.getTime();
   const start = new Date(TOURNAMENT.startDate + "T00:00:00Z").getTime();
   const end = new Date(TOURNAMENT.endDate + "T23:59:59Z").getTime();
 
-  const liveMatches: LiveMatch[] = FIXTURES.filter((f) => {
+  // Fixtures inside the live window — clock-derived.
+  const liveFixtures = FIXTURES.filter((f) => {
     const ko = new Date(f.kickoff).getTime();
     return nowMs >= ko && nowMs <= ko + LIVE_WINDOW_MIN * 60_000;
-  })
-    .sort((a, b) => a.kickoff.localeCompare(b.kickoff))
-    .map((f) => {
-      const home = f.homeId ? teamById(f.homeId) : undefined;
-      const away = f.awayId ? teamById(f.awayId) : undefined;
-      return {
-        id: f.id,
-        homeName: teamName(home),
-        awayName: teamName(away),
-        homeFlag: home?.flag ?? null,
-        awayFlag: away?.flag ?? null,
-        kickoff: f.kickoff,
-        stageLabel: stageLabel(f),
-        minute: null,
-        homeScore: null,
-        awayScore: null,
-      };
-    });
+  }).sort((a, b) => a.kickoff.localeCompare(b.kickoff));
+
+  // Overlay real scores from match_results when they exist.
+  let resultByMatch = new Map<number, ResultRow>();
+  if (liveFixtures.length > 0) {
+    try {
+      const supabase = createSupabaseServerClient();
+      const { data } = await supabase
+        .from("match_results")
+        .select("match_id, home_score, away_score, status, minute")
+        .in("match_id", liveFixtures.map((f) => f.id));
+      for (const r of (data as ResultRow[] | null) ?? []) {
+        resultByMatch.set(r.match_id, r);
+      }
+    } catch {
+      // Supabase isn't reachable — fall back to score-less live tiles.
+    }
+  }
+
+  const liveMatches: LiveMatch[] = liveFixtures.map((f) => {
+    const home = f.homeId ? teamById(f.homeId) : undefined;
+    const away = f.awayId ? teamById(f.awayId) : undefined;
+    const result = resultByMatch.get(f.id);
+    return {
+      id: f.id,
+      homeName: teamName(home),
+      awayName: teamName(away),
+      homeFlag: home?.flag ?? null,
+      awayFlag: away?.flag ?? null,
+      kickoff: f.kickoff,
+      stageLabel: stageLabel(f),
+      minute: result?.minute ?? null,
+      homeScore: result?.home_score ?? null,
+      awayScore: result?.away_score ?? null,
+    };
+  });
 
   const upcoming = nextFixtures(now.toISOString(), 1);
   const nextMatch = upcoming.length > 0 ? toNextMatch(upcoming[0]) : null;
@@ -123,6 +151,7 @@ export function computeLiveState(now: Date = new Date()): LiveState {
     tournamentStart: new Date(start).toISOString(),
     liveMatches,
     nextMatch,
-    hasScoreFeed: false,
+    // Flip when at least one real result row backs a live tile.
+    hasScoreFeed: resultByMatch.size > 0,
   };
 }

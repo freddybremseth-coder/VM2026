@@ -15,6 +15,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { refreshFinishedMatches } from "@/lib/cron/refresh-matches";
+import { fetchAndStoreResults } from "@/lib/cron/fetch-results";
 import { checkSquadAnnouncements } from "@/lib/cron/check-squads";
 import { refreshFormAndDetectNews } from "@/lib/cron/news-feed";
 import { setLastCronRun } from "@/lib/cron/store";
@@ -22,12 +23,14 @@ import { getPhase } from "@/lib/cron/phase";
 import type { CronRunReport, CronTaskResult } from "@/lib/cron/types";
 
 // Worst-case calls per run, by phase, given the current caps:
-//   pre    → 0 match + 3 squad + 3 form = 6 calls/run × 4 runs/day = 24/day
-//   during → 15 match + 0 squad + 0 form = 15 calls/run × 4 runs/day = 60/day
+//   pre    → 0 match + 0 results + 3 squad + 3 form = 6/run
+//   during → 15 match + 10 results + 0 squad + 0 form = 25/run
 //   post   → 0 (everything skipped)
+// On Hobby plan the cron fires once per day → multiply by 1. On Pro with a
+// more frequent schedule, this is the per-run worst case.
 const DAILY_BUDGET: Record<"pre" | "during" | "post", number> = {
-  pre: 24,
-  during: 60,
+  pre: 6,
+  during: 25,
   post: 0,
 };
 
@@ -74,13 +77,14 @@ export async function GET(req: NextRequest) {
   const startedAt = new Date().toISOString();
   const t0 = performance.now();
 
-  const [matches, squads, news] = await Promise.all([
+  const [matches, results, squads, news] = await Promise.all([
     safeRun("refresh-finished-matches", refreshFinishedMatches),
+    safeRun("fetch-results", () => fetchAndStoreResults()),
     safeRun("check-squad-announcements", checkSquadAnnouncements),
     safeRun("refresh-form-detect-news", refreshFormAndDetectNews),
   ]);
 
-  const tasks = [matches, squads, news];
+  const tasks = [matches, results, squads, news];
   const ok = tasks.every((t) => t.status !== "failed");
   const phase = getPhase();
 

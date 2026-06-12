@@ -72,16 +72,33 @@ export default async function LeagueDetailPage({
   const memberIds = rows.map((m) => m.user_id);
   const matchIds = liveOrRecent.map((f) => f.id);
   type TipRow = { user_id: string; match_id: number; home_score: number; away_score: number };
+  type MatchResultRow = {
+    match_id: number;
+    home_score: number;
+    away_score: number;
+    status: string;
+    minute: number | null;
+  };
   let tipsByMatch = new Map<number, Map<string, { home: number; away: number }>>();
+  let resultByMatch = new Map<number, MatchResultRow>();
   if (memberIds.length > 0 && matchIds.length > 0) {
-    const { data: tips } = await supabase
-      .from("predictions")
-      .select("user_id, match_id, home_score, away_score")
-      .in("user_id", memberIds)
-      .in("match_id", matchIds);
-    for (const t of (tips as TipRow[] | null) ?? []) {
+    const [tipsRes, resultsRes] = await Promise.all([
+      supabase
+        .from("predictions")
+        .select("user_id, match_id, home_score, away_score")
+        .in("user_id", memberIds)
+        .in("match_id", matchIds),
+      supabase
+        .from("match_results")
+        .select("match_id, home_score, away_score, status, minute")
+        .in("match_id", matchIds),
+    ]);
+    for (const t of (tipsRes.data as TipRow[] | null) ?? []) {
       if (!tipsByMatch.has(t.match_id)) tipsByMatch.set(t.match_id, new Map());
       tipsByMatch.get(t.match_id)!.set(t.user_id, { home: t.home_score, away: t.away_score });
+    }
+    for (const r of (resultsRes.data as MatchResultRow[] | null) ?? []) {
+      resultByMatch.set(r.match_id, r);
     }
   }
 
@@ -200,6 +217,7 @@ export default async function LeagueDetailPage({
                 fixture={f}
                 members={rows}
                 tips={tipsByMatch.get(f.id) ?? new Map()}
+                result={resultByMatch.get(f.id) ?? null}
                 youId={user.id}
               />
             ))}
@@ -280,11 +298,18 @@ function MatchTipsCard({
   fixture,
   members,
   tips,
+  result,
   youId,
 }: {
   fixture: Fixture;
   members: MemberRow[];
   tips: Map<string, { home: number; away: number }>;
+  result: {
+    home_score: number;
+    away_score: number;
+    status: string;
+    minute: number | null;
+  } | null;
   youId: string;
 }) {
   const home = fixture.homeId ? teamById(fixture.homeId) : undefined;
@@ -299,6 +324,22 @@ function MatchTipsCard({
   for (const t of tips.values()) {
     const k = `${t.home}-${t.away}`;
     scoreCounts.set(k, (scoreCounts.get(k) ?? 0) + 1);
+  }
+
+  const resultOutcome = result
+    ? result.home_score > result.away_score
+      ? "H"
+      : result.home_score < result.away_score
+        ? "A"
+        : "D"
+    : null;
+
+  function gradeTip(tip: { home: number; away: number }): "exact" | "outcome" | "miss" | null {
+    if (!result) return null;
+    if (tip.home === result.home_score && tip.away === result.away_score) return "exact";
+    const tipOutcome = tip.home > tip.away ? "H" : tip.home < tip.away ? "A" : "D";
+    if (tipOutcome === resultOutcome) return "outcome";
+    return "miss";
   }
 
   return (
@@ -319,12 +360,28 @@ function MatchTipsCard({
         <span className="font-serif text-base font-semibold tracking-editorial text-cream truncate">
           {teamName(home)}
         </span>
-        <span className="text-cream/35 font-serif italic text-sm">vs</span>
+        {result ? (
+          <span className="font-mono text-base font-bold stat-num text-amber px-2">
+            {result.home_score}–{result.away_score}
+          </span>
+        ) : (
+          <span className="text-cream/35 font-serif italic text-sm">vs</span>
+        )}
         <span className="font-serif text-base font-semibold tracking-editorial text-cream truncate">
           {teamName(away)}
         </span>
         {away && <HoloFlag code={away.flag} w={22} radius={2} />}
       </div>
+      {result && (
+        <div className="mb-3 -mt-2 text-[10px] font-mono uppercase tracking-kicker text-signal flex items-center gap-1.5">
+          <span className="live-dot inline-block" />
+          {result.status === "finished"
+            ? "Slutt"
+            : result.status === "halftime"
+              ? "Pause"
+              : `Live${result.minute ? ` · ${result.minute}'` : ""}`}
+        </div>
+      )}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-1.5">
         {members.map((m) => {
           const label =
@@ -348,7 +405,26 @@ function MatchTipsCard({
                 )}
               </span>
               {tip ? (
-                <span className="font-mono font-semibold stat-num text-amber shrink-0 flex items-center gap-1.5">
+                <span
+                  className={`font-mono font-semibold stat-num shrink-0 flex items-center gap-1.5 ${
+                    gradeTip(tip) === "exact"
+                      ? "text-win"
+                      : gradeTip(tip) === "outcome"
+                        ? "text-amber"
+                        : gradeTip(tip) === "miss"
+                          ? "text-cream/45 line-through"
+                          : "text-amber"
+                  }`}
+                  title={
+                    gradeTip(tip) === "exact"
+                      ? "3 poeng — eksakt"
+                      : gradeTip(tip) === "outcome"
+                        ? "1 poeng — riktig utfall"
+                        : gradeTip(tip) === "miss"
+                          ? "0 poeng"
+                          : undefined
+                  }
+                >
                   {tip.home}–{tip.away}
                   {agree > 1 && (
                     <span className="text-[9px] font-mono text-cream/45 uppercase tracking-kicker">
