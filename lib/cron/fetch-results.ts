@@ -1,9 +1,12 @@
 /**
  * Cron task — fetch live/final scores and write them into match_results.
  *
- * Phase-aware: only runs during the tournament. Each fixture costs ONE
- * api-football call (`/fixtures?id=`), much cheaper than the events task
- * (3 calls per fixture). Default cap is 10 fixtures per run.
+ * v2: uses the AF fixture resolver. ONE api-football call per run
+ * (`/fixtures?league=1&season=2026&from=…&to=…`) returns every WC fixture in
+ * the window WITH goals + status, and we match them to our internal fixture
+ * ids by team names + kickoff. The old version passed our internal ids
+ * (1–110) straight to `/fixtures?id=` — which are API-Football's own,
+ * unrelated fixture ids — so results never landed.
  *
  * Once a row in `match_results` flips to `status='finished'`, the
  * grade_predictions_for_match trigger awards points and rolls
@@ -11,18 +14,18 @@
  */
 
 import { FIXTURES } from "@/lib/wc26-fixtures";
-import { fetchApiFootballScore } from "@/lib/match-events/api-football-provider";
+import {
+  fetchAfFixturesInWindow,
+  matchAfToInternal,
+} from "@/lib/cron/af-fixture-resolver";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { getPhase } from "./phase";
 import type { CronTaskResult } from "./types";
 
 const LOOKBACK_HOURS = 30;
 const LOOKAHEAD_HOURS = 2;
-const MAX_FIXTURES_PER_RUN = 10;
 
 interface RunOptions {
-  /** Override the default fixture cap (manual admin trigger). */
-  maxFixtures?: number;
   /** Override the kickoff window in hours. */
   lookbackHours?: number;
   lookaheadHours?: number;
@@ -56,7 +59,6 @@ export async function fetchAndStoreResults(
 
   const lookback = (options.lookbackHours ?? LOOKBACK_HOURS) * 3_600_000;
   const lookahead = (options.lookaheadHours ?? LOOKAHEAD_HOURS) * 3_600_000;
-  const max = options.maxFixtures ?? MAX_FIXTURES_PER_RUN;
 
   const now = Date.now();
   const windowStart = now - lookback;
@@ -67,59 +69,92 @@ export async function fetchAndStoreResults(
     return ts >= windowStart && ts <= windowEnd;
   });
 
+  if (candidates.length === 0) {
+    return {
+      task,
+      status: "ok",
+      summary: "Ingen kamper i vinduet",
+      detail: { callsMade: 0 },
+      durationMs: Math.round(performance.now() - startedAt),
+    };
+  }
+
+  // ONE api call for the whole window — response includes goals + status.
+  let resolved;
+  try {
+    const af = await fetchAfFixturesInWindow(windowStart, windowEnd);
+    resolved = matchAfToInternal(af, candidates);
+  } catch (err) {
+    return {
+      task,
+      status: "failed",
+      summary: err instanceof Error ? err.message : String(err),
+      detail: { callsMade: 1 },
+      durationMs: Math.round(performance.now() - startedAt),
+    };
+  }
+
   const wrote: Array<{
     id: number;
+    afId: number;
     status: string;
     h: number | null;
     a: number | null;
   }> = [];
+  const skipped: number[] = [];
   const errors: Array<{ id: number; error: string }> = [];
 
-  // Lazily create the admin client only if we'll use it.
-  const admin = candidates.length > 0 ? createSupabaseAdminClient() : null;
-  const cap = Math.min(candidates.length, max);
+  let admin: ReturnType<typeof createSupabaseAdminClient>;
+  try {
+    admin = createSupabaseAdminClient();
+  } catch (err) {
+    return {
+      task,
+      status: "failed",
+      summary: err instanceof Error ? err.message : String(err),
+      detail: { callsMade: 1 },
+      durationMs: Math.round(performance.now() - startedAt),
+    };
+  }
 
-  for (let i = 0; i < cap; i++) {
-    const fx = candidates[i];
-    try {
-      const score = await fetchApiFootballScore(fx.id);
-      // Defensive: if the API returns no score yet (pre-kickoff edge case),
-      // skip writing — we don't want a row of (0, 0, scheduled).
-      if (score.homeScore === null || score.awayScore === null) {
-        continue;
-      }
-      const { error } = await admin!.from("match_results").upsert(
-        {
-          match_id: fx.id,
-          home_score: score.homeScore,
-          away_score: score.awayScore,
-          status: score.status,
-          minute: score.minute,
-        },
-        { onConflict: "match_id" },
-      );
-      if (error) throw new Error(error.message);
+  for (const r of resolved) {
+    // Defensive: pre-kickoff fixtures have null goals — don't write (0,0).
+    if (r.homeScore === null || r.awayScore === null) {
+      skipped.push(r.internalId);
+      continue;
+    }
+    const { error } = await admin.from("match_results").upsert(
+      {
+        match_id: r.internalId,
+        home_score: r.homeScore,
+        away_score: r.awayScore,
+        status: r.status,
+        minute: r.minute,
+      },
+      { onConflict: "match_id" },
+    );
+    if (error) {
+      errors.push({ id: r.internalId, error: error.message });
+    } else {
       wrote.push({
-        id: fx.id,
-        status: score.status,
-        h: score.homeScore,
-        a: score.awayScore,
-      });
-    } catch (err) {
-      errors.push({
-        id: fx.id,
-        error: err instanceof Error ? err.message : String(err),
+        id: r.internalId,
+        afId: r.afId,
+        status: r.status,
+        h: r.homeScore,
+        a: r.awayScore,
       });
     }
   }
+
+  const unmatched = candidates.length - resolved.length;
 
   return {
     task,
     status: errors.length > 0 && wrote.length === 0 ? "failed" : "ok",
     summary: `Skrev ${wrote.length} resultat${wrote.length === 1 ? "" : "er"}${
-      errors.length > 0 ? ` · ${errors.length} feilet` : ""
-    }`,
-    detail: { wrote, errors, callsMade: wrote.length + errors.length },
+      unmatched > 0 ? ` · ${unmatched} umatchet` : ""
+    }${errors.length > 0 ? ` · ${errors.length} feilet` : ""}`,
+    detail: { wrote, skipped, errors, unmatched, callsMade: 1 },
     durationMs: Math.round(performance.now() - startedAt),
   };
 }
