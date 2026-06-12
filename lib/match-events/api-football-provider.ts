@@ -12,7 +12,13 @@
  * We map their response to our MatchEventData shape.
  */
 
-import type { MatchEventData, ShotEvent, XGTimelinePoint, PlayerHeatmap } from "./types";
+import type {
+  MatchEventData,
+  ShotEvent,
+  XGTimelinePoint,
+  PlayerHeatmap,
+} from "./types";
+import { getAfFixtureId } from "@/lib/cron/af-fixture-resolver";
 
 const BASE_URL = "https://v3.football.api-sports.io";
 
@@ -46,7 +52,7 @@ interface AFEvent {
   team: { id: number; name: string };
   player: { id: number; name: string };
   assist: { id: number | null; name: string | null };
-  type: string;   // "Goal", "Card", "Var", "subst"
+  type: string; // "Goal", "Card", "Var", "subst"
   detail: string; // "Normal Goal", "Penalty", "Own Goal", "Yellow Card", ...
   comments: string | null;
 }
@@ -117,11 +123,16 @@ function eventsToShots(
 function buildTimeline(shots: ShotEvent[]): XGTimelinePoint[] {
   const sorted = [...shots].sort((a, b) => a.minute - b.minute);
   const points: XGTimelinePoint[] = [{ minute: 0, home: 0, away: 0 }];
-  let home = 0, away = 0;
+  let home = 0;
+  let away = 0;
   for (const s of sorted) {
     if (s.side === "home") home += s.xg;
     else away += s.xg;
-    points.push({ minute: s.minute, home: parseFloat(home.toFixed(3)), away: parseFloat(away.toFixed(3)) });
+    points.push({
+      minute: s.minute,
+      home: parseFloat(home.toFixed(3)),
+      away: parseFloat(away.toFixed(3)),
+    });
   }
   return points;
 }
@@ -129,12 +140,18 @@ function buildTimeline(shots: ShotEvent[]): XGTimelinePoint[] {
 // ---------------------------------------------------------------------------
 // Public entry point
 // ---------------------------------------------------------------------------
-export async function fetchApiFootballEvents(matchId: number): Promise<MatchEventData> {
+export async function fetchApiFootballEvents(
+  matchId: number,
+): Promise<MatchEventData> {
+  // Translate OUR internal fixture id (1–110) to API-Football's fixture id.
+  // Passing internal ids straight to the API returns unrelated old fixtures.
+  const afId = await getAfFixtureId(matchId);
+
   // Fetch fixture info, events, and stats in parallel.
   const [fixtures, events, stats] = await Promise.all([
-    apiFetch<AFFixture[]>(`/fixtures?id=${matchId}`),
-    apiFetch<AFEvent[]>(`/fixtures/events?fixture=${matchId}`),
-    apiFetch<AFStat[]>(`/fixtures/statistics?fixture=${matchId}`),
+    apiFetch<AFFixture[]>(`/fixtures?id=${afId}`),
+    apiFetch<AFEvent[]>(`/fixtures/events?fixture=${afId}`),
+    apiFetch<AFStat[]>(`/fixtures/statistics?fixture=${afId}`),
   ]);
 
   const fx = fixtures[0];
@@ -180,10 +197,15 @@ export interface FixtureScore {
   awayScore: number | null;
 }
 
-export async function fetchApiFootballScore(matchId: number): Promise<FixtureScore> {
-  const fixtures = await apiFetch<AFFixture[]>(`/fixtures?id=${matchId}`);
+export async function fetchApiFootballScore(
+  matchId: number,
+): Promise<FixtureScore> {
+  const afId = await getAfFixtureId(matchId);
+  const fixtures = await apiFetch<AFFixture[]>(`/fixtures?id=${afId}`);
   const fx = fixtures[0];
-  if (!fx) throw new Error(`No fixture found for id ${matchId}`);
+  if (!fx) {
+    throw new Error(`No fixture found for id ${afId} (internal ${matchId})`);
+  }
   return {
     matchId,
     status: mapStatus(fx.fixture.status.short),
@@ -192,4 +214,3 @@ export async function fetchApiFootballScore(matchId: number): Promise<FixtureSco
     awayScore: fx.goals.away,
   };
 }
-
