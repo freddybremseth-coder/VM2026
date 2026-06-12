@@ -57,22 +57,27 @@ export async function recordMatchResultAction(
   if (!isAdmin(user.id)) return { error: "Mangler admin-tilgang." };
 
   // Service-role client because the RLS policy on match_results denies all
-  // public writes.
-  const admin = createSupabaseAdminClient();
-  const { error } = await admin
-    .from("match_results")
-    .upsert(
-      {
-        match_id: matchId,
-        home_score: homeScore,
-        away_score: awayScore,
-        status,
-        minute: status === "finished" ? 90 : null,
-      },
-      { onConflict: "match_id" },
-    );
+  // public writes. Wrapped so a missing env var (SUPABASE_SERVICE_ROLE_KEY)
+  // surfaces as a readable form error instead of a digest crash page.
+  try {
+    const admin = createSupabaseAdminClient();
+    const { error } = await admin
+      .from("match_results")
+      .upsert(
+        {
+          match_id: matchId,
+          home_score: homeScore,
+          away_score: awayScore,
+          status,
+          minute: status === "finished" ? 90 : null,
+        },
+        { onConflict: "match_id" },
+      );
 
-  if (error) return { error: error.message };
+    if (error) return { error: error.message };
+  } catch (err) {
+    return { error: err instanceof Error ? err.message : String(err) };
+  }
 
   // Invalidate downstream surfaces that read from match_results.
   revalidatePath("/admin/results");
@@ -105,7 +110,17 @@ export async function triggerFetchResultsAction(): Promise<CronTaskResult> {
       durationMs: 0,
     };
   }
-  const result = await fetchAndStoreResults();
+  let result: CronTaskResult;
+  try {
+    result = await fetchAndStoreResults();
+  } catch (err) {
+    return {
+      task: "fetch-results",
+      status: "failed",
+      summary: err instanceof Error ? err.message : String(err),
+      durationMs: 0,
+    };
+  }
   revalidatePath("/admin/results");
   return result;
 }
