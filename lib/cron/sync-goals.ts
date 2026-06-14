@@ -251,11 +251,14 @@ export async function syncTournamentGoals(
     }
   }
 
+  // Surface the first error message in the summary so the admin UI shows
+  // it directly — the detail.errors array is hidden behind a debug view.
+  const firstErr = errors[0]?.error;
   return {
     task,
     status: errors.length > 0 && wrote === 0 ? "failed" : "ok",
     summary: `Skrev ${wrote} mål fra ${queue.length} kamp${queue.length === 1 ? "" : "er"}${
-      errors.length > 0 ? ` · ${errors.length} feilet` : ""
+      errors.length > 0 ? ` · ${errors.length} feilet${firstErr ? ` (1. feil: ${firstErr})` : ""}` : ""
     }${unresolvedTeam > 0 ? ` · ${unresolvedTeam} ukjent lag` : ""}`,
     detail: { wrote, queue: queue.map((c) => c.match_id), callsMade, errors, unresolvedTeam },
     durationMs: Math.round(performance.now() - startedAt),
