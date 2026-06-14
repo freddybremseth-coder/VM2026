@@ -159,7 +159,7 @@ insert into public.fixtures (id, kickoff, status) values
 (101, '2026-07-14T19:00:00Z', 'scheduled'),
 (102, '2026-07-15T19:00:00Z', 'scheduled'),
 (103, '2026-07-18T19:00:00Z', 'scheduled'),
-(104, '2026-07-19T19:00:00Z', 'scheduled');
+(104, '2026-07-19T19:00:00Z', 'scheduled')
 on conflict (id) do update set
   kickoff = excluded.kickoff,
   status  = excluded.status;
