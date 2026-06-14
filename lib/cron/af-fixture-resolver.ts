@@ -236,8 +236,19 @@ export async function getAfFixtureId(internalId: number): Promise<number> {
   const resolved = matchAfToInternal(af, [fx]);
   const found = resolved.find((r) => r.internalId === internalId);
   if (!found) {
+    // Build a diagnostic so we can SEE why: was the AF response empty
+    // (wrong league/season?) or were there fixtures but names didn't match?
+    const home = fx.homeId ? teamById(fx.homeId)?.name : "?";
+    const away = fx.awayId ? teamById(fx.awayId)?.name : "?";
+    const sample = af
+      .slice(0, 3)
+      .map((a) => `${a.homeName} vs ${a.awayName} @ ${a.kickoffIso.slice(0, 16)}`)
+      .join(" | ");
     throw new Error(
-      `Could not resolve API-Football fixture for internal match ${internalId}`,
+      `Resolver miss for #${internalId} ${home} vs ${away} @ ${fx.kickoff.slice(0, 16)} — ` +
+        `AF returned ${af.length} fixtures (league=${WC_LEAGUE_ID}, season=${WC_SEASON})${
+          af.length > 0 ? ` · sample: ${sample}` : ""
+        }`,
     );
   }
   // Cache every resolution from this window while we're at it.
