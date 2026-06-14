@@ -5,6 +5,7 @@ import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { fixtureById } from "@/lib/wc26-fixtures";
 import { fetchAndStoreResults } from "@/lib/cron/fetch-results";
+import { syncTournamentGoals } from "@/lib/cron/sync-goals";
 import type { CronTaskResult } from "@/lib/cron/types";
 
 export interface RecordResultResponse {
@@ -122,5 +123,35 @@ export async function triggerFetchResultsAction(): Promise<CronTaskResult> {
     };
   }
   revalidatePath("/admin/results");
+  return result;
+}
+
+/**
+ * Manual trigger for the sync-goals task. Lets the admin backfill goal
+ * events on demand — useful when API_FOOTBALL_KEY was added after a
+ * match finished, or after correcting a result.
+ */
+export async function triggerSyncGoalsAction(matchIds?: number[]): Promise<CronTaskResult> {
+  const supabase = createSupabaseServerClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) {
+    return { task: "sync-goals", status: "failed", summary: "Du må være innlogget.", durationMs: 0 };
+  }
+  if (!isAdmin(user.id)) {
+    return { task: "sync-goals", status: "failed", summary: "Mangler admin-tilgang.", durationMs: 0 };
+  }
+  let result: CronTaskResult;
+  try {
+    result = await syncTournamentGoals({ matchIds });
+  } catch (err) {
+    return {
+      task: "sync-goals",
+      status: "failed",
+      summary: err instanceof Error ? err.message : String(err),
+      durationMs: 0,
+    };
+  }
+  revalidatePath("/admin/results");
+  revalidatePath("/", "layout");
   return result;
 }

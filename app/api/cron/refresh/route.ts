@@ -16,6 +16,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { refreshFinishedMatches } from "@/lib/cron/refresh-matches";
 import { fetchAndStoreResults } from "@/lib/cron/fetch-results";
+import { syncTournamentGoals } from "@/lib/cron/sync-goals";
 import { checkSquadAnnouncements } from "@/lib/cron/check-squads";
 import { refreshFormAndDetectNews } from "@/lib/cron/news-feed";
 import { setLastCronRun } from "@/lib/cron/store";
@@ -77,14 +78,15 @@ export async function GET(req: NextRequest) {
   const startedAt = new Date().toISOString();
   const t0 = performance.now();
 
-  const [matches, results, squads, news] = await Promise.all([
+  const [matches, results, goals, squads, news] = await Promise.all([
     safeRun("refresh-finished-matches", refreshFinishedMatches),
     safeRun("fetch-results", () => fetchAndStoreResults()),
+    safeRun("sync-goals", () => syncTournamentGoals()),
     safeRun("check-squad-announcements", checkSquadAnnouncements),
     safeRun("refresh-form-detect-news", refreshFormAndDetectNews),
   ]);
 
-  const tasks = [matches, results, squads, news];
+  const tasks = [matches, results, goals, squads, news];
   const ok = tasks.every((t) => t.status !== "failed");
   const phase = getPhase();
 

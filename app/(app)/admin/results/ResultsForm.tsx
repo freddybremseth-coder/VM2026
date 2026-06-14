@@ -7,6 +7,7 @@ import { formatKickoff, formatDateLabel } from "@/lib/utils";
 import {
   recordMatchResultAction,
   triggerFetchResultsAction,
+  triggerSyncGoalsAction,
 } from "./actions";
 import type { FixtureRow } from "./page";
 
@@ -69,7 +70,7 @@ export function ResultsForm({
   }
 
   function triggerFetch() {
-    setGlobalFeedback("Henter…");
+    setGlobalFeedback("Henter resultater…");
     startTransition(async () => {
       const res = await triggerFetchResultsAction();
       setGlobalFeedback(
@@ -80,9 +81,21 @@ export function ResultsForm({
     });
   }
 
+  function triggerGoals() {
+    setGlobalFeedback("Henter mål…");
+    startTransition(async () => {
+      const res = await triggerSyncGoalsAction();
+      setGlobalFeedback(
+        res.status === "failed"
+          ? `Feil: ${res.summary}`
+          : `${res.summary ?? "OK"} (${res.durationMs} ms)`,
+      );
+    });
+  }
+
   return (
     <>
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-3 flex-wrap">
         <button
           type="button"
           onClick={triggerFetch}
@@ -91,6 +104,16 @@ export function ResultsForm({
         >
           <RefreshCw size={13} className={pending ? "animate-spin" : ""} />
           Hent live fra API-Football
+        </button>
+        <button
+          type="button"
+          onClick={triggerGoals}
+          disabled={!hasApiKey || pending}
+          className="flex items-center gap-1.5 bg-paper hover:bg-paperHi border border-cream/8 disabled:opacity-50 text-cream text-xs font-semibold px-3 py-2 transition-colors"
+          title="Henter mål-hendelser for ferdige kamper og oppdaterer topscorerlista"
+        >
+          <RefreshCw size={13} className={pending ? "animate-spin" : ""} />
+          Hent mål
         </button>
         {globalFeedback && (
           <span className="text-[11px] font-mono text-cream/70">{globalFeedback}</span>

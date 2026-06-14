@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Search, Menu, ArrowUpRight } from "lucide-react";
+import { Search, Menu, ArrowUpRight, Trophy } from "lucide-react";
 import { HoloFlag } from "@/components/shared/HoloFlag";
 import { Kicker, Headline } from "@/components/shared/EditorialKicker";
 import { StadiumBackdrop } from "@/components/shared/StadiumBackdrop";
@@ -7,6 +7,8 @@ import { teamById, teamName, TOURNAMENT } from "@/lib/wc26-data";
 import { nextFixtures, fixturesOn } from "@/lib/wc26-fixtures";
 import { formatKickoff, formatDateLabel } from "@/lib/utils";
 import { getDictionary } from "@/lib/i18n";
+import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { getTournamentTopScorersLive, type TournamentScorer } from "@/lib/tournament-scorers";
 
 /**
  * Dashboard — VM2026 hero.
@@ -22,7 +24,7 @@ import { getDictionary } from "@/lib/i18n";
  *  ├─ NorgePin promo strip
  *  └─ Top-scorers placeholder until a real feed is wired
  */
-export default function DashboardPage() {
+export default async function DashboardPage() {
   const t = getDictionary();
   const now = new Date();
   const startDate = new Date(TOURNAMENT.startDate + "T00:00:00Z");
@@ -34,6 +36,12 @@ export default function DashboardPage() {
   const todayIso = now.toISOString().slice(0, 10);
   const todayFixtures = fixturesOn(todayIso);
   const upcoming = nextFixtures(now.toISOString(), 6);
+
+  // Real tournament top scorers from the per-goal log. Empty until the
+  // cron picks up the first finished match's events, in which case the
+  // section below renders the honest placeholder.
+  const supabase = createSupabaseServerClient();
+  const topScorers = await getTournamentTopScorersLive(supabase, 8);
 
   return (
     <div className="min-h-screen">
@@ -110,31 +118,38 @@ export default function DashboardPage() {
         <NorgePin />
       </section>
 
-      {/* Top performers — placeholder until a real top-scorers feed is wired.
-          We don't fabricate "live" top scorers; the empty state is the
-          honest answer until match results + player stats arrive in DB. */}
+      {/* Top scorers — driven by the per-goal log in tournament_goals.
+          Renders the real leaderboard when goals exist, otherwise an
+          honest placeholder. No stub data. */}
       <section className="px-5 md:px-10 mt-9 mb-12">
         <Kicker tone="amber">Hovedpersoner</Kicker>
-        <Headline rank="h3">
-          {tournamentLive ? "Toppscorerne kommer her." : "VM-toppscorerne kommer her."}
-        </Headline>
-        <div className="mt-4 surface p-5 sm:p-6 flex items-start gap-4">
-          <div className="h-10 w-10 bg-amber/15 flex items-center justify-center shrink-0">
-            <span className="font-serif text-amber text-lg font-semibold leading-none">⚽</span>
-          </div>
-          <div className="min-w-0">
-            <div className="font-serif text-lg font-semibold tracking-editorial text-cream">
-              {tournamentLive ? "Topplisten ruller når data er koblet på." : "Listen åpner 11. juni."}
+        {topScorers.length > 0 ? (
+          <>
+            <Headline rank="h3">VM-toppscorerne.</Headline>
+            <TopScorersBoard scorers={topScorers} />
+          </>
+        ) : (
+          <>
+            <Headline rank="h3">
+              {tournamentLive ? "Toppscorerne kommer her." : "VM-toppscorerne kommer her."}
+            </Headline>
+            <div className="mt-4 surface p-5 sm:p-6 flex items-start gap-4">
+              <div className="h-10 w-10 bg-amber/15 flex items-center justify-center shrink-0">
+                <span className="font-serif text-amber text-lg font-semibold leading-none">⚽</span>
+              </div>
+              <div className="min-w-0">
+                <div className="font-serif text-lg font-semibold tracking-editorial text-cream">
+                  {tournamentLive ? "Topplisten ruller når første mål er registrert." : "Listen åpner 11. juni."}
+                </div>
+                <p className="text-sm text-cream/55 mt-2 leading-relaxed max-w-2xl">
+                  Topplisten viser ekte mål når API-Football leverer kamp-hendelser. Inntil da: følg landslagene under{" "}
+                  <Link href="/teams" className="text-signal hover:underline">Lag</Link>,
+                  eller pek ut din egen mester i <Link href="/bracket" className="text-signal hover:underline">turneringstreet</Link>.
+                </p>
+              </div>
             </div>
-            <p className="text-sm text-cream/55 mt-2 leading-relaxed max-w-2xl">
-              {tournamentLive
-                ? "Topplisten viser ekte mål når kampresultater er registrert. Inntil da: følg landslagene under "
-                : "Toppscorerne, assist-kongene og hovedpersonene fra hver matchday rangeres her så snart første kamp er ferdigspilt. Inntil da: følg landslagene under "}
-              <Link href="/teams" className="text-signal hover:underline">Lag</Link>,
-              eller pek ut din egen mester i <Link href="/bracket" className="text-signal hover:underline">turneringstreet</Link>.
-            </p>
-          </div>
-        </div>
+          </>
+        )}
       </section>
     </div>
   );
@@ -197,6 +212,47 @@ function FixtureRow({
         {formatKickoff(fixture.kickoff)}
       </span>
     </Link>
+  );
+}
+
+function TopScorersBoard({ scorers }: { scorers: TournamentScorer[] }) {
+  return (
+    <ol className="mt-4 surface divide-y divide-cream/8">
+      {scorers.map((s, i) => {
+        const inner = (
+          <li className="flex items-center gap-3 px-4 py-3">
+            <span className="font-serif text-base text-cream/45 w-6 text-right stat-num shrink-0">
+              {i + 1}
+            </span>
+            {s.teamFlag && <HoloFlag code={s.teamFlag} w={22} radius={2} />}
+            <div className="flex-1 min-w-0">
+              <div className="font-serif text-base font-semibold tracking-editorial text-cream truncate">
+                {s.scorerName}
+              </div>
+              <div className="text-[10px] uppercase tracking-kicker font-mono text-cream/55 truncate">
+                {s.teamName}
+                {s.penalties > 0 && (
+                  <span className="ml-1.5 text-cream/35">· {s.penalties} str.</span>
+                )}
+              </div>
+            </div>
+            <div className="flex items-center gap-1.5 shrink-0">
+              <Trophy size={12} className="text-amber" />
+              <span className="font-mono font-bold stat-num text-lg text-amber">
+                {s.goals}
+              </span>
+            </div>
+          </li>
+        );
+        return s.scorerPlayerId ? (
+          <Link key={`${s.teamId}-${s.scorerName}`} href={`/players/${s.scorerPlayerId}`} className="block hover:bg-paperHi transition-colors">
+            {inner}
+          </Link>
+        ) : (
+          <div key={`${s.teamId}-${s.scorerName}`}>{inner}</div>
+        );
+      })}
+    </ol>
   );
 }
 

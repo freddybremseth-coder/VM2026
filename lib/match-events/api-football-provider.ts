@@ -214,3 +214,66 @@ export async function fetchApiFootballScore(
     awayScore: fx.goals.away,
   };
 }
+
+/**
+ * One scored goal in a fixture. The team_id is the team CREDITED with the
+ * goal — for an own goal that's the OPPOSING team (not the team the scorer
+ * plays for). Caller is responsible for translating api-football team ids
+ * to our internal ones if needed.
+ */
+export interface MatchGoal {
+  matchId: number;
+  /** Team the goal counts for. For own-goals, this is the OTHER team. */
+  scoringAfTeamId: number;
+  scorerName: string;
+  assistName: string | null;
+  minute: number;
+  isOwnGoal: boolean;
+  isPenalty: boolean;
+}
+
+/**
+ * Fetch just the goal events for a fixture. One API call.
+ * Used by the sync-goals cron to populate `public.tournament_goals`.
+ */
+export async function fetchApiFootballGoals(
+  matchId: number,
+): Promise<{ goals: MatchGoal[]; homeAfTeamId: number; awayAfTeamId: number }> {
+  const afId = await getAfFixtureId(matchId);
+  const [fixtures, events] = await Promise.all([
+    apiFetch<AFFixture[]>(`/fixtures?id=${afId}`),
+    apiFetch<AFEvent[]>(`/fixtures/events?fixture=${afId}`),
+  ]);
+  const fx = fixtures[0];
+  if (!fx) {
+    throw new Error(`No fixture found for id ${afId} (internal ${matchId})`);
+  }
+  const homeId = fx.teams.home.id;
+  const awayId = fx.teams.away.id;
+
+  const goals: MatchGoal[] = [];
+  for (const ev of events) {
+    if (ev.type !== "Goal") continue;
+    // "Missed Penalty" is a Goal event with detail Missed — skip.
+    if (ev.detail === "Missed Penalty") continue;
+    const isOwn = ev.detail === "Own Goal";
+    const isPenalty = ev.detail === "Penalty";
+    // For an own goal, credit the OPPOSING team.
+    const scoringAfTeamId = isOwn
+      ? ev.team.id === homeId
+        ? awayId
+        : homeId
+      : ev.team.id;
+    const extra = ev.time.extra ?? 0;
+    goals.push({
+      matchId,
+      scoringAfTeamId,
+      scorerName: ev.player.name,
+      assistName: ev.assist?.name ?? null,
+      minute: Math.max(1, Math.min(130, ev.time.elapsed + extra)),
+      isOwnGoal: isOwn,
+      isPenalty,
+    });
+  }
+  return { goals, homeAfTeamId: homeId, awayAfTeamId: awayId };
+}
