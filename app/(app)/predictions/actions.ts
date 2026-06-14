@@ -3,6 +3,26 @@
 import { revalidatePath } from "next/cache";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { fixtureById } from "@/lib/wc26-fixtures";
+import { canStillEdit, type FixtureStatus } from "@/lib/predictions-visibility";
+
+/**
+ * Server-side lock check. Pulls the trusted status from public.fixtures so
+ * an early kickoff (status flipped before clock) and a postponed match
+ * both behave correctly — never trusts the in-code kickoff alone.
+ */
+async function isEditLocked(matchId: number): Promise<boolean> {
+  const fx = fixtureById(matchId);
+  if (!fx) return true;
+  const supabase = createSupabaseServerClient();
+  const { data } = await supabase
+    .from("fixtures")
+    .select("kickoff, status")
+    .eq("id", matchId)
+    .maybeSingle();
+  const kickoff = (data?.kickoff as string | undefined) ?? fx.kickoff;
+  const status = ((data?.status as FixtureStatus | undefined) ?? "scheduled");
+  return !canStillEdit(new Date(), { kickoff, status });
+}
 
 export interface PredictionResult {
   ok?: true;
@@ -30,7 +50,7 @@ export async function savePredictionAction(
   if (fixture.stage.kind === "knockout" && (!fixture.homeId || !fixture.awayId)) {
     return { error: "Knockout pairing not yet known." };
   }
-  if (new Date(fixture.kickoff).getTime() <= Date.now()) {
+  if (await isEditLocked(matchId)) {
     return { error: "Kickoff has passed — predictions are locked." };
   }
 
@@ -83,7 +103,23 @@ export async function savePredictionsBatchAction(
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { error: "Du må være innlogget." };
 
-  const now = Date.now();
+  // Pre-fetch trusted kickoff + status for every match in the batch in one
+  // round-trip. Then the lock decision per row is a pure helper call.
+  const matchIds = raw
+    .map((r) => Number(r.matchId))
+    .filter((n) => Number.isInteger(n));
+  let dbByMatch = new Map<number, { kickoff: string; status: FixtureStatus }>();
+  if (matchIds.length > 0) {
+    const { data: dbFixtures } = await supabase
+      .from("fixtures")
+      .select("id, kickoff, status")
+      .in("id", matchIds);
+    for (const r of (dbFixtures as { id: number; kickoff: string; status: FixtureStatus }[] | null) ?? []) {
+      dbByMatch.set(r.id, { kickoff: r.kickoff, status: r.status });
+    }
+  }
+
+  const now = new Date();
   const rows: Array<{
     user_id: string;
     match_id: number;
@@ -104,7 +140,10 @@ export async function savePredictionsBatchAction(
     const fixture = fixtureById(matchId);
     if (!fixture) { skipped++; continue; }
     if (!fixture.homeId || !fixture.awayId) { skipped++; continue; }
-    if (new Date(fixture.kickoff).getTime() <= now) { skipped++; continue; }
+    const db = dbByMatch.get(matchId);
+    const kickoff = db?.kickoff ?? fixture.kickoff;
+    const status: FixtureStatus = db?.status ?? "scheduled";
+    if (!canStillEdit(now, { kickoff, status })) { skipped++; continue; }
 
     rows.push({
       user_id: user.id,
