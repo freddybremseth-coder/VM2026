@@ -7,6 +7,7 @@ import {
   Target,
   Users,
   Share2,
+  Lock,
 } from "lucide-react";
 import { HoloFlag } from "@/components/shared/HoloFlag";
 import { StadiumBackdrop } from "@/components/shared/StadiumBackdrop";
@@ -16,10 +17,14 @@ import { MatchTabs } from "@/components/match/MatchTabs";
 import { AIMatchPreview } from "@/components/match/AIMatchPreview";
 import { FormCard } from "@/components/match/FormCard";
 import { HeadToHeadCard } from "@/components/match/HeadToHeadCard";
+import { LiveResultHero } from "@/components/match/LiveResultHero";
+import { LiveGoalsList } from "@/components/match/LiveGoalsList";
 import { DataSourceBanner } from "@/components/shared/DataSourceBanner";
 import { ModelExplainer } from "@/components/shared/ModelExplainer";
 import { StickyMobileCTA } from "@/components/match/StickyMobileCTA";
 import { getMatchDetail, getFixtureView } from "@/lib/match-data";
+import { getLiveMatch } from "@/lib/live-match";
+import { canStillEdit } from "@/lib/predictions-visibility";
 import { buildPreviewLive } from "@/lib/ai-preview";
 import { teamById, teamName } from "@/lib/wc26-data";
 import { formatKickoff, formatDateLabel } from "@/lib/utils";
@@ -47,92 +52,150 @@ export default async function MatchLayout({
     );
   }
 
-  // Pre-match fixture view — cinematic StadiumBackdrop hero
+  // Pre-match fixture view — cinematic StadiumBackdrop hero.
+  // Fetch the authoritative live state in parallel with the AI preview so
+  // a finished match can swap in a result hero + goals list instead of the
+  // "Tipp denne kampen" CTA.
   const fixture = getFixtureView(params.matchId);
   if (!fixture) notFound();
 
-  const preview = await buildPreviewLive(Number(params.matchId));
+  const matchId = Number(params.matchId);
+  const [live, preview] = await Promise.all([
+    getLiveMatch(matchId),
+    buildPreviewLive(matchId),
+  ]);
+
+  // Treat as started/finished if Supabase has a non-scheduled status row.
+  const started =
+    live !== null &&
+    (live.status === "live" ||
+      live.status === "halftime" ||
+      live.status === "finished");
+  const tippable = !started && canStillEdit(new Date(), {
+    kickoff: live?.kickoff ?? fixture.kickoff,
+    status: live?.status ?? "scheduled",
+  });
 
   return (
     <>
       <div className="px-4 sm:px-6 py-6 pb-24 lg:pb-6 max-w-[1600px] mx-auto space-y-5">
         <BackLink />
 
-        <StadiumBackdrop className="border border-cream/8">
-          <div className="px-4 sm:px-6 py-6 sm:py-8">
-            <div className="flex items-center justify-between gap-3 mb-6">
-              <Kicker tone="signal">{fixture.stage}</Kicker>
-              <span className="font-mono text-[11px] text-cream/70 text-right shrink-0 stat-num">
-                <span className="hidden sm:inline">
-                  {formatDateLabel(fixture.kickoff)} · {formatKickoff(fixture.kickoff)}
+        {started && live ? (
+          <LiveResultHero match={live} />
+        ) : (
+          <StadiumBackdrop className="border border-cream/8">
+            <div className="px-4 sm:px-6 py-6 sm:py-8">
+              <div className="flex items-center justify-between gap-3 mb-6">
+                <Kicker tone="signal">{fixture.stage}</Kicker>
+                <span className="font-mono text-[11px] text-cream/70 text-right shrink-0 stat-num">
+                  <span className="hidden sm:inline">
+                    {formatDateLabel(fixture.kickoff)} · {formatKickoff(fixture.kickoff)}
+                  </span>
+                  <span className="sm:hidden">{formatKickoff(fixture.kickoff)}</span>
                 </span>
-                <span className="sm:hidden">{formatKickoff(fixture.kickoff)}</span>
-              </span>
-            </div>
-
-            <div className="flex flex-col sm:grid sm:grid-cols-[1fr_auto_1fr] sm:items-center gap-5 sm:gap-8">
-              {fixture.teams.home ? (
-                <FixtureTeamRow team={fixture.teams.home} align="right" />
-              ) : (
-                <div className="font-mono text-cream/35 text-lg sm:text-right">TBD</div>
-              )}
-              <div className="font-serif text-3xl sm:text-5xl text-cream/35 text-center italic">
-                vs
               </div>
-              {fixture.teams.away ? (
-                <FixtureTeamRow team={fixture.teams.away} align="left" />
-              ) : (
-                <div className="font-mono text-cream/35 text-lg">TBD</div>
-              )}
-            </div>
 
-            <div className="mt-7 pt-4 border-t border-cream/8 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-[10px] uppercase tracking-kicker font-mono text-cream/55">
-              <span className="flex items-center gap-1.5">
-                <MapPin size={11} />
-                {fixture.venue.name} · {fixture.venue.city}
-              </span>
-              {fixture.venue.capacity > 0 && (
+              <div className="flex flex-col sm:grid sm:grid-cols-[1fr_auto_1fr] sm:items-center gap-5 sm:gap-8">
+                {fixture.teams.home ? (
+                  <FixtureTeamRow team={fixture.teams.home} align="right" />
+                ) : (
+                  <div className="font-mono text-cream/35 text-lg sm:text-right">TBD</div>
+                )}
+                <div className="font-serif text-3xl sm:text-5xl text-cream/35 text-center italic">
+                  vs
+                </div>
+                {fixture.teams.away ? (
+                  <FixtureTeamRow team={fixture.teams.away} align="left" />
+                ) : (
+                  <div className="font-mono text-cream/35 text-lg">TBD</div>
+                )}
+              </div>
+
+              <div className="mt-7 pt-4 border-t border-cream/8 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-[10px] uppercase tracking-kicker font-mono text-cream/55">
                 <span className="flex items-center gap-1.5">
-                  <UserCircle2 size={11} />
-                  {fixture.venue.capacity.toLocaleString("nb-NO")} kapasitet
+                  <MapPin size={11} />
+                  {fixture.venue.name} · {fixture.venue.city}
                 </span>
-              )}
+                {fixture.venue.capacity > 0 && (
+                  <span className="flex items-center gap-1.5">
+                    <UserCircle2 size={11} />
+                    {fixture.venue.capacity.toLocaleString("nb-NO")} kapasitet
+                  </span>
+                )}
+              </div>
             </div>
-          </div>
-        </StadiumBackdrop>
+          </StadiumBackdrop>
+        )}
 
-        {/* Tipp denne — primary CTA */}
-        <div className="surface p-4 sm:p-5 ring-1 ring-signal/30 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4 bg-gradient-to-r from-signal/10 via-transparent to-transparent">
-          <div className="flex items-center gap-3 min-w-0">
-            <div className="h-11 w-11 bg-signal/15 flex items-center justify-center shrink-0">
-              <Target size={20} className="text-signal" />
+        {tippable ? (
+          // Pre-kickoff: invite the user to tip.
+          <div className="surface p-4 sm:p-5 ring-1 ring-signal/30 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4 bg-gradient-to-r from-signal/10 via-transparent to-transparent">
+            <div className="flex items-center gap-3 min-w-0">
+              <div className="h-11 w-11 bg-signal/15 flex items-center justify-center shrink-0">
+                <Target size={20} className="text-signal" />
+              </div>
+              <div className="min-w-0">
+                <div className="font-serif text-base font-semibold tracking-editorial">
+                  Tipp denne kampen
+                </div>
+                <div className="text-[11px] text-cream/55 mt-0.5 font-mono">
+                  3 pts for eksakt resultat · 1 pt for utfall
+                </div>
+              </div>
             </div>
-            <div className="min-w-0">
-              <div className="font-serif text-base font-semibold tracking-editorial">
-                Tipp denne kampen
-              </div>
-              <div className="text-[11px] text-cream/55 mt-0.5 font-mono">
-                3 pts for eksakt resultat · 1 pt for utfall
-              </div>
+            <div className="flex items-center gap-2 sm:shrink-0">
+              <Link
+                href={`/share/match/${fixture.id}`}
+                className="flex-1 sm:flex-initial text-center bg-paper hover:bg-paperHi border border-cream/8 text-cream/85 text-xs font-semibold px-3 py-2 transition-colors flex items-center justify-center gap-1.5"
+              >
+                <Share2 size={12} /> Del
+              </Link>
+              <Link
+                href="/predictions"
+                className="flex-1 sm:flex-initial text-center bg-signal hover:bg-signalD text-cream text-xs font-semibold px-4 py-2 transition-colors flex items-center justify-center gap-1.5"
+              >
+                Tipp nå
+              </Link>
             </div>
           </div>
-          <div className="flex items-center gap-2 sm:shrink-0">
-            <Link
-              href={`/share/match/${fixture.id}`}
-              className="flex-1 sm:flex-initial text-center bg-paper hover:bg-paperHi border border-cream/8 text-cream/85 text-xs font-semibold px-3 py-2 transition-colors flex items-center justify-center gap-1.5"
-            >
-              <Share2 size={12} /> Del
-            </Link>
+        ) : (
+          // Kickoff passed (or cancelled): tipping closed.
+          <div className="surface p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4 bg-cream/5">
+            <div className="flex items-center gap-3 min-w-0">
+              <div className="h-11 w-11 bg-cream/10 flex items-center justify-center shrink-0">
+                <Lock size={18} className="text-cream/55" />
+              </div>
+              <div className="min-w-0">
+                <div className="font-serif text-base font-semibold tracking-editorial">
+                  Tipping er stengt
+                </div>
+                <div className="text-[11px] text-cream/55 mt-0.5 font-mono">
+                  {live?.status === "finished"
+                    ? "Kampen er ferdig — sjekk hvordan tippet ditt scoret."
+                    : "Avspark har passert — tippene er låst og avsløres for ligaen."}
+                </div>
+              </div>
+            </div>
             <Link
               href="/predictions"
-              className="flex-1 sm:flex-initial text-center bg-signal hover:bg-signalD text-cream text-xs font-semibold px-4 py-2 transition-colors flex items-center justify-center gap-1.5"
+              className="flex-1 sm:flex-initial text-center bg-paper hover:bg-paperHi border border-cream/8 text-cream/85 text-xs font-semibold px-4 py-2 transition-colors"
             >
-              Tipp nå
+              Se mine tips
             </Link>
           </div>
-        </div>
+        )}
 
-        {preview && <AIMatchPreview preview={preview} />}
+        {/* Goal log — only when there are goals to show (live + finished). */}
+        {live && live.goals.length > 0 && (
+          <LiveGoalsList
+            goals={live.goals}
+            home={live.teams.home}
+            away={live.teams.away}
+          />
+        )}
+
+        {!started && preview && <AIMatchPreview preview={preview} />}
 
         {fixture.teams.home && fixture.teams.away && (() => {
           const homeTeam = teamById(fixture.teams.home.id);
@@ -151,11 +214,13 @@ export default async function MatchLayout({
           );
         })()}
 
-        <DataSourceBanner caveat="xG-timeline, skudd, ballbesittelse og taktikk populerer live når kampen er i gang." />
+        {!started && (
+          <DataSourceBanner caveat="xG-timeline, skudd, ballbesittelse og taktikk populerer live når kampen er i gang." />
+        )}
 
         <ModelExplainer />
       </div>
-      <StickyMobileCTA matchId={fixture.id} />
+      <StickyMobileCTA matchId={fixture.id} tippable={tippable} />
     </>
   );
 }

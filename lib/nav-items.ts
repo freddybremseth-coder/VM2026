@@ -14,6 +14,7 @@ import {
   Trophy,
   GitBranch,
   Flag,
+  Crosshair,
 } from "lucide-react";
 
 export type NavKey =
@@ -22,6 +23,7 @@ export type NavKey =
   | "matches"
   | "teams"
   | "players"
+  | "scorers"
   | "predictions"
   | "leagues"
   | "bracket";
@@ -38,6 +40,7 @@ export const NAV_ITEMS: Array<{
   { href: "/matches",     key: "matches",     icon: Calendar },
   { href: "/teams",       key: "teams",       icon: Users },
   { href: "/players",     key: "players",     icon: User },
+  { href: "/scorers",     key: "scorers",     icon: Crosshair },
   { href: "/predictions", key: "predictions", icon: Target },
   { href: "/leagues",     key: "leagues",     icon: Trophy },
   { href: "/bracket",     key: "bracket",     icon: GitBranch },
@@ -53,6 +56,7 @@ export const DEFAULT_NAV_LABELS: NavLabels = {
   matches: "Matches",
   teams: "Teams",
   players: "Players",
+  scorers: "Top scorers",
   predictions: "Predictions",
   leagues: "Mini-leagues",
   bracket: "Bracket",

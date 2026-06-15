@@ -5,6 +5,42 @@ import { Kicker, Headline } from "@/components/shared/EditorialKicker";
 import { FIXTURES, type Fixture } from "@/lib/wc26-fixtures";
 import { teamById, teamName, venueById } from "@/lib/wc26-data";
 import { formatKickoff, formatDateLabel } from "@/lib/utils";
+import { createSupabaseServerClient } from "@/lib/supabase/server";
+
+interface ResultLite {
+  home: number;
+  away: number;
+  status: "live" | "halftime" | "finished" | string;
+  minute: number | null;
+}
+
+async function fetchResults(): Promise<Map<number, ResultLite>> {
+  try {
+    const supabase = createSupabaseServerClient();
+    const { data } = await supabase
+      .from("match_results")
+      .select("match_id, home_score, away_score, status, minute");
+    const map = new Map<number, ResultLite>();
+    for (const r of (data as Array<{
+      match_id: number;
+      home_score: number | null;
+      away_score: number | null;
+      status: string;
+      minute: number | null;
+    }> | null) ?? []) {
+      if (r.home_score === null || r.away_score === null) continue;
+      map.set(r.match_id, {
+        home: r.home_score,
+        away: r.away_score,
+        status: r.status,
+        minute: r.minute,
+      });
+    }
+    return map;
+  } catch {
+    return new Map();
+  }
+}
 
 const KO_LABELS: Record<string, string> = {
   R32: "Round of 32",
@@ -25,7 +61,7 @@ function dayKey(iso: string): string {
   return iso.slice(0, 10);
 }
 
-export default function MatchesPage() {
+export default async function MatchesPage() {
   const byDay = new Map<string, Fixture[]>();
   for (const f of FIXTURES) {
     const k = dayKey(f.kickoff);
@@ -36,6 +72,7 @@ export default function MatchesPage() {
 
   const groupMatches = FIXTURES.filter((f) => f.stage.kind === "group").length;
   const koMatches = FIXTURES.length - groupMatches;
+  const results = await fetchResults();
 
   return (
     <div className="px-5 md:px-10 py-8 max-w-[1400px] mx-auto">
@@ -55,14 +92,22 @@ export default function MatchesPage() {
 
       <div className="space-y-10">
         {days.map(([day, fixtures]) => (
-          <DaySection key={day} day={day} fixtures={fixtures} />
+          <DaySection key={day} day={day} fixtures={fixtures} results={results} />
         ))}
       </div>
     </div>
   );
 }
 
-function DaySection({ day, fixtures }: { day: string; fixtures: Fixture[] }) {
+function DaySection({
+  day,
+  fixtures,
+  results,
+}: {
+  day: string;
+  fixtures: Fixture[];
+  results: Map<number, ResultLite>;
+}) {
   const dateLabel = formatDateLabel(day + "T12:00:00Z");
   return (
     <section>
@@ -78,37 +123,62 @@ function DaySection({ day, fixtures }: { day: string; fixtures: Fixture[] }) {
         {fixtures
           .sort((a, b) => a.kickoff.localeCompare(b.kickoff))
           .map((f) => (
-            <FixtureCard key={f.id} fixture={f} />
+            <FixtureCard key={f.id} fixture={f} result={results.get(f.id)} />
           ))}
       </div>
     </section>
   );
 }
 
-function FixtureCard({ fixture }: { fixture: Fixture }) {
+function FixtureCard({
+  fixture,
+  result,
+}: {
+  fixture: Fixture;
+  result?: ResultLite;
+}) {
   const home = fixture.homeId ? teamById(fixture.homeId) : undefined;
   const away = fixture.awayId ? teamById(fixture.awayId) : undefined;
   const venue = venueById(fixture.venueId);
   const isKnockout = fixture.stage.kind === "knockout";
+  const isLive = result?.status === "live" || result?.status === "halftime";
+  const isFinished = result?.status === "finished";
 
   return (
     <Link
       href={`/matches/${fixture.id}`}
       className={`block bg-paper p-4 transition-colors hover:bg-paperHi ${
         isKnockout ? "ring-1 ring-amber/15" : ""
-      }`}
+      } ${isLive ? "ring-1 ring-signal/40" : ""}`}
     >
       <div className="flex items-center justify-between mb-3">
         <span className="text-[10px] font-mono uppercase tracking-kicker text-cream/55">
           {stageLabel(fixture)}
         </span>
-        <span className="font-mono text-[11px] text-cream/70 stat-num">
-          {formatKickoff(fixture.kickoff)}
-        </span>
+        {isLive ? (
+          <span className="inline-flex items-center gap-1.5 bg-signal text-cream px-2 py-0.5 text-[10px] font-extrabold tracking-[1.3px]">
+            <span className="live-dot h-1.5 w-1.5" />
+            {result?.status === "halftime" ? "HT" : result?.minute ? `${result.minute}'` : "LIVE"}
+          </span>
+        ) : isFinished ? (
+          <span className="font-mono text-[10px] uppercase tracking-kicker text-cream/55 stat-num">
+            FT
+          </span>
+        ) : (
+          <span className="font-mono text-[11px] text-cream/70 stat-num">
+            {formatKickoff(fixture.kickoff)}
+          </span>
+        )}
       </div>
       <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-3">
         <TeamSide team={home} align="right" />
-        <div className="font-serif text-base text-cream/35 italic">vs</div>
+        {result ? (
+          <div className="font-serif text-xl font-semibold tracking-[-0.02em] stat-num text-cream">
+            {result.home}–{result.away}
+          </div>
+        ) : (
+          <div className="font-serif text-base text-cream/35 italic">vs</div>
+        )}
         <TeamSide team={away} align="left" />
       </div>
       {venue && (
