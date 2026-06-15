@@ -1,24 +1,25 @@
 /**
- * Cron task — pull goal events from API-Football and persist them into
+ * Cron task — pull goal events from ESPN and persist them into
  * public.tournament_goals.
  *
  * Strategy:
  *   1. Pick finished matches (status='finished' in match_results) that have
  *      LESS than match_results.home_score + away_score rows already in
  *      tournament_goals — i.e. we're missing at least one goal.
- *   2. For each, call api-football's events endpoint (1 API call per match).
- *   3. Map AF team id → our internal team id via AF_TEAM_ID (inverted).
+ *   2. For each, hit ESPN's public summary endpoint (1 fetch per match).
+ *      Returns scoring details with athlete, team, minute, and own-goal /
+ *      penalty flags.
+ *   3. ESPN-provider already resolves team to our internal team id by name.
  *   4. Best-effort resolve scorer / assist names against the player DB so
  *      the leaderboard can link to player profiles.
  *   5. Upsert with the unique key (match_id, scorer_name, minute, is_own_goal),
  *      so re-runs are no-ops.
  *
- * Bounded at MAX_FIXTURES_PER_RUN matches per invocation; safe under the
- * 100/day API-Football free-tier ceiling.
+ * Bounded at MAX_FIXTURES_PER_RUN matches per invocation. No daily API
+ * quota on the ESPN public endpoint, but we keep the cap as a courtesy.
  */
 
-import { fetchApiFootballGoals, type MatchGoal } from "@/lib/match-events/api-football-provider";
-import { AF_TEAM_ID } from "@/lib/api-football-ids";
+import { fetchEspnGoals } from "@/lib/match-events/espn-provider";
 import { getAllPlayers } from "@/lib/wc26-squads";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { getPhase } from "./phase";
@@ -32,15 +33,6 @@ interface RunOptions {
   /** Force-resync these specific match ids (admin override). */
   matchIds?: number[];
 }
-
-/** Reverse map: AF team id → our internal team id. */
-const INTERNAL_BY_AF_ID: Map<number, number> = (() => {
-  const m = new Map<number, number>();
-  for (const [internalStr, afId] of Object.entries(AF_TEAM_ID)) {
-    if (afId > 0) m.set(afId, Number(internalStr));
-  }
-  return m;
-})();
 
 /**
  * Build a best-effort name → playerId lookup over the entire squad
@@ -89,14 +81,7 @@ export async function syncTournamentGoals(
   const startedAt = performance.now();
   const task = "sync-goals";
 
-  if (!process.env.API_FOOTBALL_KEY) {
-    return {
-      task,
-      status: "skipped",
-      summary: "API_FOOTBALL_KEY not set — skipped",
-      durationMs: Math.round(performance.now() - startedAt),
-    };
-  }
+  // ESPN's public endpoint needs no key — old API_FOOTBALL_KEY gate removed.
 
   const phase = getPhase();
   if (phase !== "during" && !options.matchIds) {
@@ -188,7 +173,7 @@ export async function syncTournamentGoals(
 
   for (const c of queue) {
     try {
-      const { goals } = await fetchApiFootballGoals(c.match_id);
+      const { goals } = await fetchEspnGoals(c.match_id);
       callsMade++;
 
       // For an admin re-sync, clear out existing rows for this match so we
@@ -211,19 +196,20 @@ export async function syncTournamentGoals(
       }> = [];
 
       for (const g of goals) {
-        const internalTeam = INTERNAL_BY_AF_ID.get(g.scoringAfTeamId);
-        if (!internalTeam) {
+        // ESPN provider already resolves team to our internal id by name.
+        // If unresolved it was filtered out upstream, but defensive check:
+        if (!g.internalTeamId) {
           unresolvedTeam++;
           continue;
         }
         rowsToInsert.push({
           match_id: g.matchId,
-          team_id: internalTeam,
+          team_id: g.internalTeamId,
           scorer_name: g.scorerName,
-          scorer_player_id: resolvePlayerId(g.scorerName, internalTeam, playerLookup),
+          scorer_player_id: resolvePlayerId(g.scorerName, g.internalTeamId, playerLookup),
           assist_name: g.assistName,
           assist_player_id: g.assistName
-            ? resolvePlayerId(g.assistName, internalTeam, playerLookup)
+            ? resolvePlayerId(g.assistName, g.internalTeamId, playerLookup)
             : null,
           minute: g.minute,
           is_own_goal: g.isOwnGoal,

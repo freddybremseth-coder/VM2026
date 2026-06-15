@@ -2,17 +2,15 @@
  * Provider abstraction for match-event data.
  *
  * Every provider must implement `fetchMatchEvents`. The router in
- * `getMatchEvents()` picks the right provider based on env vars:
- *
- *   API_FOOTBALL_KEY set  → api-football (live feed)
- *   else                  → mock provider (deterministic, always works)
+ * `getMatchEvents()` picks the live ESPN provider first (no key required),
+ * and falls back to deterministic mock data on failure.
  *
  * Callers import `getMatchEvents` — never the individual providers directly.
  */
 
 import type { MatchEventData, PlayerHeatmap, ShotEvent } from "./types";
 import { fetchMockEvents } from "./mock-provider";
-import { fetchApiFootballEvents } from "./api-football-provider";
+import { fetchEspnEvents } from "./espn-provider";
 
 export interface EventProvider {
   fetchMatchEvents(matchId: number): Promise<MatchEventData>;
@@ -20,15 +18,14 @@ export interface EventProvider {
 
 /**
  * Returns full match event data for the given match ID.
- * Automatically selects the best available provider.
+ * Tries ESPN's public endpoint first; falls back to mock data on error
+ * (network issue, fixture not in window, etc.).
  */
 export async function getMatchEvents(matchId: number): Promise<MatchEventData> {
-  if (process.env.API_FOOTBALL_KEY) {
-    try {
-      return await fetchApiFootballEvents(matchId);
-    } catch (err) {
-      console.warn("[match-events] API-Football failed, falling back to mock:", err);
-    }
+  try {
+    return await fetchEspnEvents(matchId);
+  } catch (err) {
+    console.warn("[match-events] ESPN failed, falling back to mock:", err);
   }
   return fetchMockEvents(matchId);
 }

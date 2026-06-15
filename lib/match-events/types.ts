@@ -84,7 +84,7 @@ export interface MatchEventData {
   /** Optional. Mock + some real providers omit this. */
   heatmaps?: PlayerHeatmap[];
   /** Where the data came from — surfaced in the UI as the source-of-truth chip. */
-  source: "mock" | "api-football" | "fotmob" | "opta" | "statsbomb";
+  source: "mock" | "api-football" | "espn" | "fotmob" | "opta" | "statsbomb";
   /** ISO timestamp. */
   generatedAt: string;
 }

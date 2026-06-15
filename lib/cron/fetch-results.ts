@@ -1,12 +1,11 @@
 /**
  * Cron task — fetch live/final scores and write them into match_results.
  *
- * v2: uses the AF fixture resolver. ONE api-football call per run
- * (`/fixtures?league=1&season=2026&from=…&to=…`) returns every WC fixture in
- * the window WITH goals + status, and we match them to our internal fixture
- * ids by team names + kickoff. The old version passed our internal ids
- * (1–110) straight to `/fixtures?id=` — which are API-Football's own,
- * unrelated fixture ids — so results never landed.
+ * v3: uses the ESPN fixture resolver. API-Football's free tier doesn't cover
+ * the 2026 season, so we hit ESPN's public scoreboard
+ * (https://site.api.espn.com/.../soccer/fifa.world/scoreboard) instead — no
+ * API key required and the response carries goals + status, so still ONE
+ * fetch per UTC day in the window.
  *
  * Once a row in `match_results` flips to `status='finished'`, the
  * grade_predictions_for_match trigger awards points and rolls
@@ -15,9 +14,9 @@
 
 import { FIXTURES } from "@/lib/wc26-fixtures";
 import {
-  fetchAfFixturesInWindow,
-  matchAfToInternal,
-} from "@/lib/cron/af-fixture-resolver";
+  fetchEspnFixturesInWindow,
+  matchEspnToInternal,
+} from "@/lib/cron/espn-fixture-resolver";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { getPhase } from "./phase";
 import type { CronTaskResult } from "./types";
@@ -37,14 +36,8 @@ export async function fetchAndStoreResults(
   const startedAt = performance.now();
   const task = "fetch-results";
 
-  if (!process.env.API_FOOTBALL_KEY) {
-    return {
-      task,
-      status: "skipped",
-      summary: "API_FOOTBALL_KEY not set — skipped",
-      durationMs: Math.round(performance.now() - startedAt),
-    };
-  }
+  // ESPN's public endpoint needs no key — the previous gate on
+  // API_FOOTBALL_KEY would block this cron forever. Removed.
 
   const phase = getPhase();
   if (phase !== "during") {
@@ -79,11 +72,11 @@ export async function fetchAndStoreResults(
     };
   }
 
-  // ONE api call for the whole window — response includes goals + status.
+  // One fetch per UTC day in the window — response includes goals + status.
   let resolved;
   try {
-    const af = await fetchAfFixturesInWindow(windowStart, windowEnd);
-    resolved = matchAfToInternal(af, candidates);
+    const espn = await fetchEspnFixturesInWindow(windowStart, windowEnd);
+    resolved = matchEspnToInternal(espn, candidates);
   } catch (err) {
     return {
       task,
@@ -96,7 +89,7 @@ export async function fetchAndStoreResults(
 
   const wrote: Array<{
     id: number;
-    afId: number;
+    espnId: string;
     status: string;
     h: number | null;
     a: number | null;
@@ -138,7 +131,7 @@ export async function fetchAndStoreResults(
     } else {
       wrote.push({
         id: r.internalId,
-        afId: r.afId,
+        espnId: r.espnId,
         status: r.status,
         h: r.homeScore,
         a: r.awayScore,

@@ -21,6 +21,7 @@ const LIVE_POLL_MS = 30_000;
 const BADGE_COLOR: Record<MatchEventData["source"], string> = {
   mock:           "bg-pitch-700 text-pitch-300",
   "api-football": "bg-data-500/15 text-data-300",
+  espn:           "bg-data-500/15 text-data-300",
   fotmob:         "bg-accent-500/15 text-accent-300",
   opta:           "bg-win/15 text-win",
   statsbomb:      "bg-draw/15 text-draw",
