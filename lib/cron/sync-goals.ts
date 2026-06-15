@@ -25,7 +25,11 @@ import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { getPhase } from "./phase";
 import type { CronTaskResult } from "./types";
 
-const MAX_FIXTURES_PER_RUN = 5;
+// ESPN is free + has no quota, so we drain the full backlog per run
+// instead of the API-Football-era cap of 5. A 60-match WC fully synced in
+// one invocation still costs ~60 fetches in 30s, well within the 5min
+// vercel cron timeout.
+const MAX_FIXTURES_PER_RUN = 60;
 
 interface RunOptions {
   /** Override the cap on fixtures per run. */

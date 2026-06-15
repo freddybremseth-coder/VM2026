@@ -21,8 +21,12 @@ import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { getPhase } from "./phase";
 import type { CronTaskResult } from "./types";
 
-const LOOKBACK_HOURS = 30;
-const LOOKAHEAD_HOURS = 2;
+// ESPN is free + has no daily quota, so we widen the window to cover the
+// whole tournament. The earlier 30h lookback was an API-Football-era safety
+// margin; under ESPN it left earlier matches stuck out of the candidate
+// set forever.
+const LOOKBACK_HOURS = 24 * 40; // 40 days — covers the entire WC 2026
+const LOOKAHEAD_HOURS = 12;
 
 interface RunOptions {
   /** Override the kickoff window in hours. */
