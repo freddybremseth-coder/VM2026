@@ -1,94 +1,67 @@
+/**
+ * /matches/[id]/lineups
+ *
+ * Real starting XI + bench per team, pulled from ESPN summary. Replaces
+ * the previous getMatchDetail()-based implementation which only had
+ * hard-coded data for the demo fixture (id=1001) and rendered "squad not
+ * yet announced" for every real WC fixture.
+ */
+
 import { AlertTriangle } from "lucide-react";
-import { FormationPitch } from "@/components/match/FormationPitch";
-import { SquadList } from "@/components/match/SquadList";
-import { getMatchDetail } from "@/lib/match-data";
-import { teamById } from "@/lib/wc26-data";
-import { getStartingXI, getBench } from "@/lib/wc26-squads";
+import { Kicker } from "@/components/shared/EditorialKicker";
+import { LineupCard } from "@/components/match/LineupCard";
+import { fetchEspnMatchInfo } from "@/lib/match-events/espn-match-info";
 
-export default function LineupsPage({ params }: { params: { matchId: string } }) {
-  const match = getMatchDetail(params.matchId);
-  if (!match) return null;
+export default async function LineupsPage({
+  params,
+}: {
+  params: { matchId: string };
+}) {
+  const matchId = Number(params.matchId);
+  if (!Number.isFinite(matchId)) return null;
 
-  const homeTeam = teamById(match.teams.home.id);
-  const awayTeam = teamById(match.teams.away.id);
+  const info = await fetchEspnMatchInfo(matchId);
 
-  const homeXI = getStartingXI(match.teams.home.id);
-  const awayXI = getStartingXI(match.teams.away.id);
-  const homeBench = getBench(match.teams.home.id);
-  const awayBench = getBench(match.teams.away.id);
+  if (!info) {
+    return <NotReady />;
+  }
 
-  const homeHasSquad = homeXI.length > 0;
-  const awayHasSquad = awayXI.length > 0;
+  const hasLineups =
+    info.home.starters.length > 0 || info.away.starters.length > 0;
+
+  if (!hasLineups) {
+    return <NotReady published="Startoppstillinger publiseres typisk én time før avspark." />;
+  }
 
   return (
     <div className="space-y-5">
-      {(homeTeam?.squadStatus !== "official" || awayTeam?.squadStatus !== "official") && (
-        <div className="flex items-start gap-3 rounded-md bg-draw/10 border border-draw/30 px-4 py-3">
-          <AlertTriangle size={14} className="text-draw shrink-0 mt-0.5" />
-          <div className="text-xs text-pitch-200 leading-relaxed">
-            <span className="font-semibold text-draw">Preliminary squads.</span>{" "}
-            Final 26-man rosters are typically submitted a week before kickoff.
-            What's shown here reflects probable selections based on current club
-            form, not official lists.
-          </div>
-        </div>
-      )}
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-        {homeHasSquad ? (
-          <FormationPitch
-            startingXI={homeXI}
-            formation={match.teams.home.formation}
-            side="home"
-            teamShortName={match.teams.home.shortName}
-          />
-        ) : (
-          <PitchUnavailable shortName={match.teams.home.shortName} />
-        )}
-        {awayHasSquad ? (
-          <FormationPitch
-            startingXI={awayXI}
-            formation={match.teams.away.formation}
-            side="away"
-            teamShortName={match.teams.away.shortName}
-          />
-        ) : (
-          <PitchUnavailable shortName={match.teams.away.shortName} />
-        )}
+      <div className="flex items-baseline justify-between">
+        <Kicker tone="signal">Oppstilling</Kicker>
+        <span className="text-[10px] uppercase tracking-kicker font-mono text-cream/45">
+          via ESPN
+        </span>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-        {homeHasSquad && (
-          <SquadList
-            startingXI={homeXI}
-            bench={homeBench}
-            side="home"
-            teamShortName={match.teams.home.shortName}
-          />
-        )}
-        {awayHasSquad && (
-          <SquadList
-            startingXI={awayXI}
-            bench={awayBench}
-            side="away"
-            teamShortName={match.teams.away.shortName}
-          />
-        )}
+        <LineupCard side={info.home} teamName={info.homeName} prominent />
+        <LineupCard side={info.away} teamName={info.awayName} prominent />
       </div>
     </div>
   );
 }
 
-function PitchUnavailable({ shortName }: { shortName: string }) {
+function NotReady({
+  published = "ESPN publiserer startoppstilling og benk like før avspark. Sjekk tilbake omtrent én time før kickoff.",
+}: {
+  published?: string;
+}) {
   return (
-    <div className="card-panel p-8 text-center flex flex-col items-center justify-center min-h-[320px]">
-      <AlertTriangle size={20} className="text-pitch-500 mb-2" />
-      <div className="text-sm font-semibold text-pitch-200">
-        {shortName} squad not yet announced
-      </div>
-      <div className="text-xs text-pitch-500 mt-1 max-w-xs">
-        Final roster will be added once the federation publishes it (typically 7 days before kickoff).
-      </div>
+    <div className="surface p-8 text-center">
+      <AlertTriangle size={20} className="text-cream/35 mx-auto mb-3" />
+      <h2 className="font-serif text-lg tracking-editorial text-cream/85 mb-1">
+        Oppstilling er ikke klar ennå
+      </h2>
+      <p className="text-xs text-cream/55 max-w-md mx-auto">{published}</p>
     </div>
   );
 }

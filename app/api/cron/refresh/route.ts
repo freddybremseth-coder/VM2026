@@ -14,30 +14,28 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
-import { refreshFinishedMatches } from "@/lib/cron/refresh-matches";
 import { fetchAndStoreResults } from "@/lib/cron/fetch-results";
 import { syncTournamentGoals } from "@/lib/cron/sync-goals";
-import { checkSquadAnnouncements } from "@/lib/cron/check-squads";
-import { refreshFormAndDetectNews } from "@/lib/cron/news-feed";
 import { setLastCronRun } from "@/lib/cron/store";
 import { getPhase } from "@/lib/cron/phase";
 import type { CronRunReport, CronTaskResult } from "@/lib/cron/types";
 
-// Worst-case calls per run, by phase, given the current caps:
-//   pre    → 0 match + 0 results + 3 squad + 3 form = 6/run
-//   during → 15 match + 10 results + 0 squad + 0 form = 25/run
-//   post   → 0 (everything skipped)
-// On Hobby plan the cron fires once per day → multiply by 1. On Pro with a
-// more frequent schedule, this is the per-run worst case.
+// Worst-case ESPN fetches per run, by phase:
+//   pre    → 0 (no fixtures in window)
+//   during → 1 scoreboard + ≤60 summaries = ~61 fetches
+//   post   → 0 (everything skipped by phase gate)
+// ESPN has no quota, so the only ceiling is the 5-min vercel function
+// timeout. 61 sequential fetches at ~150ms each = ~9s, well within budget.
 const DAILY_BUDGET: Record<"pre" | "during" | "post", number> = {
-  pre: 6,
-  during: 25,
+  pre: 0,
+  during: 61,
   post: 0,
 };
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
-// 60s should be plenty for 3 parallel API-Football calls; bumping to 300s to be safe.
+// ESPN sequential summaries can take 10–15s for a full backlog day; 300s
+// leaves comfortable headroom on the 5-min vercel function ceiling.
 export const maxDuration = 300;
 
 function unauthorized() {
@@ -78,15 +76,12 @@ export async function GET(req: NextRequest) {
   const startedAt = new Date().toISOString();
   const t0 = performance.now();
 
-  const [matches, results, goals, squads, news] = await Promise.all([
-    safeRun("refresh-finished-matches", refreshFinishedMatches),
+  const [results, goals] = await Promise.all([
     safeRun("fetch-results", () => fetchAndStoreResults()),
     safeRun("sync-goals", () => syncTournamentGoals()),
-    safeRun("check-squad-announcements", checkSquadAnnouncements),
-    safeRun("refresh-form-detect-news", refreshFormAndDetectNews),
   ]);
 
-  const tasks = [matches, results, goals, squads, news];
+  const tasks = [results, goals];
   const ok = tasks.every((t) => t.status !== "failed");
   const phase = getPhase();
 
