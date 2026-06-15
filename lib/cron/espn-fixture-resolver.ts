@@ -125,6 +125,9 @@ const ALIASES: Record<string, string> = {
   irislamicrepublicofiran: "iran",
   bosniaandherzegovina: "bosniaandherzegovina",
   bosnia: "bosniaandherzegovina",
+  // ESPN spelling: "Bosnia-Herzegovina" (hyphen). After normalisation
+  // becomes "bosniaherzegovina" — needs an explicit alias.
+  bosniaherzegovina: "bosniaandherzegovina",
 };
 
 // ---------------------------------------------------------------------------

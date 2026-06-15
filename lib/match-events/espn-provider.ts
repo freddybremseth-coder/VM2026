@@ -92,6 +92,10 @@ const ALIASES: Record<string, string> = {
   caboverde: "capeverde",
   irislamicrepublicofiran: "iran",
   bosnia: "bosniaandherzegovina",
+  // ESPN renders this with a hyphen ("Bosnia-Herzegovina") which normalises
+  // to "bosniaherzegovina" without the connector — alias both variants so
+  // goal events from ESPN match wc26-data's canonical name.
+  bosniaherzegovina: "bosniaandherzegovina",
 };
 
 // Build the lookup once at module load.
