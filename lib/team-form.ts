@@ -1,17 +1,19 @@
 /**
  * Team pre-tournament form — last N international matches.
  *
- * Uses API-Football v3 when `API_FOOTBALL_KEY` is present, otherwise returns
- * a deterministic mock so the UI always has something to render.
+ * Fetches from ESPN's public team-schedule endpoint (covers ALL leagues
+ * including friendlies, qualifiers, and WC), keeps the most recent N
+ * finished matches and computes W/D/L. Falls back to a deterministic mock
+ * only when ESPN is unreachable so the UI never goes blank.
  *
- * API docs:
- *   GET /fixtures?team={afId}&last=5&type=national
+ * Endpoint:
+ *   GET https://site.api.espn.com/apis/site/v2/sports/soccer/all/teams/{espnId}/schedule
  *
- * Cache strategy: revalidate every 6 hours (pre-tournament data doesn't change
- * minute-to-minute, but we still want to pick up results on match days).
+ * Cache strategy: revalidate every 6 hours — match data lands in this feed
+ * within minutes, but pre-tournament friendlies don't change minute-to-minute.
  */
 
-import { getAFTeamId } from "./api-football-ids";
+import { getEspnTeamId } from "./espn-team-ids";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Types
@@ -32,9 +34,9 @@ export interface FormMatch {
 
 export interface TeamFormData {
   teamId: number;        // our internal WCTeam.id
-  afTeamId?: number;     // API-Football team id (if mapped)
+  espnTeamId?: string;   // ESPN team id (if mapped)
   matches: FormMatch[];  // most recent first
-  source: "api-football" | "mock";
+  source: "espn" | "mock";
   fetchedAt: string;     // ISO timestamp
 }
 
@@ -93,55 +95,78 @@ function buildMockForm(internalId: number): FormMatch[] {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// API-Football fetcher
+// ESPN fetcher (public, no API key required)
 // ─────────────────────────────────────────────────────────────────────────────
 
-interface AFFixtureResponse {
-  fixture: { date: string; venue?: { name?: string } };
-  league: { name: string };
-  teams: {
-    home: { id: number; name: string };
-    away: { id: number; name: string };
-  };
-  goals: { home: number | null; away: number | null };
+interface EspnCompetitor {
+  homeAway: "home" | "away";
+  team: { id: string; displayName: string };
+  // Score lands as either a string or a { displayValue } depending on whether
+  // ESPN has populated the rich event detail yet. We handle both.
+  score?: string | { displayValue?: string; value?: number };
+}
+interface EspnSchedEvent {
+  date: string;
+  league?: { name?: string };
+  competitions: Array<{
+    competitors: EspnCompetitor[];
+    status?: { type?: { completed?: boolean; name?: string } };
+  }>;
 }
 
-async function fetchFromAF(afTeamId: number, last = 5): Promise<FormMatch[]> {
-  const key = process.env.API_FOOTBALL_KEY;
-  if (!key) throw new Error("API_FOOTBALL_KEY not configured");
+function readScore(s: EspnCompetitor["score"]): number | null {
+  if (s === undefined || s === null) return null;
+  if (typeof s === "string") {
+    const n = Number(s);
+    return Number.isFinite(n) ? n : null;
+  }
+  if (typeof s.value === "number") return s.value;
+  if (s.displayValue !== undefined) {
+    const n = Number(s.displayValue);
+    return Number.isFinite(n) ? n : null;
+  }
+  return null;
+}
 
-  const url = `https://v3.football.api-sports.io/fixtures?team=${afTeamId}&last=${last}&type=national`;
-  const res = await fetch(url, {
-    headers: { "x-apisports-key": key },
-    next: { revalidate: 6 * 3600 }, // cache 6 hours
-  });
+async function fetchFromEspn(
+  espnTeamId: string,
+  last = 5,
+): Promise<FormMatch[]> {
+  const url = `https://site.api.espn.com/apis/site/v2/sports/soccer/all/teams/${espnTeamId}/schedule`;
+  const res = await fetch(url, { next: { revalidate: 6 * 3600 } });
+  if (!res.ok) throw new Error(`espn: ${res.status}`);
 
-  if (!res.ok) throw new Error(`api-football: ${res.status}`);
+  const json = (await res.json()) as { events?: EspnSchedEvent[] };
+  const events = json.events ?? [];
 
-  const json = (await res.json()) as { response: AFFixtureResponse[] };
-  const fixtures = json.response;
+  // Keep only finished matches and sort newest-first.
+  const finished = events
+    .filter((e) => e.competitions[0]?.status?.type?.completed === true)
+    .sort((a, b) => (a.date < b.date ? 1 : -1))
+    .slice(0, last);
 
-  return fixtures
-    .slice()
-    .reverse() // API returns most recent first; we want chronological for easy reversal later
-    .map((fx): FormMatch => {
-      const isHome = fx.teams.home.id === afTeamId;
-      const gf = isHome ? (fx.goals.home ?? 0) : (fx.goals.away ?? 0);
-      const ga = isHome ? (fx.goals.away ?? 0) : (fx.goals.home ?? 0);
-      const oppName = isHome ? fx.teams.away.name : fx.teams.home.name;
+  return finished
+    .map((e): FormMatch | null => {
+      const comp = e.competitions[0];
+      const us = comp.competitors.find((c) => c.team.id === espnTeamId);
+      const them = comp.competitors.find((c) => c.team.id !== espnTeamId);
+      if (!us || !them) return null;
+      const gf = readScore(us.score);
+      const ga = readScore(them.score);
+      if (gf === null || ga === null) return null;
       const result: FormResult = gf > ga ? "W" : gf < ga ? "L" : "D";
-
+      const oppName = them.team.displayName;
       return {
-        date: fx.fixture.date.slice(0, 10),
-        opponent: oppName.length > 12 ? oppName.slice(0, 3).toUpperCase() : oppName,
+        date: e.date.slice(0, 10),
+        opponent: oppName.length > 12 ? oppName.slice(0, 12) : oppName,
         goalsFor: gf,
         goalsAgainst: ga,
         result,
-        venue: isHome ? "H" : "A",
-        competition: fx.league.name,
+        venue: us.homeAway === "home" ? "H" : "A",
+        competition: e.league?.name ?? "International",
       };
     })
-    .reverse(); // back to most-recent-first
+    .filter((m): m is FormMatch => m !== null);
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -151,32 +176,33 @@ async function fetchFromAF(afTeamId: number, last = 5): Promise<FormMatch[]> {
 /**
  * Get the last 5 international matches for a team.
  * Falls back to mock data when:
- *   - API key not set, OR
- *   - team ID not mapped, OR
- *   - API request fails
+ *   - team ID not mapped to ESPN, OR
+ *   - ESPN request fails
  */
 export async function getTeamForm(internalId: number): Promise<TeamFormData> {
-  const afTeamId = getAFTeamId(internalId);
+  const espnTeamId = getEspnTeamId(internalId);
 
-  if (process.env.API_FOOTBALL_KEY && afTeamId) {
+  if (espnTeamId) {
     try {
-      const matches = await fetchFromAF(afTeamId);
-      return {
-        teamId: internalId,
-        afTeamId,
-        matches,
-        source: "api-football",
-        fetchedAt: new Date().toISOString(),
-      };
+      const matches = await fetchFromEspn(espnTeamId);
+      if (matches.length > 0) {
+        return {
+          teamId: internalId,
+          espnTeamId,
+          matches,
+          source: "espn",
+          fetchedAt: new Date().toISOString(),
+        };
+      }
     } catch (err) {
-      console.warn(`[team-form] API-Football failed for team ${internalId}:`, err);
+      console.warn(`[team-form] ESPN failed for team ${internalId}:`, err);
       // fall through to mock
     }
   }
 
   return {
     teamId: internalId,
-    afTeamId,
+    espnTeamId,
     matches: buildMockForm(internalId),
     source: "mock",
     fetchedAt: new Date().toISOString(),

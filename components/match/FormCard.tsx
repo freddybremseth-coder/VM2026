@@ -26,7 +26,7 @@ export async function FormCard({ home, away }: Props) {
     getTeamForm(away.id),
   ]);
 
-  const anyLive = homeForm.source === "api-football" || awayForm.source === "api-football";
+  const anyLive = homeForm.source === "espn" || awayForm.source === "espn";
 
   return (
     <div className="card-panel p-4">
