@@ -26,14 +26,14 @@ import { DEFAULT_NAV_LABELS, type NavLabels } from "@/lib/nav-items";
 // opens but middle is empty" bug (tree-shaking / chunk-split races).
 const NAV = [
   { href: "/",            key: "dashboard"   as const, Icon: LayoutDashboard },
-  { href: "/norge",       key: "norge"       as const, Icon: Flag },
   { href: "/matches",     key: "matches"     as const, Icon: Calendar },
+  { href: "/scorers",     key: "scorers"     as const, Icon: Crosshair },
+  { href: "/leagues",     key: "leagues"     as const, Icon: Trophy },
+  { href: "/predictions", key: "predictions" as const, Icon: Target },
+  { href: "/bracket",     key: "bracket"     as const, Icon: GitBranch },
+  { href: "/norge",       key: "norge"       as const, Icon: Flag },
   { href: "/teams",       key: "teams"       as const, Icon: Users },
   { href: "/players",     key: "players"     as const, Icon: User },
-  { href: "/scorers",     key: "scorers"     as const, Icon: Crosshair },
-  { href: "/predictions", key: "predictions" as const, Icon: Target },
-  { href: "/leagues",     key: "leagues"     as const, Icon: Trophy },
-  { href: "/bracket",     key: "bracket"     as const, Icon: GitBranch },
 ];
 
 /**

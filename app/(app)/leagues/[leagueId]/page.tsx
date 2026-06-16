@@ -163,10 +163,6 @@ export default async function LeagueDetailPage({
         </section>
       )}
 
-      {liveTipsData && (
-        <LiveTipsBoard leagueId={league.id} initialData={liveTipsData} />
-      )}
-
       <section>
         <Kicker tone="muted">Ledertavle</Kicker>
         <div className="surface overflow-hidden mt-3">
@@ -225,9 +221,13 @@ export default async function LeagueDetailPage({
         <p className="text-[11px] text-cream/55 mt-3 leading-relaxed font-mono">
           Poeng tildeles etter hver kamp basert på treffsikkerhet (3 p eksakt
           resultat, 1 p riktig utfall). Etterregistrering kjører når kampen er
-          slutt — se roadmap.
+          slutt.
         </p>
       </section>
+
+      {liveTipsData && (
+        <LiveTipsBoard leagueId={league.id} initialData={liveTipsData} />
+      )}
     </div>
   );
 }

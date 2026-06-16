@@ -4,9 +4,16 @@ import { HoloFlag } from "@/components/shared/HoloFlag";
 import { Kicker, Headline } from "@/components/shared/EditorialKicker";
 import { BracketSimulator } from "@/components/bracket/BracketSimulator";
 import { ModelExplainer } from "@/components/shared/ModelExplainer";
-import { GROUPS, teamName, teamsByGroup, venueById, type WCTeam } from "@/lib/wc26-data";
+import { GROUPS, teamName, teamById, venueById, type WCTeam, type GroupId } from "@/lib/wc26-data";
 import { fixturesByRound } from "@/lib/wc26-fixtures";
 import { formatKickoff } from "@/lib/utils";
+import { createSupabaseServerClient } from "@/lib/supabase/server";
+import {
+  computeAllGroupStandings,
+  resolveSlotToTeam,
+  type GroupStandingRow,
+  type ResultRow,
+} from "@/lib/group-standings";
 
 /**
  * Translate a FIFA bracket slot code into Norwegian.
@@ -29,7 +36,30 @@ function slotLabel(slot: string | undefined): string {
   return slot;
 }
 
-export default function BracketPage() {
+async function loadResults(): Promise<{
+  results: ResultRow[];
+  resultsByMatch: Map<number, ResultRow>;
+}> {
+  try {
+    const supabase = createSupabaseServerClient();
+    const { data } = await supabase
+      .from("match_results")
+      .select("match_id, home_score, away_score, status");
+    const rows = ((data as ResultRow[] | null) ?? []).filter(
+      (r) => r.home_score !== null && r.away_score !== null,
+    );
+    const byMatch = new Map<number, ResultRow>();
+    for (const r of rows) byMatch.set(r.match_id, r);
+    return { results: rows, resultsByMatch: byMatch };
+  } catch {
+    return { results: [], resultsByMatch: new Map() };
+  }
+}
+
+export default async function BracketPage() {
+  const { results, resultsByMatch } = await loadResults();
+  const standings = computeAllGroupStandings(results);
+
   return (
     <div className="px-5 md:px-10 py-8 max-w-[1400px] mx-auto space-y-10">
       <header>
@@ -52,7 +82,7 @@ export default function BracketPage() {
         <Kicker tone="muted">Grupper</Kicker>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-px bg-cream/8 mt-3">
           {GROUPS.map((g) => (
-            <GroupCard key={g} group={g} teams={teamsByGroup(g)} />
+            <GroupCard key={g} group={g} rows={standings[g]} />
           ))}
         </div>
       </section>
@@ -107,7 +137,7 @@ export default function BracketPage() {
           fastlagte koblinger — så halv-bracket-en til hvert lag er forutsigbar
           så snart gruppespillet er ferdig 27. juni.
         </p>
-        <KnockoutTree />
+        <KnockoutTree standings={standings} resultsByMatch={resultsByMatch} />
       </section>
 
       <ModelExplainer />
@@ -216,35 +246,86 @@ function PathColumn({
   );
 }
 
-function GroupCard({ group, teams }: { group: string; teams: WCTeam[] }) {
+function TeamLine({
+  team,
+  slotLabel,
+  score,
+  finished,
+}: {
+  team: WCTeam | undefined;
+  slotLabel: string;
+  score: number | null;
+  finished: boolean;
+}) {
+  const label = team ? teamName(team) : slotLabel;
+  return (
+    <div className="flex items-center gap-2 min-w-0">
+      {team && <HoloFlag code={team.flag} w={14} radius={1.5} />}
+      <span
+        className={`truncate flex-1 ${
+          team ? "text-cream" : "text-cream/55"
+        }`}
+      >
+        {label}
+      </span>
+      {finished && score !== null && (
+        <span className="font-mono font-bold stat-num text-cream shrink-0">
+          {score}
+        </span>
+      )}
+    </div>
+  );
+}
+
+function GroupCard({
+  group,
+  rows,
+}: {
+  group: string;
+  rows: GroupStandingRow[];
+}) {
+  // Rows are already sorted by FIFA tiebreakers. Pull team data + format the
+  // compact PL · W · D · L · GD · PTS line that fits next to the team name.
   return (
     <div className="bg-paper p-4">
       <div className="flex items-center justify-between mb-3">
         <Kicker tone="signal">Gruppe {group}</Kicker>
         <div className="text-[9px] font-mono text-cream/35 uppercase tracking-kicker">
-          PL · S · U · T · PTS
+          PL · V · U · T · MF · P
         </div>
       </div>
       <ul className="space-y-1.5">
-        {teams.map((t, i) => (
-          <li key={t.id}>
-            <Link
-              href={`/teams/${t.id}`}
-              className="flex items-center gap-2 text-xs hover:bg-cream/5 -mx-1 px-1 py-0.5 transition-colors group"
-            >
-              <span className="font-mono text-cream/45 w-3 text-right stat-num">
-                {i + 1}
-              </span>
-              <HoloFlag code={t.flag} w={18} radius={2} />
-              <span className="font-serif text-sm tracking-editorial text-cream truncate flex-1 group-hover:text-amber transition-colors">
-                {teamName(t)}
-              </span>
-              <span className="font-mono text-cream/45 stat-num text-[10px]">
-                0·0·0·0·0
-              </span>
-            </Link>
-          </li>
-        ))}
+        {rows.map((r, i) => {
+          const t = teamById(r.teamId);
+          if (!t) return null;
+          const advanced = i < 2; // top-2 directly qualify
+          return (
+            <li key={r.teamId}>
+              <Link
+                href={`/teams/${t.id}`}
+                className="flex items-center gap-2 text-xs hover:bg-cream/5 -mx-1 px-1 py-0.5 transition-colors group"
+              >
+                <span
+                  className={`font-mono w-3 text-right stat-num ${
+                    advanced ? "text-signal font-bold" : "text-cream/45"
+                  }`}
+                >
+                  {i + 1}
+                </span>
+                <HoloFlag code={t.flag} w={18} radius={2} />
+                <span className="font-serif text-sm tracking-editorial text-cream truncate flex-1 group-hover:text-amber transition-colors">
+                  {teamName(t)}
+                </span>
+                <span className="font-mono text-cream/55 stat-num text-[10px] tabular-nums">
+                  {r.played}·{r.won}·{r.drawn}·{r.lost}·
+                  {r.goalDiff > 0 ? "+" : ""}
+                  {r.goalDiff}·
+                  <span className="text-cream font-bold ml-0.5">{r.points}</span>
+                </span>
+              </Link>
+            </li>
+          );
+        })}
       </ul>
       <div className="mt-3 pt-3 border-t border-cream/8 text-[10px] uppercase tracking-kicker font-mono text-cream/45">
         Topp 2 + beste 3.-plass → R32
@@ -253,7 +334,13 @@ function GroupCard({ group, teams }: { group: string; teams: WCTeam[] }) {
   );
 }
 
-function KnockoutTree() {
+function KnockoutTree({
+  standings,
+  resultsByMatch,
+}: {
+  standings: Record<GroupId, GroupStandingRow[]>;
+  resultsByMatch: Map<number, ResultRow>;
+}) {
   const rounds = [
     { key: "R32" as const, label: "Runde av 32", fixtures: fixturesByRound("R32") },
     { key: "R16" as const, label: "Runde av 16", fixtures: fixturesByRound("R16") },
@@ -295,10 +382,30 @@ function KnockoutTree() {
                   day: "numeric",
                   month: "short",
                 });
-                const homeLabel = slotLabel(f.homeSlot);
-                const awayLabel = slotLabel(f.awaySlot);
+
+                // Try to resolve each side to a real team — preferring the
+                // fixture's known id (group stage) and falling back to the
+                // slot resolver (knockout slots become real teams once their
+                // feeder finishes or the group is decided).
+                const homeId =
+                  f.homeId ??
+                  resolveSlotToTeam(f.homeSlot, standings, resultsByMatch);
+                const awayId =
+                  f.awaySlot
+                    ? f.awayId ??
+                      resolveSlotToTeam(f.awaySlot, standings, resultsByMatch)
+                    : (f.awayId ?? null);
+                const homeTeam = homeId ? teamById(homeId) : undefined;
+                const awayTeam = awayId ? teamById(awayId) : undefined;
+
+                const result = resultsByMatch.get(f.id);
+                const isFinished = result?.status === "finished";
+                const isLive =
+                  result?.status === "live" || result?.status === "halftime";
+
                 // Highlight any Norway-possible match: 1I, 2I, or "Vinner K77"/"Vinner K78"
-                // and their downstream feeders.
+                // and their downstream feeders. Also light up if either
+                // resolved team is Norway (id=21).
                 const NORWAY_SLOTS = new Set([
                   "1I", "2I",
                   "W77", "W78",
@@ -307,6 +414,8 @@ function KnockoutTree() {
                   "W101", "W102",
                 ]);
                 const norwayPath =
+                  homeId === 21 ||
+                  awayId === 21 ||
                   (f.homeSlot && NORWAY_SLOTS.has(f.homeSlot)) ||
                   (f.awaySlot && NORWAY_SLOTS.has(f.awaySlot));
                 return (
@@ -316,6 +425,8 @@ function KnockoutTree() {
                     className={`block px-3 py-2 text-[11px] transition-colors ${
                       r.key === "FINAL"
                         ? "ring-1 ring-signal/40 bg-signal/5 hover:bg-signal/10"
+                        : isLive
+                        ? "ring-1 ring-signal/50 bg-signal/10 hover:bg-signal/15"
                         : norwayPath
                         ? "ring-1 ring-signal/25 bg-signal/[0.04] hover:bg-signal/10"
                         : "border border-cream/8 bg-paper hover:bg-paperHi"
@@ -325,16 +436,37 @@ function KnockoutTree() {
                       <span className="text-cream/70 uppercase tracking-kicker text-[9px]">
                         {dateLabel} · K{f.id}
                       </span>
-                      <span className="stat-num text-cream/85">
-                        {formatKickoff(f.kickoff)}
-                      </span>
+                      {isFinished ? (
+                        <span className="font-mono text-[9px] uppercase tracking-kicker text-cream/55 stat-num">
+                          FT
+                        </span>
+                      ) : isLive ? (
+                        <span className="inline-flex items-center gap-1 text-[9px] uppercase tracking-kicker font-bold text-signal">
+                          <span className="live-dot h-1 w-1" />
+                          LIVE
+                        </span>
+                      ) : (
+                        <span className="stat-num text-cream/85">
+                          {formatKickoff(f.kickoff)}
+                        </span>
+                      )}
                     </div>
                     <div className="font-serif tracking-editorial mt-1 text-cream/85 text-[11px] leading-snug">
-                      <div className="truncate">{homeLabel}</div>
+                      <TeamLine
+                        team={homeTeam}
+                        slotLabel={slotLabel(f.homeSlot)}
+                        score={result?.home_score ?? null}
+                        finished={isFinished || isLive}
+                      />
                       <div className="text-cream/35 text-[10px] font-mono italic my-0.5">
-                        vs
+                        {isFinished || isLive ? "—" : "vs"}
                       </div>
-                      <div className="truncate">{awayLabel}</div>
+                      <TeamLine
+                        team={awayTeam}
+                        slotLabel={slotLabel(f.awaySlot)}
+                        score={result?.away_score ?? null}
+                        finished={isFinished || isLive}
+                      />
                     </div>
                     {venue && (
                       <div className="text-[10px] text-cream/45 mt-1.5 flex items-center gap-1 truncate font-mono">

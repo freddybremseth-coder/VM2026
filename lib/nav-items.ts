@@ -35,15 +35,16 @@ export const NAV_ITEMS: Array<{
   key: NavKey;
   icon: typeof LayoutDashboard;
 }> = [
+  // Most-used flows live at the top: matches → top scorers → mini-leagues.
   { href: "/",            key: "dashboard",   icon: LayoutDashboard },
-  { href: "/norge",       key: "norge",       icon: Flag },
   { href: "/matches",     key: "matches",     icon: Calendar },
+  { href: "/scorers",     key: "scorers",     icon: Crosshair },
+  { href: "/leagues",     key: "leagues",     icon: Trophy },
+  { href: "/predictions", key: "predictions", icon: Target },
+  { href: "/bracket",     key: "bracket",     icon: GitBranch },
+  { href: "/norge",       key: "norge",       icon: Flag },
   { href: "/teams",       key: "teams",       icon: Users },
   { href: "/players",     key: "players",     icon: User },
-  { href: "/scorers",     key: "scorers",     icon: Crosshair },
-  { href: "/predictions", key: "predictions", icon: Target },
-  { href: "/leagues",     key: "leagues",     icon: Trophy },
-  { href: "/bracket",     key: "bracket",     icon: GitBranch },
 ];
 
 /**
