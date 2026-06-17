@@ -1,12 +1,11 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, Cpu, TrendingUp, Trophy, Crown, Clock, Sparkles, Target } from "lucide-react";
+import { ArrowLeft, Cpu, Trophy, Crown, Clock, Sparkles, Target } from "lucide-react";
 import { HoloFlag } from "@/components/shared/HoloFlag";
 import { Kicker } from "@/components/shared/EditorialKicker";
 import { DataSourceBanner } from "@/components/shared/DataSourceBanner";
 import { getAllPlayers, getSquad, getPlayerMinutes } from "@/lib/wc26-squads";
 import { teamById } from "@/lib/wc26-data";
-import { getPlayerForm, type ClubOutcome } from "@/lib/player-form";
 import { getPlayerEventData } from "@/lib/match-events/provider";
 import { PlayerMatchData } from "@/components/match/PlayerMatchData";
 
@@ -26,7 +25,6 @@ export default async function PlayerProfilePage({
   const player = getAllPlayers().find((p) => p.id === id);
   if (!player) notFound();
   const team = teamById(player.teamId);
-  const form = getPlayerForm(player.id);
   const teammates = team
     ? getSquad(team.id).filter(
         (p) => p.id !== player.id && p.position === player.position,
@@ -134,40 +132,6 @@ export default async function PlayerProfilePage({
         </div>
       </div>
 
-      {form && (
-        <section className="surface p-5">
-          <div className="flex items-center gap-2 mb-3">
-            <TrendingUp size={12} className="text-amber" />
-            <h2 className="text-[10px] uppercase tracking-kicker font-mono font-semibold text-cream/70">
-              Klubbform · {form.season}
-            </h2>
-          </div>
-
-          <div className="grid grid-cols-3 gap-4 mb-4">
-            <Stat label="Kamper" value={form.apps} />
-            <Stat label="Mål" value={form.goals} accent />
-            <Stat label="Assists" value={form.assists} amber />
-          </div>
-
-          <div className="flex items-center gap-2">
-            <span className="text-[10px] uppercase tracking-kicker text-cream/55 font-mono">
-              Siste 5
-            </span>
-            <div className="flex items-center gap-1">
-              {form.last5.map((o, i) => (
-                <OutcomeDot key={i} outcome={o} />
-              ))}
-            </div>
-          </div>
-
-          {form.note && (
-            <p className="mt-3 text-xs text-cream/55 italic leading-relaxed font-serif">
-              {form.note}
-            </p>
-          )}
-        </section>
-      )}
-
       {teammates.length > 0 && (
         <section className="surface p-5">
           <Kicker tone="muted">Andre {player.position}-er i troppen</Kicker>
@@ -256,18 +220,3 @@ function Stat({
   );
 }
 
-function OutcomeDot({ outcome }: { outcome: ClubOutcome }) {
-  const cls = {
-    W: "bg-win/30 text-win ring-win/50",
-    D: "bg-amber/15 text-amber ring-amber/40",
-    L: "bg-loss/15 text-loss ring-loss/40",
-    B: "bg-paper text-cream/45 ring-cream/8",
-  }[outcome];
-  return (
-    <span
-      className={`h-6 w-6 inline-flex items-center justify-center text-[10px] font-bold font-mono ring-1 ${cls}`}
-    >
-      {outcome}
-    </span>
-  );
-}

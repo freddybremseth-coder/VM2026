@@ -4,8 +4,6 @@ import { Kicker, Headline, PullQuote } from "@/components/shared/EditorialKicker
 import { teamById, teamName, teamsByGroup } from "@/lib/wc26-data";
 import { FIXTURES, type Fixture } from "@/lib/wc26-fixtures";
 import { getSquad, getPlayerMinutes } from "@/lib/wc26-squads";
-import { getPlayerForm } from "@/lib/player-form";
-import { getTeamFormBatch, type TeamFormData } from "@/lib/team-form";
 import { NorwayScenarioCalculator } from "@/components/norge/NorwayScenarioCalculator";
 import { formatKickoff, formatDateLabel } from "@/lib/utils";
 
@@ -25,7 +23,6 @@ import { formatKickoff, formatDateLabel } from "@/lib/utils";
  */
 
 const NORWAY_ID = 21;
-const GROUP_I_IDS = [14, 8, 27, 21]; // FRA, SEN, IRQ, NOR
 
 export default async function NorgePage() {
   const norway = teamById(NORWAY_ID);
@@ -35,15 +32,11 @@ export default async function NorgePage() {
   const groupI = teamsByGroup("I");
   const squad = getSquad(NORWAY_ID);
   const haaland = squad.find((p) => p.id === 2122) ?? null;
-  const haalandForm = haaland ? getPlayerForm(haaland.id) : null;
   const haalandMinutes = haaland ? getPlayerMinutes(haaland) : 0;
   const haalandMinPerGoal =
     haaland && haaland.goals && haaland.goals > 0
       ? Math.round(haalandMinutes / haaland.goals)
       : null;
-
-  // Pre-tournament form for all 4 Group I teams (API-Football / mock)
-  const formMap = await getTeamFormBatch(GROUP_I_IDS);
 
   // Norway's three group fixtures
   const norwayFixtures = FIXTURES.filter(
@@ -264,20 +257,6 @@ export default async function NorgePage() {
           })}
         </div>
 
-        {/* Form dots row underneath — keeps the editorial table clean */}
-        <div className="mt-3 text-[10px] font-mono uppercase tracking-[1.2px] text-cream/35">
-          Siste 5 landskamper
-        </div>
-        <div className="mt-1.5 space-y-1.5">
-          {standings.map((row) => {
-            const team = teamById(row.teamId);
-            const teamForm = formMap.get(row.teamId);
-            if (!team || !teamForm) return null;
-            return (
-              <FormDotsRow key={team.id} shortName={team.shortName} form={teamForm} />
-            );
-          })}
-        </div>
       </section>
 
       {/* ── 4. Haaland portrait ─────────────────────────────────── */}
@@ -371,35 +350,6 @@ export default async function NorgePage() {
               )}
             </div>
 
-            {/* Klubb 25/26 row */}
-            {haalandForm && (
-              <div className="border-t border-cream/8 py-3 grid grid-cols-3 gap-3 sm:gap-4">
-                <div>
-                  <div className="text-[10px] uppercase tracking-kicker font-mono text-cream/55 mb-0.5">
-                    Klubb 25/26 · Mål
-                  </div>
-                  <div className="font-serif text-xl font-semibold stat-num text-cream leading-none">
-                    {haalandForm.goals}
-                  </div>
-                </div>
-                <div>
-                  <div className="text-[10px] uppercase tracking-kicker font-mono text-cream/55 mb-0.5">
-                    Klubb 25/26 · Assists
-                  </div>
-                  <div className="font-serif text-xl font-semibold stat-num text-cream leading-none">
-                    {haalandForm.assists}
-                  </div>
-                </div>
-                <div>
-                  <div className="text-[10px] uppercase tracking-kicker font-mono text-cream/55 mb-0.5">
-                    Kamper
-                  </div>
-                  <div className="font-serif text-xl font-semibold stat-num text-cream leading-none">
-                    {haalandForm.apps}
-                  </div>
-                </div>
-              </div>
-            )}
           </Link>
         </section>
       )}
@@ -452,42 +402,6 @@ function Stat({
         {value}
       </span>
       <Kicker tone="muted">{label}</Kicker>
-    </div>
-  );
-}
-
-function FormDotsRow({
-  shortName,
-  form,
-}: {
-  shortName: string;
-  form: TeamFormData;
-}) {
-  const dotClass = (r: "W" | "D" | "L") =>
-    r === "W"
-      ? "bg-win text-canvas"
-      : r === "D"
-      ? "bg-amber text-canvas"
-      : "bg-loss text-cream";
-  return (
-    <div className="flex items-center gap-2">
-      <span className="font-mono text-[10px] uppercase tracking-[1.2px] text-cream/55 w-10">
-        {shortName}
-      </span>
-      <div className="flex items-center gap-1">
-        {form.matches.map((m, i) => (
-          <span
-            key={i}
-            title={`${m.opponent} ${m.goalsFor}–${m.goalsAgainst}`}
-            className={`inline-flex items-center justify-center w-4 h-4 rounded-full text-[8px] font-bold ${dotClass(m.result)}`}
-          >
-            {m.result === "W" ? "S" : m.result === "D" ? "U" : "T"}
-          </span>
-        ))}
-      </div>
-      <span className="text-[9px] font-mono text-cream/35 ml-1">
-        {form.source === "mock" ? "mock" : "live"}
-      </span>
     </div>
   );
 }

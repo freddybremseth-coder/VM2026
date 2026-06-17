@@ -14,8 +14,6 @@ import { StadiumBackdrop } from "@/components/shared/StadiumBackdrop";
 import { Kicker } from "@/components/shared/EditorialKicker";
 import { MatchHeader } from "@/components/match/MatchHeader";
 import { MatchTabs } from "@/components/match/MatchTabs";
-import { AIMatchPreview } from "@/components/match/AIMatchPreview";
-import { FormCard } from "@/components/match/FormCard";
 import { HeadToHeadCard } from "@/components/match/HeadToHeadCard";
 import { LiveResultHero } from "@/components/match/LiveResultHero";
 import { LiveGoalsList } from "@/components/match/LiveGoalsList";
@@ -25,7 +23,6 @@ import { StickyMobileCTA } from "@/components/match/StickyMobileCTA";
 import { getMatchDetail, getFixtureView } from "@/lib/match-data";
 import { getLiveMatch } from "@/lib/live-match";
 import { canStillEdit } from "@/lib/predictions-visibility";
-import { buildPreviewLive } from "@/lib/ai-preview";
 import { teamById, teamName } from "@/lib/wc26-data";
 import { formatKickoff, formatDateLabel } from "@/lib/utils";
 
@@ -60,10 +57,7 @@ export default async function MatchLayout({
   if (!fixture) notFound();
 
   const matchId = Number(params.matchId);
-  const [live, preview] = await Promise.all([
-    getLiveMatch(matchId),
-    buildPreviewLive(matchId),
-  ]);
+  const live = await getLiveMatch(matchId);
 
   // Treat as started/finished if Supabase has a non-scheduled status row.
   const started =
@@ -195,20 +189,17 @@ export default async function MatchLayout({
           />
         )}
 
-        {!started && preview && <AIMatchPreview preview={preview} />}
-
         {fixture.teams.home && fixture.teams.away && (() => {
           const homeTeam = teamById(fixture.teams.home.id);
           const awayTeam = teamById(fixture.teams.away.id);
           if (!homeTeam || !awayTeam) return null;
           return (
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
               <PrematchCard
                 icon={<Users size={14} className="text-signal" />}
                 title="Forventet startoppstilling"
                 status="Trykk på Lineups-fanen — bekreftede tropper har sannsynlig XI på en pitch-graf."
               />
-              <FormCard home={homeTeam} away={awayTeam} />
               <HeadToHeadCard home={homeTeam} away={awayTeam} />
             </div>
           );

@@ -6,12 +6,10 @@ import { StadiumBackdrop } from "@/components/shared/StadiumBackdrop";
 import { Kicker, Headline } from "@/components/shared/EditorialKicker";
 import { TopScorersList } from "@/components/shared/TopScorersList";
 import { TeamStarsCard } from "@/components/team/TeamStarsCard";
-import { TeamFormStripStatic } from "@/components/shared/TeamFormStrip";
 import { teamById, teamName } from "@/lib/wc26-data";
 import { getSquad } from "@/lib/wc26-squads";
 import { SquadList } from "@/components/match/SquadList";
 import { getTopScorers, getTopAssisters } from "@/lib/team-stats";
-import { getTeamForm } from "@/lib/team-form";
 
 export default async function TeamProfilePage({ params }: { params: { teamId: string } }) {
   const id = Number(params.teamId);
@@ -21,8 +19,6 @@ export default async function TeamProfilePage({ params }: { params: { teamId: st
   const squad = getSquad(id);
   const startingXI = squad.filter((p) => p.startX !== undefined);
   const bench = squad.filter((p) => p.startX === undefined);
-
-  const teamForm = await getTeamForm(id);
 
   const topScorers = getTopScorers(id, 5).map((l) => ({ ...l, teamId: id }));
   const topAssisters = getTopAssisters(id, 5).map((l) => ({ ...l, teamId: id }));
@@ -68,12 +64,8 @@ export default async function TeamProfilePage({ params }: { params: { teamId: st
       </StadiumBackdrop>
 
       <div className="px-5 md:px-10 py-8 max-w-[1100px] mx-auto space-y-5">
-        {/* Pre-tournament form strip */}
-        <div className="surface p-4 flex items-center justify-between flex-wrap gap-3">
-          <div className="flex items-center gap-3">
-            <Kicker tone="muted">Siste 5 landskamper</Kicker>
-            <TeamFormStripStatic form={teamForm} />
-          </div>
+        {/* Quick action — tip this team */}
+        <div className="surface p-4 flex items-center justify-end">
           <Link
             href="/predictions"
             className="text-[11px] uppercase tracking-kicker font-mono text-signal hover:text-amber font-semibold transition-colors"
