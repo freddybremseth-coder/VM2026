@@ -9,6 +9,43 @@ import { formatKickoff, formatDateLabel } from "@/lib/utils";
 import { getDictionary } from "@/lib/i18n";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { getTournamentTopScorersLive, type TournamentScorer } from "@/lib/tournament-scorers";
+import { computeGroupStandings, type ResultRow, type GroupStandingRow } from "@/lib/group-standings";
+
+const NORWAY_ID = 21;
+const HAALAND_PLAYER_ID = 2122;
+
+async function loadNorgePinData(
+  supabase: ReturnType<typeof createSupabaseServerClient>,
+): Promise<{
+  norge: GroupStandingRow | null;
+  rank: number | null;
+  haalandGoals: number;
+}> {
+  try {
+    const [resultsRes, haalandRes] = await Promise.all([
+      supabase
+        .from("match_results")
+        .select("match_id, home_score, away_score, status"),
+      supabase
+        .from("tournament_goals")
+        .select("*", { count: "exact", head: true })
+        .eq("scorer_player_id", HAALAND_PLAYER_ID)
+        .eq("is_own_goal", false),
+    ]);
+    const results = ((resultsRes.data as ResultRow[] | null) ?? []).filter(
+      (r) => r.home_score !== null && r.away_score !== null,
+    );
+    const standings = computeGroupStandings("I", results);
+    const idx = standings.findIndex((r) => r.teamId === NORWAY_ID);
+    return {
+      norge: idx >= 0 ? standings[idx] : null,
+      rank: idx >= 0 ? idx + 1 : null,
+      haalandGoals: haalandRes.count ?? 0,
+    };
+  } catch {
+    return { norge: null, rank: null, haalandGoals: 0 };
+  }
+}
 
 /**
  * Dashboard — VM2026 hero.
@@ -41,7 +78,10 @@ export default async function DashboardPage() {
   // cron picks up the first finished match's events, in which case the
   // section below renders the honest placeholder.
   const supabase = createSupabaseServerClient();
-  const topScorers = await getTournamentTopScorersLive(supabase, 8);
+  const [topScorers, norgePin] = await Promise.all([
+    getTournamentTopScorersLive(supabase, 8),
+    loadNorgePinData(supabase),
+  ]);
 
   return (
     <div className="min-h-screen">
@@ -115,7 +155,7 @@ export default async function DashboardPage() {
 
       {/* Norge promo strip */}
       <section className="px-5 md:px-10 mt-7">
-        <NorgePin />
+        <NorgePin data={norgePin} />
       </section>
 
       {/* Top scorers — driven by the per-goal log in tournament_goals.
@@ -256,7 +296,37 @@ function TopScorersBoard({ scorers }: { scorers: TournamentScorer[] }) {
   );
 }
 
-function NorgePin() {
+function NorgePin({
+  data,
+}: {
+  data: {
+    norge: GroupStandingRow | null;
+    rank: number | null;
+    haalandGoals: number;
+  };
+}) {
+  // Headline shows where Norway actually sits in Group I right now — or
+  // a neutral pre-tournament line if the group hasn't kicked off yet.
+  let headline = "Følg Norge i Gruppe I.";
+  if (data.norge && data.rank && data.norge.played > 0) {
+    const placeLabel =
+      data.rank === 1
+        ? "Topper Gruppe I"
+        : data.rank === 2
+        ? "2.-plass i Gruppe I"
+        : data.rank === 3
+        ? "3.-plass i Gruppe I"
+        : `${data.rank}.-plass i Gruppe I`;
+    headline = `${placeLabel} · ${data.norge.points} p`;
+  }
+  // Sub-line: real Haaland goals from tournament_goals, or omitted.
+  const subLine =
+    data.haalandGoals > 0
+      ? `Haaland ${data.haalandGoals} mål så langt`
+      : data.norge && data.norge.played > 0
+      ? `${data.norge.played} av 3 gruppekamper spilt`
+      : "Gruppespillet starter snart";
+
   return (
     <Link
       href="/norge"
@@ -272,9 +342,9 @@ function NorgePin() {
         <div className="flex-1">
           <Kicker tone="cream">Følg Norge · Gruppe I</Kicker>
           <div className="font-serif text-lg md:text-xl font-semibold tracking-editorial mt-1">
-            41% sjanse for R32.
+            {headline}
           </div>
-          <div className="text-xs text-cream/55 mt-1">Haaland 4 mål · form W·W·D</div>
+          <div className="text-xs text-cream/55 mt-1">{subLine}</div>
         </div>
         <ArrowUpRight size={20} className="text-cream/70 shrink-0" />
       </div>

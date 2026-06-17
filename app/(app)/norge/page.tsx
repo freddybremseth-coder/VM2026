@@ -1,11 +1,13 @@
 import Link from "next/link";
 import { HoloFlag } from "@/components/shared/HoloFlag";
 import { Kicker, Headline, PullQuote } from "@/components/shared/EditorialKicker";
-import { teamById, teamName, teamsByGroup } from "@/lib/wc26-data";
+import { teamById, teamName } from "@/lib/wc26-data";
 import { FIXTURES, type Fixture } from "@/lib/wc26-fixtures";
-import { getSquad, getPlayerMinutes } from "@/lib/wc26-squads";
+import { getSquad } from "@/lib/wc26-squads";
 import { NorwayScenarioCalculator } from "@/components/norge/NorwayScenarioCalculator";
 import { formatKickoff, formatDateLabel } from "@/lib/utils";
+import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { computeGroupStandings, type ResultRow, type GroupStandingRow } from "@/lib/group-standings";
 
 /**
  * Norge — flagship landlagsprofil (editorial cinematic).
@@ -29,34 +31,31 @@ export default async function NorgePage() {
   if (!norway) {
     return <div className="p-6 text-cream">Norway team data not loaded.</div>;
   }
-  const groupI = teamsByGroup("I");
   const squad = getSquad(NORWAY_ID);
   const haaland = squad.find((p) => p.id === 2122) ?? null;
-  const haalandMinutes = haaland ? getPlayerMinutes(haaland) : 0;
-  const haalandMinPerGoal =
-    haaland && haaland.goals && haaland.goals > 0
-      ? Math.round(haalandMinutes / haaland.goals)
-      : null;
 
   // Norway's three group fixtures
   const norwayFixtures = FIXTURES.filter(
     (f) => f.homeId === NORWAY_ID || f.awayId === NORWAY_ID,
   ).sort((a, b) => a.kickoff.localeCompare(b.kickoff));
 
-  // Placeholder qualification odds — replace when sim backend lands.
-  const qualOdds = 41;
-
-  // Group I standings — pre-tournament view (FIFA-rank-driven expected order,
-  // zero points across the board). Live MD aggregation will overwrite once
-  // matchday 1 is played.
-  const tournamentStarted =
-    new Date() >= new Date("2026-06-11T00:00:00Z");
-  const standings: Array<{ teamId: number; gd: string; pts: number }> = [
-    { teamId: 14, gd: "—", pts: 0 },
-    { teamId: 21, gd: "—", pts: 0 },
-    { teamId: 8, gd: "—", pts: 0 },
-    { teamId: 27, gd: "—", pts: 0 },
-  ];
+  // Group I standings — computed from match_results so the table updates
+  // matchday by matchday. Falls back to seed order (FIFA-rank) when no
+  // games have been played yet.
+  const supabase = createSupabaseServerClient();
+  let standings: GroupStandingRow[];
+  try {
+    const { data } = await supabase
+      .from("match_results")
+      .select("match_id, home_score, away_score, status");
+    const results = ((data as ResultRow[] | null) ?? []).filter(
+      (r) => r.home_score !== null && r.away_score !== null,
+    );
+    standings = computeGroupStandings("I", results);
+  } catch {
+    standings = computeGroupStandings("I", []);
+  }
+  const tournamentStarted = standings.some((r) => r.played > 0);
 
   return (
     <div className="min-h-screen">
@@ -132,60 +131,13 @@ export default async function NorgePage() {
           </PullQuote>
           <p className="mt-3 md:mt-4 text-sm md:text-base text-cream/70 max-w-xl leading-relaxed">
             Første sluttspill siden 1998.
-            {norway.fifaRank ? ` FIFA-rang #${norway.fifaRank}, ` : " "}
-            {haaland?.goals
-              ? `${haaland.goals} mål av Haaland for landslaget`
-              : "Haaland i bestillingsform"}
-            , en gruppe ingen ville ha.
+            {norway.fifaRank ? ` FIFA-rang #${norway.fifaRank}. ` : " "}
+            En gruppe ingen ville ha.
           </p>
         </div>
       </section>
 
-      {/* ── 2. Qualification matrix (Tactician) ─────────────────── */}
-      <section className="px-5 md:px-10 mt-8">
-        <Kicker>Pre-VM prognose</Kicker>
-        <Headline rank="h2">Veien til R32.</Headline>
-
-        <div className="mt-4 surface">
-          <div className="px-5 py-4 border-b border-cream/8 flex items-center gap-4">
-            <span className="font-serif text-[44px] md:text-[56px] font-semibold text-signal leading-none tracking-[-0.04em] stat-num">
-              {qualOdds}%
-            </span>
-            <div className="flex-1">
-              <Kicker tone="muted">10.000 simuleringer · v0.1 · før avspark</Kicker>
-              <div className="h-1 bg-cream/14 mt-2 relative">
-                <div
-                  className="absolute left-0 top-0 bottom-0 bg-signal"
-                  style={{ width: `${qualOdds}%` }}
-                />
-              </div>
-            </div>
-          </div>
-
-          {[
-            { vs: "VS IRQ", res: "W", text: "Seier åpner gruppen · +24%", resColor: "bg-signal" },
-            { vs: "VS SEN", res: "W", text: "Seier sikrer R32-kurs · +36%", resColor: "bg-signal" },
-            { vs: "VS FRA", res: "D", text: "Uavgjort solid · +14%", resColor: "bg-amber" },
-          ].map((row, i) => (
-            <div
-              key={row.vs}
-              className={`grid grid-cols-[68px_22px_1fr] gap-3 items-center px-5 py-2.5 font-mono ${
-                i ? "border-t border-cream/8" : ""
-              }`}
-            >
-              <span className="text-[11px] font-bold tracking-[1px] text-cream">{row.vs}</span>
-              <span
-                className={`w-5 h-5 flex items-center justify-center text-canvas text-[11px] font-extrabold ${row.resColor}`}
-              >
-                {row.res}
-              </span>
-              <span className="text-[10.5px] text-cream/55 tracking-wide">{row.text}</span>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* ── 3. Group I standings (editorial) ────────────────────── */}
+      {/* ── 2. Group I standings (editorial, live from match_results) ─── */}
       <section className="px-5 md:px-10 mt-8">
         <Kicker>Gruppe I · stilling</Kicker>
         <Headline rank="h2">
@@ -193,8 +145,13 @@ export default async function NorgePage() {
         </Headline>
         {!tournamentStarted && (
           <p className="text-xs text-cream/55 mt-2 font-mono">
-            Tabellen oppdateres automatisk etter første matchday · 11. juni.
+            Tabellen oppdateres automatisk etter første matchday.
             Foreløpig sortert etter FIFA-rang.
+          </p>
+        )}
+        {tournamentStarted && (
+          <p className="text-xs text-cream/55 mt-2 font-mono">
+            Oppdatert kontinuerlig — sortert etter poeng, målforskjell, mål for.
           </p>
         )}
         <div className="mt-3">
@@ -232,25 +189,29 @@ export default async function NorgePage() {
                 </span>
                 <span
                   className={`font-mono text-[11px] text-right font-semibold stat-num ${
-                    row.gd === "—"
+                    row.played === 0
                       ? "text-cream/35"
-                      : row.gd.startsWith("+")
+                      : row.goalDiff > 0
                       ? "text-win"
-                      : "text-loss"
+                      : row.goalDiff < 0
+                      ? "text-loss"
+                      : "text-cream/55"
                   }`}
                 >
-                  {row.gd}
+                  {row.played === 0
+                    ? "—"
+                    : `${row.goalDiff > 0 ? "+" : ""}${row.goalDiff}`}
                 </span>
                 <span
                   className={`font-serif text-xl font-semibold text-right stat-num ${
-                    row.pts === 0
+                    row.points === 0 && row.played === 0
                       ? "text-cream/35"
                       : isNorway
                       ? "text-signal"
                       : "text-cream"
                   }`}
                 >
-                  {row.pts}
+                  {row.points}
                 </span>
               </Link>
             );
@@ -296,60 +257,6 @@ export default async function NorgePage() {
               </div>
             </div>
 
-            {/* Landskamp-statistikk grid */}
-            <div className="border-t border-cream/8 pt-4 pb-4">
-              <div className="text-[10px] uppercase tracking-kicker font-mono text-cream/55 mb-3">
-                Landskamp-statistikk
-              </div>
-              <div className="grid grid-cols-3 sm:grid-cols-6 gap-3 sm:gap-4">
-                <Stat
-                  label="Mål"
-                  value={haaland.goals ?? "—"}
-                  accent="signal"
-                />
-                <Stat label="Caps" value={haaland.caps ?? "—"} />
-                <Stat
-                  label="Assists"
-                  value={haaland.assists ?? "—"}
-                  accent="amber"
-                />
-                <Stat
-                  label="Minutter"
-                  value={
-                    haalandMinutes > 0
-                      ? haalandMinutes.toLocaleString("nb-NO")
-                      : "—"
-                  }
-                />
-                <Stat
-                  label="Mål/Kamp"
-                  value={
-                    haaland.caps && haaland.goals
-                      ? (haaland.goals / haaland.caps).toFixed(2)
-                      : "—"
-                  }
-                />
-                <Stat
-                  label="Min/Mål"
-                  value={
-                    haalandMinPerGoal !== null
-                      ? haalandMinPerGoal.toLocaleString("nb-NO")
-                      : "—"
-                  }
-                />
-              </div>
-              {haalandMinPerGoal !== null && haaland.goals && (
-                <p className="mt-3 text-[11px] text-cream/55 leading-relaxed font-serif italic">
-                  Ett mål hver{" "}
-                  <span className="stat-num not-italic text-cream font-semibold">
-                    {haalandMinPerGoal}
-                  </span>{" "}
-                  minutt for landslaget — best i Europa blant aktive spillere
-                  under 30, og bare slått av Mbappé i totalbudsjettet.
-                </p>
-              )}
-            </div>
-
           </Link>
         </section>
       )}
@@ -377,34 +284,6 @@ export default async function NorgePage() {
 }
 
 // ─────────────────────────────────────────────────────────────────
-
-function Stat({
-  label,
-  value,
-  accent,
-}: {
-  label: string;
-  value: string | number;
-  /** Highlight the number for a key metric. `signal` = red, `amber` = yellow. */
-  accent?: "signal" | "amber";
-}) {
-  const valueCls =
-    accent === "signal"
-      ? "text-signal"
-      : accent === "amber"
-      ? "text-amber"
-      : "text-cream";
-  return (
-    <div>
-      <span
-        className={`font-serif text-[22px] font-semibold block leading-none stat-num ${valueCls}`}
-      >
-        {value}
-      </span>
-      <Kicker tone="muted">{label}</Kicker>
-    </div>
-  );
-}
 
 function NorgeFixtureCard({ fixture }: { fixture: Fixture }) {
   const home = fixture.homeId ? teamById(fixture.homeId) : undefined;
