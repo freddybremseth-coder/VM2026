@@ -53,7 +53,16 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: `league lookup: ${leagueErr.message}` }, { status: 500 });
   }
   if (!leagues || leagues.length === 0) {
-    return NextResponse.json({ error: "no league matches", needle: leagueNeedle }, { status: 404 });
+    // Help the caller discover the right name: list every league we have.
+    const { data: allLeagues } = await admin
+      .from("mini_leagues")
+      .select("id, name")
+      .order("created_at", { ascending: false })
+      .limit(50);
+    return NextResponse.json(
+      { error: "no league matches", needle: leagueNeedle, candidates: allLeagues ?? [] },
+      { status: 404 },
+    );
   }
   if (leagues.length > 1) {
     return NextResponse.json(
