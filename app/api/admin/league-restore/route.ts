@@ -73,9 +73,10 @@ export async function POST(req: NextRequest) {
   const league = leagues[0];
 
   // Match user by username OR display_name (case-insensitive).
+  // profiles.id == auth.users.id (the foreign key target for league_members).
   const { data: profiles, error: profileErr } = await admin
     .from("profiles")
-    .select("user_id, username, display_name")
+    .select("id, username, display_name")
     .or(`username.ilike.%${userNeedle}%,display_name.ilike.%${userNeedle}%`);
   if (profileErr) {
     return NextResponse.json({ error: `profile lookup: ${profileErr.message}` }, { status: 500 });
@@ -92,7 +93,7 @@ export async function POST(req: NextRequest) {
       { status: 409 },
     );
   }
-  const profile = profiles[0];
+  const profile = profiles[0] as { id: string; username: string; display_name: string | null };
 
   // Upsert membership with the requested point total.
   const { error: upsertErr } = await admin
@@ -100,7 +101,7 @@ export async function POST(req: NextRequest) {
     .upsert(
       {
         league_id: league.id,
-        user_id: profile.user_id,
+        user_id: profile.id,
         points,
       },
       { onConflict: "league_id,user_id" },
@@ -112,7 +113,7 @@ export async function POST(req: NextRequest) {
   return NextResponse.json({
     ok: true,
     league: { id: league.id, name: league.name },
-    user: { user_id: profile.user_id, username: profile.username, display_name: profile.display_name },
+    user: { user_id: profile.id, username: profile.username, display_name: profile.display_name },
     points,
   });
 }
