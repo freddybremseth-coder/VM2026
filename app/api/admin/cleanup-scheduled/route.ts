@@ -29,8 +29,9 @@ export async function POST(req: NextRequest) {
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
+  const rows = (data ?? []) as Array<{ match_id: number }>;
   return NextResponse.json({
-    deleted: data?.length ?? 0,
-    matchIds: data?.map((r: { match_id: number }) => r.match_id) ?? [],
+    deleted: rows.length,
+    matchIds: rows.map((r) => r.match_id),
   });
 }

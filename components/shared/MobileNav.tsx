@@ -18,7 +18,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ChatGeniusBadge, CreditsBadge } from "./Logo";
-import { SongPlayerCard } from "./SongPlayer";
+import { SongPlayerCard, NewSongPin } from "./SongPlayer";
 import { DEFAULT_NAV_LABELS, type NavLabels } from "@/lib/nav-items";
 
 // Inline NAV items so this component does not depend on a separate file
@@ -164,6 +164,7 @@ export function MobileNav({ labels }: { labels?: Partial<NavLabels> }) {
             </nav>
 
             <div className="mt-auto pt-4 border-t border-cream/8 space-y-3 shrink-0">
+              <NewSongPin />
               <SongPlayerCard />
               <div className="px-2 space-y-3">
                 <ChatGeniusBadge />
