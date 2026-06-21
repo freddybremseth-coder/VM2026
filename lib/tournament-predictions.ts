@@ -30,11 +30,31 @@ async function loadResultRows(): Promise<ResultRow[]> {
   }
 }
 
+/**
+ * Fingerprint of the result set — covers row count, every score, and every
+ * status. Any change (new row, edited score, status flip) flips the
+ * fingerprint and invalidates the cache. Using only row count missed
+ * mid-fixture edits where a score moved up but the row count stayed put.
+ */
+function fingerprintResults(rows: ResultRow[]): string {
+  let sumScores = 0;
+  let statusHash = 0;
+  for (const r of rows) {
+    sumScores += (r.home_score ?? 0) + (r.away_score ?? 0);
+    // Mix the status into the fingerprint so a status-only flip
+    // (scheduled → finished) is detected even at 0-0.
+    for (let i = 0; i < r.status.length; i++) {
+      statusHash = (statusHash * 31 + r.status.charCodeAt(i)) | 0;
+    }
+  }
+  return `${rows.length}-${sumScores}-${statusHash}`;
+}
+
 const cached = unstable_cache(
-  async (resultCount: number): Promise<SimResult> => {
-    // resultCount is part of the cache key — it changes when cron writes
-    // a new result row, which invalidates this cache automatically.
-    void resultCount;
+  async (fingerprint: string): Promise<SimResult> => {
+    // fingerprint is part of the cache key — when results change, this
+    // string changes and the cache misses, re-running the sim.
+    void fingerprint;
     const rows = await loadResultRows();
     return runTournamentSim(rows);
   },
@@ -45,21 +65,11 @@ const cached = unstable_cache(
 /**
  * Get the cached tournament predictions. Re-runs the sim when either:
  *   - 15 min have passed since the last run, OR
- *   - The number of result rows has changed (a cron tick wrote a result).
+ *   - The result fingerprint changes (count, any score, or any status).
  */
 export async function getTournamentPredictions(): Promise<SimResult> {
-  // Cheap COUNT query to use as part of the cache key.
-  let count = 0;
-  try {
-    const supabase = createSupabaseServerClient();
-    const { count: c } = await supabase
-      .from("match_results")
-      .select("*", { count: "exact", head: true });
-    count = c ?? 0;
-  } catch {
-    // fall through with count=0 — cache will key on 0 until DB is reachable.
-  }
-  return cached(count);
+  const rows = await loadResultRows();
+  return cached(fingerprintResults(rows));
 }
 
 /** Convenience: probability rows for one team, or null. */
