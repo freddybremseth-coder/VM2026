@@ -8,6 +8,7 @@ import { NorwayScenarioCalculator } from "@/components/norge/NorwayScenarioCalcu
 import { formatKickoff, formatDateLabel } from "@/lib/utils";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { computeGroupStandings, type ResultRow, type GroupStandingRow } from "@/lib/group-standings";
+import { getTeamPrediction } from "@/lib/tournament-predictions";
 
 /**
  * Norge — flagship landlagsprofil (editorial cinematic).
@@ -41,20 +42,27 @@ export default async function NorgePage() {
 
   // Group I standings — computed from match_results so the table updates
   // matchday by matchday. Falls back to seed order (FIFA-rank) when no
-  // games have been played yet.
+  // games have been played yet. Also pulls the Monte Carlo R32 probability
+  // for Norway in parallel.
   const supabase = createSupabaseServerClient();
   let standings: GroupStandingRow[];
-  try {
-    const { data } = await supabase
-      .from("match_results")
-      .select("match_id, home_score, away_score, status");
-    const results = ((data as ResultRow[] | null) ?? []).filter(
-      (r) => r.home_score !== null && r.away_score !== null,
-    );
-    standings = computeGroupStandings("I", results);
-  } catch {
-    standings = computeGroupStandings("I", []);
-  }
+  const [standingsRes, prediction] = await Promise.all([
+    (async () => {
+      try {
+        const { data } = await supabase
+          .from("match_results")
+          .select("match_id, home_score, away_score, status");
+        const results = ((data as ResultRow[] | null) ?? []).filter(
+          (r) => r.home_score !== null && r.away_score !== null,
+        );
+        return computeGroupStandings("I", results);
+      } catch {
+        return computeGroupStandings("I", []);
+      }
+    })(),
+    getTeamPrediction(NORWAY_ID),
+  ]);
+  standings = standingsRes;
   const tournamentStarted = standings.some((r) => r.played > 0);
 
   return (
@@ -137,7 +145,56 @@ export default async function NorgePage() {
         </div>
       </section>
 
-      {/* ── 2. Group I standings (editorial, live from match_results) ─── */}
+      {/* ── 2. Monte Carlo R32 sannsynlighet ─────────────────────────── */}
+      {prediction && (
+        <section className="px-5 md:px-10 mt-8">
+          <Kicker tone="signal">Sannsynlighetsmodell</Kicker>
+          <Headline rank="h2">R32-utsikter.</Headline>
+          <div className="mt-4 surface">
+            <div className="px-5 py-5 border-b border-cream/8 flex flex-col sm:flex-row sm:items-center gap-4">
+              <span className="font-serif text-[44px] sm:text-[56px] font-semibold text-signal leading-none tracking-[-0.04em] stat-num">
+                {Math.round(prediction.pR32 * 100)}%
+              </span>
+              <div className="flex-1">
+                <div className="text-[10px] uppercase tracking-kicker font-mono text-cream/55 mb-1">
+                  Sjanse for Runde av 32
+                </div>
+                <div className="h-1 bg-cream/14 relative">
+                  <div
+                    className="absolute left-0 top-0 bottom-0 bg-signal transition-[width]"
+                    style={{ width: `${Math.round(prediction.pR32 * 100)}%` }}
+                  />
+                </div>
+              </div>
+            </div>
+            <div className="grid grid-cols-2 px-5 py-4 gap-4">
+              <div>
+                <div className="text-[10px] uppercase tracking-kicker font-mono text-cream/55 mb-1">
+                  Direkte (topp 2)
+                </div>
+                <div className="font-serif text-2xl font-semibold stat-num text-cream">
+                  {Math.round(prediction.pTop2 * 100)}%
+                </div>
+              </div>
+              <div>
+                <div className="text-[10px] uppercase tracking-kicker font-mono text-cream/55 mb-1">
+                  Via beste 3.-plass
+                </div>
+                <div className="font-serif text-2xl font-semibold stat-num text-amber">
+                  {Math.round(prediction.pThirdQualify * 100)}%
+                </div>
+              </div>
+            </div>
+            <div className="px-5 pb-4 text-[10px] text-cream/55 leading-relaxed font-mono">
+              Poisson-modell · 10 000 Monte Carlo-simuleringer · oppdateres
+              automatisk etter hver fullført kamp. Lag-styrker estimeres fra
+              FIFA-rang og faktiske mål per kamp så langt.
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* ── 3. Group I standings (editorial, live from match_results) ─── */}
       <section className="px-5 md:px-10 mt-8">
         <Kicker>Gruppe I · stilling</Kicker>
         <Headline rank="h2">

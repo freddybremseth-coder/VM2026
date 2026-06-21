@@ -10,6 +10,8 @@ import { getDictionary } from "@/lib/i18n";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { getTournamentTopScorersLive, type TournamentScorer } from "@/lib/tournament-scorers";
 import { computeGroupStandings, type ResultRow, type GroupStandingRow } from "@/lib/group-standings";
+import { getTeamPrediction } from "@/lib/tournament-predictions";
+import type { TeamPrediction } from "@/lib/tournament-sim";
 
 const NORWAY_ID = 21;
 const HAALAND_PLAYER_ID = 2122;
@@ -20,9 +22,10 @@ async function loadNorgePinData(
   norge: GroupStandingRow | null;
   rank: number | null;
   haalandGoals: number;
+  prediction: TeamPrediction | null;
 }> {
   try {
-    const [resultsRes, haalandRes] = await Promise.all([
+    const [resultsRes, haalandRes, prediction] = await Promise.all([
       supabase
         .from("match_results")
         .select("match_id, home_score, away_score, status"),
@@ -31,6 +34,7 @@ async function loadNorgePinData(
         .select("*", { count: "exact", head: true })
         .eq("scorer_player_id", HAALAND_PLAYER_ID)
         .eq("is_own_goal", false),
+      getTeamPrediction(NORWAY_ID),
     ]);
     const results = ((resultsRes.data as ResultRow[] | null) ?? []).filter(
       (r) => r.home_score !== null && r.away_score !== null,
@@ -41,9 +45,10 @@ async function loadNorgePinData(
       norge: idx >= 0 ? standings[idx] : null,
       rank: idx >= 0 ? idx + 1 : null,
       haalandGoals: haalandRes.count ?? 0,
+      prediction,
     };
   } catch {
-    return { norge: null, rank: null, haalandGoals: 0 };
+    return { norge: null, rank: null, haalandGoals: 0, prediction: null };
   }
 }
 
@@ -303,10 +308,11 @@ function NorgePin({
     norge: GroupStandingRow | null;
     rank: number | null;
     haalandGoals: number;
+    prediction: TeamPrediction | null;
   };
 }) {
   // Headline shows where Norway actually sits in Group I right now — or
-  // a neutral pre-tournament line if the group hasn't kicked off yet.
+  // the model's R32 probability before kickoff.
   let headline = "Følg Norge i Gruppe I.";
   if (data.norge && data.rank && data.norge.played > 0) {
     const placeLabel =
@@ -318,14 +324,20 @@ function NorgePin({
         ? "3.-plass i Gruppe I"
         : `${data.rank}.-plass i Gruppe I`;
     headline = `${placeLabel} · ${data.norge.points} p`;
+  } else if (data.prediction) {
+    headline = `${Math.round(data.prediction.pR32 * 100)}% sjanse for R32.`;
   }
-  // Sub-line: real Haaland goals from tournament_goals, or omitted.
-  const subLine =
-    data.haalandGoals > 0
-      ? `Haaland ${data.haalandGoals} mål så langt`
-      : data.norge && data.norge.played > 0
-      ? `${data.norge.played} av 3 gruppekamper spilt`
-      : "Gruppespillet starter snart";
+  // Sub-line priority: live Haaland goals > model breakdown > kickoff blurb.
+  let subLine = "Gruppespillet starter snart";
+  if (data.haalandGoals > 0) {
+    subLine = `Haaland ${data.haalandGoals} mål så langt`;
+  } else if (data.norge && data.norge.played > 0) {
+    subLine = `${data.norge.played} av 3 gruppekamper spilt`;
+  } else if (data.prediction) {
+    subLine = `Topp 2: ${Math.round(data.prediction.pTop2 * 100)}% · Beste 3.: ${Math.round(
+      data.prediction.pThirdQualify * 100,
+    )}%`;
+  }
 
   return (
     <Link
