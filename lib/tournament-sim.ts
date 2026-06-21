@@ -46,6 +46,16 @@ export interface TeamPrediction {
   pThirdQualify: number;
   /** Sum of the two — probability of reaching the Round of 32. */
   pR32: number;
+  /** Probability of reaching the Round of 16 (won their R32 match). */
+  pR16: number;
+  /** Probability of reaching the Quarter-finals. */
+  pQF: number;
+  /** Probability of reaching the Semi-finals. */
+  pSF: number;
+  /** Probability of reaching the Final. */
+  pFinal: number;
+  /** Probability of winning the tournament. */
+  pChampion: number;
 }
 
 export interface SimResult {
@@ -167,18 +177,107 @@ interface ThirdPlaceCandidate {
   goalsFor: number;
 }
 
+interface RoundCounters {
+  top2: Map<number, number>;
+  thirdQualify: Map<number, number>;
+  r16: Map<number, number>; // reached R16
+  qf: Map<number, number>;
+  sf: Map<number, number>;
+  final: Map<number, number>;
+  champion: Map<number, number>;
+}
+
+function bump(map: Map<number, number>, key: number) {
+  map.set(key, (map.get(key) ?? 0) + 1);
+}
+
+/**
+ * Simulate a knockout match between two teams. Poisson goals; if tied after
+ * "regulation" we re-sample once (penalty-style coin-flip if still tied).
+ * Returns the winning team id.
+ */
+function simulateKnockout(
+  homeStr: TeamStrength,
+  awayStr: TeamStrength,
+): number {
+  const { home, away } = simulateFixture(homeStr, awayStr);
+  if (home > away) return homeStr.teamId;
+  if (away > home) return awayStr.teamId;
+  // Re-sample once (extra time)
+  const et = simulateFixture(homeStr, awayStr);
+  if (et.home > et.away) return homeStr.teamId;
+  if (et.away > et.home) return awayStr.teamId;
+  // Penalty shoot-out: 50/50 (real shoot-outs are ~52/48 in favour of
+  // the higher-rated team, but the swing is tiny — coin-flip is fine).
+  return Math.random() < 0.5 ? homeStr.teamId : awayStr.teamId;
+}
+
+// Cached knockout fixture metadata so we don't re-filter per simulation.
+const KO_FIXTURES = {
+  R32: FIXTURES.filter((f) => f.stage.kind === "knockout" && f.stage.round === "R32"),
+  R16: FIXTURES.filter((f) => f.stage.kind === "knockout" && f.stage.round === "R16"),
+  QF: FIXTURES.filter((f) => f.stage.kind === "knockout" && f.stage.round === "QF"),
+  SF: FIXTURES.filter((f) => f.stage.kind === "knockout" && f.stage.round === "SF"),
+  FINAL: FIXTURES.filter((f) => f.stage.kind === "knockout" && f.stage.round === "FINAL"),
+};
+
+/**
+ * Translate slot codes ("1A", "2B", "3X", "W74") into team ids using the
+ * group-stage standings + a list of best-third placers + already-decided
+ * knockout winners.
+ *
+ * Strategy: top-2 slots and W/L slots resolve deterministically. The 8
+ * "3X" slots in R32 are filled by the 8 best 3rd-placers, randomly
+ * permuted — FIFA's actual mapping rule depends on which 4 groups produce
+ * the qualifying 3rds, so a uniform shuffle is a reasonable approximation
+ * that doesn't bias any single team's probability much across 10k runs.
+ */
+function resolveSlot(
+  slot: string | undefined,
+  group2Top2: Map<string, [number, number]>,
+  thirdQueue: number[],
+  winners: Map<number, number>,
+): number | null {
+  if (!slot) return null;
+  if (slot.startsWith("W")) return winners.get(Number(slot.slice(1))) ?? null;
+  if (slot.startsWith("L")) {
+    // SF1/SF2 loser feed into 3rd-place playoff; not used in the qualification
+    // model so return null is fine.
+    return null;
+  }
+  if (slot === "3X") return thirdQueue.shift() ?? null;
+  const place = slot[0];
+  const grp = slot.slice(1);
+  const tt = group2Top2.get(grp);
+  if (!tt) return null;
+  return place === "1" ? tt[0] : place === "2" ? tt[1] : null;
+}
+
+function shuffle<T>(arr: T[]): T[] {
+  const out = [...arr];
+  for (let i = out.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [out[i], out[j]] = [out[j], out[i]];
+  }
+  return out;
+}
+
 function simulateAll(
   results: Map<number, ResultRow>,
   strengths: Map<number, TeamStrength>,
-): {
-  top2: Map<number, number>; // teamId -> count of top-2 finishes
-  thirdQualify: Map<number, number>; // teamId -> count of qualifying as best 3rd
-} {
-  const top2 = new Map<number, number>();
-  const thirdQualify = new Map<number, number>();
+): RoundCounters {
+  const counters: RoundCounters = {
+    top2: new Map(),
+    thirdQualify: new Map(),
+    r16: new Map(),
+    qf: new Map(),
+    sf: new Map(),
+    final: new Map(),
+    champion: new Map(),
+  };
 
   for (let sim = 0; sim < SIMULATIONS; sim++) {
-    // Build synthetic results: existing real ones + Poisson-sampled future ones.
+    // ── Group stage ───────────────────────────────────────────────────
     const mergedResults = new Map<number, ResultRow>(results);
     for (const f of FIXTURES) {
       if (f.stage.kind !== "group" || !f.homeId || !f.awayId) continue;
@@ -194,15 +293,17 @@ function simulateAll(
         status: "finished",
       });
     }
-
-    // Build the array form computeGroupStandings expects.
     const allResults = Array.from(mergedResults.values());
-    const thirdPlaces: ThirdPlaceCandidate[] = [];
 
+    const group2Top2 = new Map<string, [number, number]>();
+    const thirdPlaces: ThirdPlaceCandidate[] = [];
     for (const g of GROUPS) {
       const rows = computeGroupStandings(g, allResults);
-      if (rows[0]) top2.set(rows[0].teamId, (top2.get(rows[0].teamId) ?? 0) + 1);
-      if (rows[1]) top2.set(rows[1].teamId, (top2.get(rows[1].teamId) ?? 0) + 1);
+      if (rows[0] && rows[1]) {
+        group2Top2.set(g, [rows[0].teamId, rows[1].teamId]);
+        bump(counters.top2, rows[0].teamId);
+        bump(counters.top2, rows[1].teamId);
+      }
       if (rows[2]) {
         thirdPlaces.push({
           group: g,
@@ -214,19 +315,49 @@ function simulateAll(
       }
     }
 
-    // Rank the 12 third-place finishers: take top 8.
     thirdPlaces.sort((a, b) => {
       if (b.points !== a.points) return b.points - a.points;
       if (b.goalDiff !== a.goalDiff) return b.goalDiff - a.goalDiff;
       return b.goalsFor - a.goalsFor;
     });
-    for (let i = 0; i < Math.min(8, thirdPlaces.length); i++) {
-      const t = thirdPlaces[i];
-      thirdQualify.set(t.teamId, (thirdQualify.get(t.teamId) ?? 0) + 1);
-    }
+    const qualifiedThirds = thirdPlaces.slice(0, 8);
+    for (const t of qualifiedThirds) bump(counters.thirdQualify, t.teamId);
+    const thirdQueue = shuffle(qualifiedThirds.map((t) => t.teamId));
+
+    // ── Knockouts ─────────────────────────────────────────────────────
+    const winners = new Map<number, number>(); // match_id -> winning team id
+
+    /**
+     * Run all fixtures in a knockout round. Each winner is recorded in
+     * `winners` (keyed by fixture id, so downstream rounds can look up
+     * "W74") and bumped in `nextRoundCounter` — winning this round means
+     * reaching the next one.
+     */
+    const runRound = (
+      fixtures: Fixture[],
+      nextRoundCounter: Map<number, number>,
+    ) => {
+      for (const f of fixtures) {
+        const homeId = resolveSlot(f.homeSlot, group2Top2, thirdQueue, winners);
+        const awayId = resolveSlot(f.awaySlot, group2Top2, thirdQueue, winners);
+        if (!homeId || !awayId) continue;
+        const homeStr = strengths.get(homeId);
+        const awayStr = strengths.get(awayId);
+        if (!homeStr || !awayStr) continue;
+        const winner = simulateKnockout(homeStr, awayStr);
+        winners.set(f.id, winner);
+        bump(nextRoundCounter, winner);
+      }
+    };
+
+    runRound(KO_FIXTURES.R32, counters.r16); // R32 winner → reached R16
+    runRound(KO_FIXTURES.R16, counters.qf); //  R16 winner → reached QF
+    runRound(KO_FIXTURES.QF, counters.sf); //   QF winner  → reached SF
+    runRound(KO_FIXTURES.SF, counters.final); // SF winner → reached Final
+    runRound(KO_FIXTURES.FINAL, counters.champion); // Final winner = Champion
   }
 
-  return { top2, thirdQualify };
+  return counters;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -241,11 +372,11 @@ export function runTournamentSim(rawResults: ResultRow[]): SimResult {
   for (const r of validResults) resultsByMatch.set(r.match_id, r);
 
   const strengths = buildStrengths(resultsByMatch);
-  const { top2, thirdQualify } = simulateAll(resultsByMatch, strengths);
+  const counters = simulateAll(resultsByMatch, strengths);
 
   const perTeam: TeamPrediction[] = TEAMS.map((t) => {
-    const top2Count = top2.get(t.id) ?? 0;
-    const thirdCount = thirdQualify.get(t.id) ?? 0;
+    const top2Count = counters.top2.get(t.id) ?? 0;
+    const thirdCount = counters.thirdQualify.get(t.id) ?? 0;
     const pTop2 = top2Count / SIMULATIONS;
     const pThirdQualify = thirdCount / SIMULATIONS;
     return {
@@ -253,6 +384,11 @@ export function runTournamentSim(rawResults: ResultRow[]): SimResult {
       pTop2,
       pThirdQualify,
       pR32: pTop2 + pThirdQualify,
+      pR16: (counters.r16.get(t.id) ?? 0) / SIMULATIONS,
+      pQF: (counters.qf.get(t.id) ?? 0) / SIMULATIONS,
+      pSF: (counters.sf.get(t.id) ?? 0) / SIMULATIONS,
+      pFinal: (counters.final.get(t.id) ?? 0) / SIMULATIONS,
+      pChampion: (counters.champion.get(t.id) ?? 0) / SIMULATIONS,
     };
   });
 

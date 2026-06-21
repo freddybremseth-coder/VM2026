@@ -145,11 +145,11 @@ export default async function NorgePage() {
         </div>
       </section>
 
-      {/* ── 2. Monte Carlo R32 sannsynlighet ─────────────────────────── */}
+      {/* ── 2. Monte Carlo turneringssjanse per runde ──────────────────── */}
       {prediction && (
         <section className="px-5 md:px-10 mt-8">
           <Kicker tone="signal">Sannsynlighetsmodell</Kicker>
-          <Headline rank="h2">R32-utsikter.</Headline>
+          <Headline rank="h2">Veien videre.</Headline>
           <div className="mt-4 surface">
             <div className="px-5 py-5 border-b border-cream/8 flex flex-col sm:flex-row sm:items-center gap-4">
               <span className="font-serif text-[44px] sm:text-[56px] font-semibold text-signal leading-none tracking-[-0.04em] stat-num">
@@ -165,30 +165,19 @@ export default async function NorgePage() {
                     style={{ width: `${Math.round(prediction.pR32 * 100)}%` }}
                   />
                 </div>
-              </div>
-            </div>
-            <div className="grid grid-cols-2 px-5 py-4 gap-4">
-              <div>
-                <div className="text-[10px] uppercase tracking-kicker font-mono text-cream/55 mb-1">
-                  Direkte (topp 2)
-                </div>
-                <div className="font-serif text-2xl font-semibold stat-num text-cream">
-                  {Math.round(prediction.pTop2 * 100)}%
-                </div>
-              </div>
-              <div>
-                <div className="text-[10px] uppercase tracking-kicker font-mono text-cream/55 mb-1">
-                  Via beste 3.-plass
-                </div>
-                <div className="font-serif text-2xl font-semibold stat-num text-amber">
+                <div className="mt-2 text-[10px] uppercase tracking-kicker font-mono text-cream/45">
+                  Topp 2: {Math.round(prediction.pTop2 * 100)}% · Beste 3.-plass:{" "}
                   {Math.round(prediction.pThirdQualify * 100)}%
                 </div>
               </div>
             </div>
+            <RoundBars prediction={prediction} />
             <div className="px-5 pb-4 text-[10px] text-cream/55 leading-relaxed font-mono">
-              Poisson-modell · 10 000 Monte Carlo-simuleringer · oppdateres
-              automatisk etter hver fullført kamp. Lag-styrker estimeres fra
-              FIFA-rang og faktiske mål per kamp så langt.
+              Poisson-modell · 10 000 Monte Carlo-simuleringer · re-kjøres etter
+              hver fullført kamp. Lag-styrker estimeres fra FIFA-rang og
+              faktiske mål per kamp så langt; knockout-uavgjort avgjøres med
+              en re-sample og deretter myntkast (proxy for ekstra tid +
+              straffespark).
             </div>
           </div>
         </section>
@@ -341,6 +330,44 @@ export default async function NorgePage() {
 }
 
 // ─────────────────────────────────────────────────────────────────
+
+function RoundBars({
+  prediction,
+}: {
+  prediction: NonNullable<Awaited<ReturnType<typeof getTeamPrediction>>>;
+}) {
+  const rounds: Array<{ label: string; p: number; tone: string }> = [
+    { label: "Runde av 16", p: prediction.pR16, tone: "bg-signal" },
+    { label: "Kvartfinale", p: prediction.pQF, tone: "bg-amber" },
+    { label: "Semifinale", p: prediction.pSF, tone: "bg-amber" },
+    { label: "Finale", p: prediction.pFinal, tone: "bg-amber" },
+    { label: "Mester", p: prediction.pChampion, tone: "bg-win" },
+  ];
+  return (
+    <div className="px-5 py-4 space-y-2.5">
+      {rounds.map((r) => {
+        const pct = r.p * 100;
+        const display = pct >= 1 ? `${pct.toFixed(1)}%` : pct >= 0.1 ? `${pct.toFixed(2)}%` : "<0.1%";
+        return (
+          <div key={r.label} className="grid grid-cols-[7rem_1fr_4rem] gap-3 items-center">
+            <span className="text-[11px] uppercase tracking-kicker font-mono text-cream/55">
+              {r.label}
+            </span>
+            <div className="h-1.5 bg-cream/8 relative">
+              <div
+                className={`absolute left-0 top-0 bottom-0 ${r.tone} transition-[width]`}
+                style={{ width: `${Math.max(0.5, Math.min(100, pct))}%` }}
+              />
+            </div>
+            <span className="font-mono text-xs font-bold stat-num text-cream text-right">
+              {display}
+            </span>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
 
 function NorgeFixtureCard({ fixture }: { fixture: Fixture }) {
   const home = fixture.homeId ? teamById(fixture.homeId) : undefined;
