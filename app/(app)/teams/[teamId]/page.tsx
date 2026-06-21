@@ -6,10 +6,12 @@ import { StadiumBackdrop } from "@/components/shared/StadiumBackdrop";
 import { Kicker, Headline } from "@/components/shared/EditorialKicker";
 import { TopScorersList } from "@/components/shared/TopScorersList";
 import { TeamStarsCard } from "@/components/team/TeamStarsCard";
+import { TournamentOdds } from "@/components/shared/TournamentOdds";
 import { teamById, teamName } from "@/lib/wc26-data";
 import { getSquad } from "@/lib/wc26-squads";
 import { SquadList } from "@/components/match/SquadList";
 import { getTopScorers, getTopAssisters } from "@/lib/team-stats";
+import { getTeamPrediction } from "@/lib/tournament-predictions";
 
 export default async function TeamProfilePage({ params }: { params: { teamId: string } }) {
   const id = Number(params.teamId);
@@ -22,6 +24,7 @@ export default async function TeamProfilePage({ params }: { params: { teamId: st
 
   const topScorers = getTopScorers(id, 5).map((l) => ({ ...l, teamId: id }));
   const topAssisters = getTopAssisters(id, 5).map((l) => ({ ...l, teamId: id }));
+  const prediction = await getTeamPrediction(id);
 
   return (
     <>
@@ -73,6 +76,16 @@ export default async function TeamProfilePage({ params }: { params: { teamId: st
             Tipp {team.shortName} →
           </Link>
         </div>
+
+        {prediction && (
+          <div>
+            <Kicker tone="signal">Sannsynlighet</Kicker>
+            <h2 className="font-serif text-2xl font-semibold tracking-editorial mt-1 mb-4">
+              {teamName(team)} videre i turneringen.
+            </h2>
+            <TournamentOdds prediction={prediction} title="Sjanse" />
+          </div>
+        )}
 
         {squad.length > 0 && <TeamStarsCard teamId={id} />}
 
