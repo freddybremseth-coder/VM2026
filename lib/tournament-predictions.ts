@@ -7,7 +7,6 @@
  * so the sim re-runs at most once per cron tick (15 min via cron-job.org).
  */
 
-import { unstable_cache } from "next/cache";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import {
   runTournamentSim,
@@ -56,26 +55,44 @@ function fingerprintResults(rows: ResultRow[]): string {
   return `${rows.length}-${sumScores}-${statusHash}`;
 }
 
-const cached = unstable_cache(
-  async (fingerprint: string): Promise<SimResult> => {
-    // fingerprint is part of the cache key — when results change, this
-    // string changes and the cache misses, re-running the sim.
-    void fingerprint;
-    const rows = await loadResultRows();
-    return runTournamentSim(rows);
-  },
-  ["tournament-predictions"],
-  { revalidate: 900 }, // 15 min safety net
-);
+/**
+ * Per-Vercel-instance in-memory cache, keyed on the result fingerprint.
+ * Earlier attempt used unstable_cache, but Vercel's Data Cache held the
+ * old SimResult even when our cache key changed — so a 0-9 Tunisia kept
+ * showing a 41% R32 from when scheduled rows were polluting the input.
+ *
+ * In-memory is per-instance (each serverless function warms its own
+ * Map), but that's fine: every instance recomputes once per fingerprint
+ * change, the sim runs in ~700ms, and there's never stale data.
+ *
+ * We cap the map at 4 entries so an instance can't grow without bound
+ * when results churn during a match.
+ */
+const memCache = new Map<string, SimResult>();
+const MAX_ENTRIES = 4;
 
 /**
- * Get the cached tournament predictions. Re-runs the sim when either:
- *   - 15 min have passed since the last run, OR
- *   - The result fingerprint changes (count, any score, or any status).
+ * Get tournament predictions for the current state of match_results.
+ * Recomputes when the fingerprint changes (count, any score, or any
+ * status flip). Otherwise returns the cached SimResult instantly.
  */
 export async function getTournamentPredictions(): Promise<SimResult> {
   const rows = await loadResultRows();
-  return cached(fingerprintResults(rows));
+  const fingerprint = fingerprintResults(rows);
+
+  const hit = memCache.get(fingerprint);
+  if (hit) return hit;
+
+  const sim = runTournamentSim(rows);
+  memCache.set(fingerprint, sim);
+
+  // Trim the oldest entry if we're over the cap.
+  if (memCache.size > MAX_ENTRIES) {
+    const oldest = memCache.keys().next().value;
+    if (oldest !== undefined) memCache.delete(oldest);
+  }
+
+  return sim;
 }
 
 /** Convenience: probability rows for one team, or null. */
