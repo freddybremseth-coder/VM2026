@@ -37,7 +37,10 @@ async function loadNorgePinData(
       getTeamPrediction(NORWAY_ID),
     ]);
     const results = ((resultsRes.data as ResultRow[] | null) ?? []).filter(
-      (r) => r.home_score !== null && r.away_score !== null,
+      (r) =>
+        r.home_score !== null &&
+        r.away_score !== null &&
+        (r.status === "finished" || r.status === "live" || r.status === "halftime"),
     );
     const standings = computeGroupStandings("I", results);
     const idx = standings.findIndex((r) => r.teamId === NORWAY_ID);

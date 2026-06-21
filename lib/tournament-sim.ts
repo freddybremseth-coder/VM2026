@@ -366,7 +366,10 @@ function simulateAll(
 
 export function runTournamentSim(rawResults: ResultRow[]): SimResult {
   const validResults = rawResults.filter(
-    (r) => r.home_score !== null && r.away_score !== null,
+    (r) =>
+      r.home_score !== null &&
+      r.away_score !== null &&
+      (r.status === "finished" || r.status === "live" || r.status === "halftime"),
   );
   const resultsByMatch = new Map<number, ResultRow>();
   for (const r of validResults) resultsByMatch.set(r.match_id, r);

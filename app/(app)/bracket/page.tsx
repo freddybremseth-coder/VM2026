@@ -46,7 +46,10 @@ async function loadResults(): Promise<{
       .from("match_results")
       .select("match_id, home_score, away_score, status");
     const rows = ((data as ResultRow[] | null) ?? []).filter(
-      (r) => r.home_score !== null && r.away_score !== null,
+      (r) =>
+        r.home_score !== null &&
+        r.away_score !== null &&
+        (r.status === "finished" || r.status === "live" || r.status === "halftime"),
     );
     const byMatch = new Map<number, ResultRow>();
     for (const r of rows) byMatch.set(r.match_id, r);

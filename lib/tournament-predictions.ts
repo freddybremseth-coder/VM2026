@@ -22,8 +22,14 @@ async function loadResultRows(): Promise<ResultRow[]> {
     const { data } = await supabase
       .from("match_results")
       .select("match_id, home_score, away_score, status");
+    // Only count matches that have actually been played. ESPN sometimes
+    // writes score=0 for scheduled fixtures, so a null-only filter
+    // wrongly treats them as real 0-0 draws.
     return ((data as ResultRow[] | null) ?? []).filter(
-      (r) => r.home_score !== null && r.away_score !== null,
+      (r) =>
+        r.home_score !== null &&
+        r.away_score !== null &&
+        (r.status === "finished" || r.status === "live" || r.status === "halftime"),
     );
   } catch {
     return [];

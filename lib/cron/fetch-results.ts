@@ -120,6 +120,13 @@ export async function fetchAndStoreResults(
       skipped.push(r.internalId);
       continue;
     }
+    // ESPN returns score=0 for scheduled fixtures, which would otherwise
+    // land as a real 0-0 draw in match_results. Skip anything that
+    // hasn't actually kicked off yet.
+    if (r.status === "scheduled") {
+      skipped.push(r.internalId);
+      continue;
+    }
     const { error } = await admin.from("match_results").upsert(
       {
         match_id: r.internalId,

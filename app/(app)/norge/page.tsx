@@ -54,7 +54,10 @@ export default async function NorgePage() {
           .from("match_results")
           .select("match_id, home_score, away_score, status");
         const results = ((data as ResultRow[] | null) ?? []).filter(
-          (r) => r.home_score !== null && r.away_score !== null,
+          (r) =>
+            r.home_score !== null &&
+            r.away_score !== null &&
+            (r.status === "finished" || r.status === "live" || r.status === "halftime"),
         );
         return computeGroupStandings("I", results);
       } catch {
