@@ -25,30 +25,47 @@ export async function GET(req: NextRequest) {
     .select("external_id, home_team, away_team")
     .eq("status", "upcoming")
     .order("commence_at", { ascending: true })
-    .limit(1);
-  const m = (data ?? [])[0] as
-    | { external_id: string; home_team: string; away_team: string }
-    | undefined;
-  if (!m) return NextResponse.json({ error: "no match" }, { status: 404 });
-
-  const url = new URL("https://api.oddspapi.io/v4/odds");
-  url.searchParams.set("apiKey", apiKey);
-  url.searchParams.set("fixtureId", m.external_id);
-  const res = await fetch(url.toString(), { cache: "no-store" });
-  if (!res.ok) {
-    return NextResponse.json({ error: `odds ${res.status}` }, { status: 500 });
+    .limit(8);
+  const candidates = (data ?? []) as Array<{
+    external_id: string;
+    home_team: string;
+    away_team: string;
+  }>;
+  if (candidates.length === 0) {
+    return NextResponse.json({ error: "no match" }, { status: 404 });
   }
-  const odds = (await res.json()) as {
-    bookmakerOdds?: Record<
-      string,
-      {
-        markets?: Record<
+
+  // Try several fixtures — individual ones can 403 once they lock/start.
+  let m: (typeof candidates)[number] | undefined;
+  let odds:
+    | {
+        bookmakerOdds?: Record<
           string,
-          { outcomes?: Record<string, { players?: Record<string, { price?: number }> }> }
+          {
+            markets?: Record<
+              string,
+              { outcomes?: Record<string, { players?: Record<string, { price?: number }> }> }
+            >;
+          }
         >;
       }
-    >;
-  };
+    | undefined;
+  const errors: string[] = [];
+  for (const c of candidates) {
+    const url = new URL("https://api.oddspapi.io/v4/odds");
+    url.searchParams.set("apiKey", apiKey);
+    url.searchParams.set("fixtureId", c.external_id);
+    const res = await fetch(url.toString(), { cache: "no-store" });
+    if (res.ok) {
+      m = c;
+      odds = await res.json();
+      break;
+    }
+    errors.push(`${c.home_team} v ${c.away_team}: ${res.status}`);
+  }
+  if (!m || !odds) {
+    return NextResponse.json({ error: "all fixtures failed", errors }, { status: 502 });
+  }
 
   const bo = odds.bookmakerOdds ?? {};
   const firstKey = Object.keys(bo)[0];
