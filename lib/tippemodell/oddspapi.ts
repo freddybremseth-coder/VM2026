@@ -113,9 +113,13 @@ export async function fetchFixtures(opts: {
     to: opts.to,
   });
   const withOdds = raw.filter((f) => f.hasOdds);
-  const filtered = opts.tournamentName
+  const byTournament = opts.tournamentName
     ? withOdds.filter((f) => f.tournamentName === opts.tournamentName)
     : withOdds;
+  // Drop simulated/virtual football ("SRL" = eSoccer Battle simulated
+  // reality leagues). These share the "World Cup" tournament name but are
+  // bot-vs-bot esports, not the real tournament — must never leak in.
+  const filtered = byTournament.filter((f) => !isSimulated(f));
   return filtered.map((f) => ({
     externalId: f.fixtureId,
     startTime: f.startTime,
@@ -123,6 +127,17 @@ export async function fetchFixtures(opts: {
     awayTeam: f.participant2Name,
     tournamentName: f.tournamentName,
   }));
+}
+
+/**
+ * Detect OddsPapi's simulated/virtual football. These appear under the same
+ * tournamentName as the real event but use an "SRL" / "Srl" suffix on team
+ * names ("Norway Srl", "France SRL") and are bot-vs-bot esports. We never
+ * want them in the real odds table.
+ */
+function isSimulated(f: RawFixture): boolean {
+  const srl = /\bsrl\b/i;
+  return srl.test(f.participant1Name) || srl.test(f.participant2Name);
 }
 
 /** Canonicalise outcome names so 1X2 markets always use 'home'/'draw'/'away'. */

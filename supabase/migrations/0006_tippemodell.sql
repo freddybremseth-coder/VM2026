@@ -89,10 +89,10 @@ insert into tm_markets (key, name) values
 on conflict (key) do nothing;
 
 -- ── Seed VM 2026 league ────────────────────────────────────────────────────
--- The name MUST match OddsPapi's tournamentName exactly. We use the most
--- common rendering; verify once odds start flowing and adjust if needed.
+-- The name MUST match OddsPapi's tournamentName exactly. Verified against the
+-- live OddsPapi feed: the tournament is carried as "World Cup".
 insert into tm_leagues (external_id, name, country, active) values
-  ('fifa-wc-2026', 'FIFA World Cup', 'International', true)
+  ('fifa-wc-2026', 'World Cup', 'International', true)
 on conflict (external_id) do nothing;
 
 -- ── RLS: read open, writes only via service role ──────────────────────────
