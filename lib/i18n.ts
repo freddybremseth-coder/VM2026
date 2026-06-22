@@ -29,6 +29,7 @@ const EN = {
     predictions: "Predictions",
     leagues: "Mini-leagues",
     bracket: "Bracket",
+    tippemodell: "Tippemodell",
   },
   common: {
     search: "Search…",
@@ -118,6 +119,7 @@ const NB: Dict = {
     predictions: "Tippe",
     leagues: "Mini-ligaer",
     bracket: "Sluttspill",
+    tippemodell: "Tippemodell",
   },
   common: {
     search: "Søk…",

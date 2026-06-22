@@ -15,6 +15,7 @@ import {
   GitBranch,
   Flag,
   Crosshair,
+  TrendingUp,
 } from "lucide-react";
 
 export type NavKey =
@@ -26,7 +27,8 @@ export type NavKey =
   | "scorers"
   | "predictions"
   | "leagues"
-  | "bracket";
+  | "bracket"
+  | "tippemodell";
 
 export type NavLabels = Record<NavKey, string>;
 
@@ -41,6 +43,7 @@ export const NAV_ITEMS: Array<{
   { href: "/scorers",     key: "scorers",     icon: Crosshair },
   { href: "/leagues",     key: "leagues",     icon: Trophy },
   { href: "/predictions", key: "predictions", icon: Target },
+  { href: "/tippemodell", key: "tippemodell", icon: TrendingUp },
   { href: "/bracket",     key: "bracket",     icon: GitBranch },
   { href: "/norge",       key: "norge",       icon: Flag },
   { href: "/teams",       key: "teams",       icon: Users },
@@ -61,4 +64,5 @@ export const DEFAULT_NAV_LABELS: NavLabels = {
   predictions: "Predictions",
   leagues: "Mini-leagues",
   bracket: "Bracket",
+  tippemodell: "Tippemodell",
 };

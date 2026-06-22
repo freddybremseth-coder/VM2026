@@ -13,6 +13,7 @@ import {
   GitBranch,
   Flag,
   Crosshair,
+  TrendingUp,
   Menu,
   X,
 } from "lucide-react";
@@ -30,6 +31,7 @@ const NAV = [
   { href: "/scorers",     key: "scorers"     as const, Icon: Crosshair },
   { href: "/leagues",     key: "leagues"     as const, Icon: Trophy },
   { href: "/predictions", key: "predictions" as const, Icon: Target },
+  { href: "/tippemodell", key: "tippemodell" as const, Icon: TrendingUp },
   { href: "/bracket",     key: "bracket"     as const, Icon: GitBranch },
   { href: "/norge",       key: "norge"       as const, Icon: Flag },
   { href: "/teams",       key: "teams"       as const, Icon: Users },
