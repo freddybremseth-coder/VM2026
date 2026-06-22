@@ -51,17 +51,23 @@ export function MatchOddsCard({ match }: { match: MatchView }) {
         ))}
       </div>
 
-      {/* Footer — wc26 link */}
-      {wcMatch && match.wc26FixtureId !== null && (
-        <div className="mt-3 pt-3 border-t border-cream/8">
+      {/* Footer — line-movement + wc26 link */}
+      <div className="mt-3 pt-3 border-t border-cream/8 flex items-center gap-4">
+        <Link
+          href={`/tippemodell/${match.matchId}`}
+          className="text-[10px] uppercase tracking-kicker font-mono text-signal hover:text-amber transition-colors"
+        >
+          Linjebevegelse →
+        </Link>
+        {wcMatch && match.wc26FixtureId !== null && (
           <Link
             href={`/matches/${match.wc26FixtureId}`}
-            className="text-[10px] uppercase tracking-kicker font-mono text-signal hover:text-amber transition-colors"
+            className="text-[10px] uppercase tracking-kicker font-mono text-cream/55 hover:text-amber transition-colors"
           >
-            Se kampdetalj →
+            Kampdetalj →
           </Link>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   );
 }
