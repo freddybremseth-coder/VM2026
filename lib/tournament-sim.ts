@@ -35,7 +35,19 @@ import {
 
 const SIMULATIONS = 10_000;
 const BASE_RATE = 1.2; // average goals-per-side at WC neutral venue
-const FIFA_RANK_WEIGHT = 0.6; // 0..1 — how much prior matters vs played matches
+// Effective sample size of the FIFA-rank prior — equivalent to "this many
+// neutral-venue matches" worth of evidence. After N actual matches the
+// prior weight is PRIOR_PSEUDO_GAMES / (PRIOR_PSEUDO_GAMES + N), so with
+// pseudo=4 a team that's played 1 game still gets 80% prior weight (4/5),
+// 2 games → 67%, 3 games → 57%. Earlier we used 0.6, which collapsed to
+// 38% prior weight after a single match — that turned one strong result
+// (Norway 4-1 Iraq → modelled at 2.4 attack rating) into near-certain
+// qualification, which doesn't match how much we should actually update
+// our belief from a single 90-minute match against the group's weakest
+// side. Three pseudo-games is the value that lets the model accept a
+// genuinely dominant performance over the full group stage while
+// staying skeptical after one match.
+const PRIOR_PSEUDO_GAMES = 4;
 const GROUPS: GroupId[] = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L"];
 
 export interface TeamPrediction {
@@ -121,8 +133,10 @@ function buildStrengths(results: Map<number, ResultRow>): Map<number, TeamStreng
       out.set(t.id, { teamId: t.id, attack: prior.attack, defense: prior.defense });
       continue;
     }
-    // Weight: prior_weight at n=0 → 1, decays toward 0 as more games are played.
-    const priorWeight = FIFA_RANK_WEIGHT / (FIFA_RANK_WEIGHT + stats.n);
+    // Bayesian-ish blend: treat the FIFA-rank prior as PRIOR_PSEUDO_GAMES
+    // worth of evidence and add the actual played matches on top. Weight
+    // decays as n grows: n=1 → 80% prior, n=3 → 57%, n=6 → 40%.
+    const priorWeight = PRIOR_PSEUDO_GAMES / (PRIOR_PSEUDO_GAMES + stats.n);
     const observedAttack = stats.gf / stats.n / BASE_RATE;
     const observedDefense = stats.ga / stats.n / BASE_RATE;
     out.set(t.id, {
