@@ -34,7 +34,9 @@ import {
 } from "@/lib/group-standings";
 
 const SIMULATIONS = 10_000;
-const BASE_RATE = 1.2; // average goals-per-side at WC neutral venue
+/** Average goals-per-side at a WC neutral venue. Exported for the
+ *  Dixon-Coles per-match model, which reuses the same scale. */
+export const BASE_RATE = 1.2;
 // Effective sample size of the FIFA-rank prior — equivalent to "this many
 // neutral-venue matches" worth of evidence. After N actual matches the
 // prior weight is PRIOR_PSEUDO_GAMES / (PRIOR_PSEUDO_GAMES + N), so with
@@ -80,7 +82,7 @@ export interface SimResult {
 // Team strength derivation
 // ─────────────────────────────────────────────────────────────────────────────
 
-interface TeamStrength {
+export interface TeamStrength {
   teamId: number;
   attack: number; // goals scored per game expected vs an average opponent
   defense: number; // goals conceded per game expected vs an average opponent
@@ -106,7 +108,9 @@ function priorFromRank(team: WCTeam): { attack: number; defense: number } {
  * from completed matches. Heavier weight on the prior early; as more
  * matches are played the actual numbers dominate.
  */
-function buildStrengths(results: Map<number, ResultRow>): Map<number, TeamStrength> {
+export function buildStrengths(
+  results: Map<number, ResultRow>,
+): Map<number, TeamStrength> {
   const out = new Map<number, TeamStrength>();
   // Aggregate goals-for / goals-against per team from played group matches.
   const played = new Map<number, { gf: number; ga: number; n: number }>();

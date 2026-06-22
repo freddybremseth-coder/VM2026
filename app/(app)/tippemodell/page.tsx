@@ -80,9 +80,17 @@ function Legend() {
       <span>
         <span className="font-mono stat-num text-cream/85">P 2.20</span> Pinnacle/sharp
       </span>
+      <span>
+        <span className="font-mono stat-num text-cream/85">Modell 45%</span>{" "}
+        Dixon-Coles
+      </span>
+      <span className="flex items-center gap-1.5">
+        <span className="h-3 w-3 bg-win/30 border border-win/60" />
+        Modell-verdi (+EV)
+      </span>
       <span className="flex items-center gap-1.5">
         <span className="h-3 w-3 bg-amber/30 border border-amber/60" />
-        Mulig verdi (best&nbsp;&gt;&nbsp;fair)
+        Markeds-edge
       </span>
     </div>
   );

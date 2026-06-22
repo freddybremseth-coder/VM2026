@@ -14,6 +14,7 @@
 
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { bestPrice, devig, edge } from "@/lib/tippemodell/odds-math";
+import { getMatchValue, type OutcomeValue } from "@/lib/tippemodell/value-model";
 
 export interface BookPrice {
   bookmaker: string;
@@ -32,6 +33,14 @@ export interface OutcomeView {
   bookCount: number;
   /** > 0 means best market price beats fair odds — potential value. */
   edge: number | null;
+  /** Our Dixon-Coles model probability for this outcome (null off-model). */
+  modelProb: number | null;
+  /** Expected value of the best price vs our model (null when no model/odds). */
+  modelEv: number | null;
+  /** Quarter-Kelly stake fraction (null when no edge). */
+  kelly: number | null;
+  /** True when our model rates this a positive-EV value bet. */
+  modelValue: boolean;
 }
 
 export interface MatchView {
@@ -155,6 +164,10 @@ export async function getTippemodellDashboard(): Promise<MatchView[]> {
           fairProb: null,
           bookCount: rows.length,
           edge: null,
+          modelProb: null,
+          modelEv: null,
+          kelly: null,
+          modelValue: false,
         };
       },
     );
@@ -175,6 +188,24 @@ export async function getTippemodellDashboard(): Promise<MatchView[]> {
         o.fairProb = fair![i];
         o.edge = edge(o.best?.price ?? null, fair![i]);
       });
+    }
+
+    // Dixon-Coles value model — only for fixtures we recognise as WC matches.
+    if (m.wc26_fixture_id !== null) {
+      const bestOdds: Partial<Record<OutcomeKey, number>> = {};
+      for (const o of outcomes) {
+        if (o.best) bestOdds[o.outcome] = o.best.price;
+      }
+      const value = await getMatchValue(m.wc26_fixture_id, bestOdds);
+      if (value) {
+        for (const o of outcomes) {
+          const v: OutcomeValue = value.outcomes[o.outcome];
+          o.modelProb = v.modelProb;
+          o.modelEv = v.ev;
+          o.kelly = v.kelly;
+          o.modelValue = v.isValue;
+        }
+      }
     }
 
     out.push({

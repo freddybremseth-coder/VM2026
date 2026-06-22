@@ -10,8 +10,10 @@
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import {
   runTournamentSim,
+  buildStrengths,
   type SimResult,
   type TeamPrediction,
+  type TeamStrength,
 } from "@/lib/tournament-sim";
 import type { ResultRow } from "@/lib/group-standings";
 
@@ -101,4 +103,30 @@ export async function getTeamPrediction(
 ): Promise<TeamPrediction | null> {
   const sim = await getTournamentPredictions();
   return sim.perTeam.find((p) => p.teamId === teamId) ?? null;
+}
+
+/**
+ * Cached team-strength map (attack/defense ratings) used by the
+ * Dixon-Coles per-match value model. Same fingerprint key as the sim so
+ * both stay consistent and recompute together when results change.
+ */
+const strengthCache = new Map<string, Map<number, TeamStrength>>();
+
+export async function getTeamStrengths(): Promise<Map<number, TeamStrength>> {
+  const rows = await loadResultRows();
+  const fingerprint = `str-${fingerprintResults(rows)}`;
+
+  const hit = strengthCache.get(fingerprint);
+  if (hit) return hit;
+
+  const byMatch = new Map<number, ResultRow>();
+  for (const r of rows) byMatch.set(r.match_id, r);
+  const strengths = buildStrengths(byMatch);
+  strengthCache.set(fingerprint, strengths);
+
+  if (strengthCache.size > MAX_ENTRIES) {
+    const oldest = strengthCache.keys().next().value;
+    if (oldest !== undefined) strengthCache.delete(oldest);
+  }
+  return strengths;
 }

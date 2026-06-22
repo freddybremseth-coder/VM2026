@@ -67,15 +67,25 @@ export function MatchOddsCard({ match }: { match: MatchView }) {
 }
 
 function OutcomeCell({ outcome }: { outcome: OutcomeView }) {
-  const hasValue =
-    outcome.edge !== null && outcome.edge > VALUE_THRESHOLD;
+  // Model value (Dixon-Coles +EV) is the stronger signal; fall back to the
+  // market-only edge flag when we have no model (non-WC fixtures).
+  const hasModelValue = outcome.modelValue;
+  const hasMarketEdge =
+    !hasModelValue && outcome.edge !== null && outcome.edge > VALUE_THRESHOLD;
+  const highlight = hasModelValue || hasMarketEdge;
+
   const fairPct = outcome.fairProb !== null ? outcome.fairProb * 100 : null;
+  const modelPct = outcome.modelProb !== null ? outcome.modelProb * 100 : null;
+  const evPct = outcome.modelEv !== null ? outcome.modelEv * 100 : null;
   const edgePct = outcome.edge !== null ? outcome.edge * 100 : null;
+  const kellyPct = outcome.kelly !== null ? outcome.kelly * 100 : null;
 
   return (
     <div
       className={`p-2.5 bg-paper border transition-colors ${
-        hasValue
+        hasModelValue
+          ? "border-win/60 ring-1 ring-win/40"
+          : hasMarketEdge
           ? "border-amber/60 ring-1 ring-amber/40"
           : "border-cream/8"
       }`}
@@ -95,7 +105,7 @@ function OutcomeCell({ outcome }: { outcome: OutcomeView }) {
         <>
           <div
             className={`font-mono font-bold text-base stat-num ${
-              hasValue ? "text-amber" : "text-cream"
+              highlight ? (hasModelValue ? "text-win" : "text-amber") : "text-cream"
             }`}
           >
             {outcome.best.price.toFixed(2)}
@@ -104,27 +114,54 @@ function OutcomeCell({ outcome }: { outcome: OutcomeView }) {
             {outcome.best.bookmaker}
           </div>
 
-          {/* Fair-prob meter */}
+          {/* Fair-prob meter (market) + model marker overlaid */}
           {fairPct !== null && (
-            <div className="mt-2 h-[2px] bg-cream/8 relative overflow-hidden">
+            <div className="mt-2 h-[3px] bg-cream/8 relative overflow-hidden">
               <div
-                className="absolute left-0 top-0 bottom-0 bg-signal/70 transition-[width]"
+                className="absolute left-0 top-0 bottom-0 bg-signal/70"
                 style={{ width: `${Math.max(2, Math.min(100, fairPct))}%` }}
               />
+              {/* Model probability as a thin marker line on the same scale */}
+              {modelPct !== null && (
+                <div
+                  className="absolute top-0 bottom-0 w-[2px] bg-win"
+                  style={{ left: `${Math.max(0, Math.min(99, modelPct))}%` }}
+                  title={`Modell: ${modelPct.toFixed(0)}%`}
+                />
+              )}
             </div>
           )}
 
-          {/* Pinnacle/sharp reference */}
+          {/* Model probability line */}
+          {modelPct !== null && (
+            <div className="mt-1.5 text-[9px] font-mono text-cream/55 stat-num">
+              Modell {modelPct.toFixed(0)}%
+            </div>
+          )}
+
+          {/* Sharp reference */}
           {outcome.sharp !== null && (
-            <div className="mt-1.5 text-[9px] font-mono text-cream/45 stat-num">
+            <div className="mt-0.5 text-[9px] font-mono text-cream/45 stat-num">
               P {outcome.sharp.toFixed(2)}
             </div>
           )}
 
-          {/* Edge badge */}
-          {hasValue && edgePct !== null && (
-            <div className="mt-1 inline-flex items-center gap-1 px-1.5 py-0.5 bg-amber/15 text-amber text-[9px] font-mono font-bold">
-              +{edgePct.toFixed(1)}%
+          {/* Value badges */}
+          {hasModelValue && evPct !== null && (
+            <div className="mt-1.5 flex flex-wrap items-center gap-1">
+              <span className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-win/15 text-win text-[9px] font-mono font-bold">
+                +EV {evPct.toFixed(1)}%
+              </span>
+              {kellyPct !== null && kellyPct > 0 && (
+                <span className="inline-flex items-center px-1.5 py-0.5 bg-win/10 text-win/85 text-[9px] font-mono">
+                  Kelly {kellyPct.toFixed(1)}%
+                </span>
+              )}
+            </div>
+          )}
+          {hasMarketEdge && edgePct !== null && (
+            <div className="mt-1.5 inline-flex items-center gap-1 px-1.5 py-0.5 bg-amber/15 text-amber text-[9px] font-mono font-bold">
+              marked +{edgePct.toFixed(1)}%
             </div>
           )}
         </>
