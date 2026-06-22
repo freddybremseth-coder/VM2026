@@ -51,20 +51,33 @@ export async function GET(req: NextRequest) {
     parsed = text.slice(0, 1000);
   }
 
-  // Return the top-level keys + a shallow structural sketch so we can
-  // see how bookmakers/markets/outcomes are actually named.
-  let sketch: unknown = parsed;
-  if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
-    const obj = parsed as Record<string, unknown>;
-    sketch = {
-      topLevelKeys: Object.keys(obj),
-      sample: JSON.parse(JSON.stringify(obj).slice(0, 2500)),
-    };
+  // Describe the structure without risking a mid-JSON slice. We walk the
+  // top of the tree and report keys + types so we can see how bookmakers /
+  // markets / outcomes are actually named.
+  function describe(value: unknown, depth: number): unknown {
+    if (depth > 4) return "…";
+    if (Array.isArray(value)) {
+      return {
+        type: "array",
+        length: value.length,
+        first: value.length > 0 ? describe(value[0], depth + 1) : null,
+      };
+    }
+    if (value && typeof value === "object") {
+      const obj = value as Record<string, unknown>;
+      const out: Record<string, unknown> = {};
+      for (const k of Object.keys(obj).slice(0, 20)) {
+        out[k] = describe(obj[k], depth + 1);
+      }
+      return out;
+    }
+    if (typeof value === "string") return value.length > 40 ? `string(${value.length})` : value;
+    return typeof value;
   }
 
   return NextResponse.json({
     httpStatus: res.status,
     match,
-    sketch,
+    structure: describe(parsed, 0),
   });
 }
