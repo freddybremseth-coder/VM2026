@@ -65,6 +65,14 @@ const KELLY_FRACTION = 0.25;
 const KELLY_CAP = 0.05;
 /** Minimum EV to call something "value" (covers model noise). */
 export const VALUE_EV_THRESHOLD = 0.02;
+/**
+ * Upper bound on a believable edge. Against a 90+ bookmaker market the
+ * closing line is sharp; an apparent edge above this is almost always our
+ * model being overconfident on thin data, not free money. We still show
+ * the model probability, but we do NOT flag it as value or suggest a
+ * stake — flagging a 40% "edge" as a bet would be dishonest.
+ */
+export const MAX_BELIEVABLE_EV = 0.15;
 
 export interface OutcomeValue {
   outcome: OutcomeKey;
@@ -74,8 +82,11 @@ export interface OutcomeValue {
   ev: number | null;
   /** Suggested stake as a fraction of bankroll (quarter-Kelly, capped). */
   kelly: number | null;
-  /** True when ev exceeds the value threshold. */
+  /** True when ev is in the believable value band. */
   isValue: boolean;
+  /** True when the model diverges from the market beyond what's credible —
+   *  shown as "model disagrees", never as a value bet. */
+  modelDiverges: boolean;
 }
 
 export interface MatchValue {
@@ -124,18 +135,21 @@ export async function getMatchValue(
     const odds = bestOddsByOutcome[oc] ?? null;
     let ev: number | null = null;
     let kelly: number | null = null;
+    let isValue = false;
+    let modelDiverges = false;
     if (odds && odds > 1) {
       ev = expectedValue(modelProb, odds);
-      const fullKelly = kellyFraction(modelProb, odds);
-      kelly = Math.min(KELLY_CAP, fullKelly * KELLY_FRACTION);
+      if (ev > MAX_BELIEVABLE_EV) {
+        // Edge too large to be real against a deep market — treat as model
+        // overconfidence, not a bet. No stake suggested.
+        modelDiverges = true;
+      } else if (ev > VALUE_EV_THRESHOLD) {
+        isValue = true;
+        const fullKelly = kellyFraction(modelProb, odds);
+        kelly = Math.min(KELLY_CAP, fullKelly * KELLY_FRACTION);
+      }
     }
-    outcomes[oc] = {
-      outcome: oc,
-      modelProb,
-      ev,
-      kelly,
-      isValue: ev !== null && ev > VALUE_EV_THRESHOLD,
-    };
+    outcomes[oc] = { outcome: oc, modelProb, ev, kelly, isValue, modelDiverges };
   }
 
   return {

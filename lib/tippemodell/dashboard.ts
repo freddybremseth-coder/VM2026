@@ -41,6 +41,8 @@ export interface OutcomeView {
   kelly: number | null;
   /** True when our model rates this a positive-EV value bet. */
   modelValue: boolean;
+  /** True when the model diverges from the market beyond credible bounds. */
+  modelDiverges: boolean;
 }
 
 export interface MatchView {
@@ -168,6 +170,7 @@ export async function getTippemodellDashboard(): Promise<MatchView[]> {
           modelEv: null,
           kelly: null,
           modelValue: false,
+          modelDiverges: false,
         };
       },
     );
@@ -210,6 +213,7 @@ export async function getTippemodellDashboard(): Promise<MatchView[]> {
           o.modelEv = v.ev;
           o.kelly = v.kelly;
           o.modelValue = v.isValue;
+          o.modelDiverges = v.modelDiverges;
         }
       }
     }

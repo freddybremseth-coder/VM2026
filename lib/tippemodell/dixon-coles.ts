@@ -27,6 +27,15 @@ export const RHO = -0.1;
 /** Mild home edge — WC 2026 is mostly neutral venues, so keep it small. */
 export const HOME_ADVANTAGE = 1.05;
 
+/**
+ * Clamp expected goals to a sane band. Without this, a team that won its
+ * group games heavily gets an inflated attack rating and the model spits
+ * out λ ≈ 3.7 (→ 92% win), far more confident than a 90-bookmaker market.
+ * Real international λ almost never exceeds ~2.6 even against minnows.
+ */
+const LAMBDA_MIN = 0.25;
+const LAMBDA_MAX = 2.6;
+
 const MAX_GOALS = 10; // score matrix dimension; P(>10 goals) is negligible
 
 export interface MatchProbabilities {
@@ -76,9 +85,10 @@ export function expectedGoals(
   home: TeamStrength,
   away: TeamStrength,
 ): { lambdaHome: number; lambdaAway: number } {
+  const clamp = (x: number) => Math.max(LAMBDA_MIN, Math.min(LAMBDA_MAX, x));
   return {
-    lambdaHome: BASE_RATE * home.attack * away.defense * HOME_ADVANTAGE,
-    lambdaAway: BASE_RATE * away.attack * home.defense,
+    lambdaHome: clamp(BASE_RATE * home.attack * away.defense * HOME_ADVANTAGE),
+    lambdaAway: clamp(BASE_RATE * away.attack * home.defense),
   };
 }
 

@@ -164,6 +164,14 @@ function OutcomeCell({ outcome }: { outcome: OutcomeView }) {
               marked +{edgePct.toFixed(1)}%
             </div>
           )}
+          {outcome.modelDiverges && (
+            <div
+              className="mt-1.5 inline-flex items-center gap-1 px-1.5 py-0.5 bg-cream/8 text-cream/45 text-[9px] font-mono"
+              title="Modellen avviker for mye fra markedet til å være troverdig verdi — vises som info, ikke som spilltips."
+            >
+              modell uenig
+            </div>
+          )}
         </>
       ) : (
         <div className="font-mono text-[10px] text-cream/35 italic mt-1">
