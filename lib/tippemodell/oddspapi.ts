@@ -75,18 +75,66 @@ interface RawFixture {
   tournamentName?: string;
 }
 
-interface RawOddsBookmaker {
-  key: string;
-  title: string;
-  markets: Array<{
-    key: string;
-    outcomes: Array<{ name: string; price: number; point?: number }>;
-  }>;
+// OddsPapi v4 /odds actual shape (verified against the live feed — differs
+// substantially from the documented form):
+//
+//   bookmakerOdds: {
+//     "<bookmakerKey>": {
+//       bookmakerIsActive, suspended,
+//       markets: {
+//         "<numericMarketId>": {
+//           marketActive,
+//           outcomes: {
+//             "<numericOutcomeId>": {
+//               players: { "0": { price, active, mainLine, ... } }
+//             }
+//           }
+//         }
+//       }
+//     }
+//   }
+//
+// Market 101 is 1X2; its outcome ids map 101→home, 102→draw, 103→away.
+interface RawPlayer {
+  active?: boolean;
+  mainLine?: boolean;
+  price?: number;
 }
-
+interface RawOutcome {
+  players?: Record<string, RawPlayer>;
+}
+interface RawMarket {
+  marketActive?: boolean;
+  outcomes?: Record<string, RawOutcome>;
+}
+interface RawBookmakerOdds {
+  bookmakerIsActive?: boolean;
+  suspended?: boolean;
+  markets?: Record<string, RawMarket>;
+}
 interface RawOddsResponse {
   fixtureId: string;
-  bookmakers: RawOddsBookmaker[];
+  bookmakerOdds?: Record<string, RawBookmakerOdds>;
+}
+
+// Numeric market id → our canonical market key. Phase 1 = 1X2 only.
+const MARKET_ID_TO_KEY: Record<string, string> = {
+  "101": "h2h",
+};
+
+// For market 101, outcome ids map to 1X2 selections.
+const H2H_OUTCOME_ID_TO_KEY: Record<string, "home" | "draw" | "away"> = {
+  "101": "home",
+  "102": "draw",
+  "103": "away",
+};
+
+/** Prettify a bookmaker key into a display title ("3et" → "3ET"). */
+function prettifyBookmaker(key: string): string {
+  return key
+    .split(/[-_\s]/)
+    .map((w) => (w.length <= 3 ? w.toUpperCase() : w[0].toUpperCase() + w.slice(1)))
+    .join(" ");
 }
 
 // ─── Public API ────────────────────────────────────────────────────────────
@@ -140,38 +188,47 @@ function isSimulated(f: RawFixture): boolean {
   return srl.test(f.participant1Name) || srl.test(f.participant2Name);
 }
 
-/** Canonicalise outcome names so 1X2 markets always use 'home'/'draw'/'away'. */
-function canonicalOutcome(name: string, home: string, away: string): string {
-  if (name === home) return "home";
-  if (name === away) return "away";
-  if (/^draw$/i.test(name) || name === "X") return "draw";
-  return name;
-}
-
 /**
- * Fetch all bookmaker odds for one fixture. Returns one entry per
- * (bookmaker, market, outcome). Restricts to the markets we care about
- * (h2h / totals / btts).
+ * Fetch all bookmaker odds for one fixture and normalise to
+ * NormalisedOutcome[]. Phase 1 keeps only the 1X2 market (id 101).
+ *
+ * Walks bookmakerOdds → markets → outcomes → players["0"].price, skipping
+ * suspended bookmakers, inactive markets, and inactive/non-main-line
+ * outcomes. The homeTeam/awayTeam args are unused for this structure
+ * (outcome ids carry the 1X2 mapping) but kept in the signature so the
+ * batch caller and any future name-based markets stay compatible.
  */
 export async function fetchOddsForFixture(
   fixtureId: string,
-  homeTeam: string,
-  awayTeam: string,
+  _homeTeam: string,
+  _awayTeam: string,
 ): Promise<NormalisedOutcome[]> {
   if (!isOddsApiConfigured()) return [];
   const data = await papiGet<RawOddsResponse>("/odds", { fixtureId });
   const out: NormalisedOutcome[] = [];
-  for (const bm of data.bookmakers ?? []) {
-    for (const market of bm.markets ?? []) {
-      if (!["h2h", "totals", "btts"].includes(market.key)) continue;
-      for (const o of market.outcomes ?? []) {
+
+  for (const [bookmakerKey, bm] of Object.entries(data.bookmakerOdds ?? {})) {
+    if (bm.suspended || bm.bookmakerIsActive === false) continue;
+    for (const [marketId, market] of Object.entries(bm.markets ?? {})) {
+      const marketKey = MARKET_ID_TO_KEY[marketId];
+      if (!marketKey) continue; // phase 1: only market 101 (h2h)
+      if (market.marketActive === false) continue;
+
+      for (const [outcomeId, outcome] of Object.entries(market.outcomes ?? {})) {
+        const selection = H2H_OUTCOME_ID_TO_KEY[outcomeId];
+        if (!selection) continue;
+        // The primary line lives under players["0"]; alt lines (if any)
+        // sit under other keys — for 1X2 there's just the one.
+        const player = outcome.players?.["0"];
+        if (!player || player.active === false) continue;
+        if (typeof player.price !== "number" || player.price <= 1) continue;
+
         out.push({
-          bookmakerKey: bm.key,
-          bookmakerTitle: bm.title,
-          marketKey: market.key,
-          outcome: canonicalOutcome(o.name, homeTeam, awayTeam),
-          price: o.price,
-          point: o.point,
+          bookmakerKey,
+          bookmakerTitle: prettifyBookmaker(bookmakerKey),
+          marketKey,
+          outcome: selection,
+          price: player.price,
         });
       }
     }
