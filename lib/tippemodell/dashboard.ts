@@ -190,13 +190,19 @@ export async function getTippemodellDashboard(): Promise<MatchView[]> {
       });
     }
 
-    // Dixon-Coles value model — only for fixtures we recognise as WC matches.
-    if (m.wc26_fixture_id !== null) {
+    // Dixon-Coles value model. We pass the team names so knockout fixtures
+    // (whose static fixture row carries slots, not team ids) still resolve
+    // strengths from the concrete teams OddsPapi knows. wc26_fixture_id is
+    // used when present; -1 lets the model fall back to name resolution.
+    {
       const bestOdds: Partial<Record<OutcomeKey, number>> = {};
       for (const o of outcomes) {
         if (o.best) bestOdds[o.outcome] = o.best.price;
       }
-      const value = await getMatchValue(m.wc26_fixture_id, bestOdds);
+      const value = await getMatchValue(m.wc26_fixture_id ?? -1, bestOdds, {
+        home: m.home_team,
+        away: m.away_team,
+      });
       if (value) {
         for (const o of outcomes) {
           const v: OutcomeValue = value.outcomes[o.outcome];

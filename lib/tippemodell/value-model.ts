@@ -15,6 +15,7 @@
  */
 
 import { FIXTURES } from "@/lib/wc26-fixtures";
+import { TEAMS } from "@/lib/wc26-data";
 import { getTeamStrengths } from "@/lib/tournament-predictions";
 import {
   matchProbabilities,
@@ -22,6 +23,41 @@ import {
   expectedValue,
 } from "@/lib/tippemodell/dixon-coles";
 import type { OutcomeKey } from "@/lib/tippemodell/dashboard";
+
+// Name → internal team id, built once. Lets us model knockout fixtures
+// (whose static fixture rows carry slots like "W74", not team ids) using
+// the concrete team names OddsPapi already knows.
+function normName(s: string): string {
+  const base = s
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "")
+    .replace(/&/g, "and")
+    .replace(/[^a-z0-9]/g, "");
+  return NAME_ALIASES[base] ?? base;
+}
+const NAME_ALIASES: Record<string, string> = {
+  czechrepublic: "czechia",
+  turkey: "turkiye",
+  ivorycoast: "cotedivoire",
+  korearepublic: "southkorea",
+  unitedstates: "usa",
+  capeverdeislands: "capeverde",
+  caboverde: "capeverde",
+  bosnia: "bosniaandherzegovina",
+  bosniaherzegovina: "bosniaandherzegovina",
+  congodr: "drcongo",
+  democraticrepublicofthecongo: "drcongo",
+};
+const INTERNAL_BY_NAME: Map<string, number> = (() => {
+  const m = new Map<string, number>();
+  for (const t of TEAMS) m.set(normName(t.name), t.id);
+  return m;
+})();
+
+function teamIdByName(name: string): number | null {
+  return INTERNAL_BY_NAME.get(normName(name)) ?? null;
+}
 
 /** Quarter-Kelly for safety; full Kelly is famously too aggressive. */
 const KELLY_FRACTION = 0.25;
@@ -56,13 +92,23 @@ export interface MatchValue {
 export async function getMatchValue(
   wc26FixtureId: number,
   bestOddsByOutcome: Partial<Record<OutcomeKey, number>>,
+  teamNames?: { home: string; away: string },
 ): Promise<MatchValue | null> {
+  // Resolve internal team ids. Group fixtures carry homeId/awayId directly;
+  // knockout fixtures only have slots ("W74"), so fall back to resolving the
+  // concrete team names OddsPapi provided.
   const fixture = FIXTURES.find((f) => f.id === wc26FixtureId);
-  if (!fixture || !fixture.homeId || !fixture.awayId) return null;
+  let homeId = fixture?.homeId ?? null;
+  let awayId = fixture?.awayId ?? null;
+  if ((!homeId || !awayId) && teamNames) {
+    homeId = homeId ?? teamIdByName(teamNames.home);
+    awayId = awayId ?? teamIdByName(teamNames.away);
+  }
+  if (!homeId || !awayId) return null;
 
   const strengths = await getTeamStrengths();
-  const home = strengths.get(fixture.homeId);
-  const away = strengths.get(fixture.awayId);
+  const home = strengths.get(homeId);
+  const away = strengths.get(awayId);
   if (!home || !away) return null;
 
   const probs = matchProbabilities(home, away);
