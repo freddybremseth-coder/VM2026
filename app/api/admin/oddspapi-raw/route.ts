@@ -75,9 +75,26 @@ export async function GET(req: NextRequest) {
     return typeof value;
   }
 
+  // Also dump one bookmaker's full markets/outcomes so we can map the
+  // numeric market ids and the outcome field names exactly.
+  let firstBookmaker: unknown = null;
+  if (parsed && typeof parsed === "object") {
+    const bo = (parsed as Record<string, unknown>).bookmakerOdds;
+    if (bo && typeof bo === "object") {
+      const keys = Object.keys(bo as Record<string, unknown>);
+      if (keys.length > 0) {
+        firstBookmaker = {
+          key: keys[0],
+          data: (bo as Record<string, unknown>)[keys[0]],
+        };
+      }
+    }
+  }
+
   return NextResponse.json({
     httpStatus: res.status,
     match,
     structure: describe(parsed, 0),
+    firstBookmakerFull: firstBookmaker,
   });
 }
