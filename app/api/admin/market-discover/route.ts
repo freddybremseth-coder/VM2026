@@ -82,10 +82,39 @@ export async function GET(req: NextRequest) {
     summary[marketId] = rows;
   }
 
+  // Try to fetch a market-name reference so we map ids → names instead of
+  // guessing. Probe several plausible endpoints; return whatever responds.
+  const metaProbes = [
+    "/markets?sportId=10",
+    "/markets",
+    "/sports/10/markets",
+    "/marketTypes?sportId=10",
+  ];
+  const meta: Record<string, unknown> = {};
+  for (const path of metaProbes) {
+    try {
+      const u = new URL(`https://api.oddspapi.io/v4${path.split("?")[0]}`);
+      u.searchParams.set("apiKey", apiKey);
+      const q = path.split("?")[1];
+      if (q) for (const [k, v] of new URLSearchParams(q)) u.searchParams.set(k, v);
+      const r = await fetch(u.toString(), { cache: "no-store" });
+      if (r.ok) {
+        const body = await r.json();
+        // Keep it compact — first 30 entries if array.
+        meta[path] = Array.isArray(body) ? body.slice(0, 30) : body;
+      } else {
+        meta[path] = `HTTP ${r.status}`;
+      }
+    } catch (e) {
+      meta[path] = e instanceof Error ? e.message : String(e);
+    }
+  }
+
   return NextResponse.json({
     match: `${m.home_team} v ${m.away_team}`,
     bookmaker: firstKey,
     marketCount: Object.keys(markets).length,
     markets: summary,
+    marketMeta: meta,
   });
 }
