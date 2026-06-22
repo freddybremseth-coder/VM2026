@@ -15,7 +15,6 @@
  */
 
 const BASE_URL = "https://api.oddspapi.io/v4";
-const COOLDOWN_MS = 900; // a hair over the documented 880ms
 
 export type NormalisedOutcome = {
   bookmakerKey: string;
@@ -236,7 +235,18 @@ export async function fetchOddsForFixture(
   return out;
 }
 
-/** Convenience: batch-fetch odds for many fixtures with the documented cooldown. */
+/**
+ * Batch-fetch odds for many fixtures using a small concurrency pool.
+ *
+ * Sequential fetching with the full 900ms cooldown took ~46s for a typical
+ * 14-match window — past cron-job.org's 30s request timeout. A pool of
+ * CONCURRENCY workers with a light per-worker stagger cuts wall-clock to
+ * ~12-15s while staying polite to OddsPapi. A fixture that 429s (rate
+ * limited) or errors is simply skipped and picked up on the next cron tick.
+ */
+const CONCURRENCY = 4;
+const STAGGER_MS = 250;
+
 export async function fetchOddsBatch(
   fixtures: Array<{
     externalId: string;
@@ -245,15 +255,33 @@ export async function fetchOddsBatch(
   }>,
 ): Promise<Map<string, NormalisedOutcome[]>> {
   const out = new Map<string, NormalisedOutcome[]>();
-  for (let i = 0; i < fixtures.length; i++) {
-    const f = fixtures[i];
-    try {
-      const odds = await fetchOddsForFixture(f.externalId, f.homeTeam, f.awayTeam);
-      out.set(f.externalId, odds);
-    } catch (err) {
-      console.warn(`[oddspapi] odds failed for ${f.externalId}:`, err);
+  let cursor = 0;
+
+  async function worker(workerIndex: number): Promise<void> {
+    // Stagger worker starts so we don't fire CONCURRENCY requests at the
+    // exact same instant.
+    await sleep(workerIndex * STAGGER_MS);
+    while (true) {
+      const i = cursor++;
+      if (i >= fixtures.length) return;
+      const f = fixtures[i];
+      try {
+        const odds = await fetchOddsForFixture(
+          f.externalId,
+          f.homeTeam,
+          f.awayTeam,
+        );
+        out.set(f.externalId, odds);
+      } catch (err) {
+        console.warn(`[oddspapi] odds failed for ${f.externalId}:`, err);
+      }
     }
-    if (i < fixtures.length - 1) await sleep(COOLDOWN_MS);
   }
+
+  await Promise.all(
+    Array.from({ length: Math.min(CONCURRENCY, fixtures.length) }, (_, w) =>
+      worker(w),
+    ),
+  );
   return out;
 }
