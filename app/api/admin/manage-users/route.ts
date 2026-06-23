@@ -81,8 +81,19 @@ export async function GET(req: NextRequest) {
       result.push({ id: t.id, label, action: "deleted", ok: !error, error: error?.message });
     } else {
       // Just remove from every league (keep the account + its tips).
-      const { error } = await admin.from("league_members").delete().eq("user_id", t.id);
-      result.push({ id: t.id, label, action: "left-leagues", ok: !error, error: error?.message });
+      const { data: del, error } = await admin
+        .from("league_members")
+        .delete()
+        .eq("user_id", t.id)
+        .select("league_id");
+      result.push({
+        id: t.id,
+        label,
+        action: "left-leagues",
+        ok: !error,
+        error: error?.message,
+        ...(del ? { deletedRows: del.length } : {}),
+      } as never);
     }
   }
 
