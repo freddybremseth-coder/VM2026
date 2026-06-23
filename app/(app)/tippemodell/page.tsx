@@ -50,6 +50,7 @@ export default async function TippemodellPage() {
       ) : (
         <>
           <Legend />
+          <HowToRead />
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             {matches.map((m) => (
               <MatchOddsCard key={m.matchId} match={m} />
@@ -93,6 +94,68 @@ function Legend() {
         Markeds-edge
       </span>
     </div>
+  );
+}
+
+function HowToRead() {
+  const points: Array<{ tag: string; title: string; body: string; tone: "info" | "win" }> = [
+    { tag: "1", tone: "info", title: "Beste pris", body: "Høyeste odds noen bookmaker tilbyr. 3.10 = 100 kr gir 310 kr tilbake hvis utfallet slår til." },
+    { tag: "2", tone: "info", title: "Fair %", body: "Markedets sanne sjanse etter at bookmaker-marginen er fjernet — hva «alle» mener." },
+    { tag: "3", tone: "info", title: "Modell %", body: "Vår egen Dixon-Coles-modell. Når modellen er høyere enn fair %, mener den utfallet er underpriset." },
+    { tag: "4", tone: "win", title: "+EV %", body: "Hvor god verdien er: forventet gevinst per krone hvis modellen har rett. +5,4 % ≈ +5,40 kr per 100 kr." },
+    { tag: "5", tone: "win", title: "Kelly %", body: "Hvor mye å satse: andel av bankrollen (forsiktig kvart-Kelly, maks 5 %). 0,6 % = 6 kr av 1000 kr." },
+    { tag: "6", tone: "win", title: "Grønn ramme", body: "Modellen flagger dette som verdt et spill — positiv EV i et troverdig sjikt (2–15 %)." },
+  ];
+  const states: Array<{ label: string; body: string; cls: string }> = [
+    { label: "Grønn — modell-verdi", body: "Verdt et spill ifølge modellen. Sjekk Kelly for innsats.", cls: "border-win/60 text-win" },
+    { label: "Gul — markeds-edge", body: "Prisen slår fair-linja, men vi har ingen modell for kampen.", cls: "border-amber/60 text-amber" },
+    { label: "Grå — «modell uenig»", body: "Avviker for mye til å være ekte verdi. Info, ikke spilltips.", cls: "border-cream/15 text-cream/55" },
+  ];
+  return (
+    <details className="surface mb-5 group">
+      <summary className="flex items-center gap-2 p-3 cursor-pointer list-none text-[11px] uppercase tracking-kicker font-mono text-cream/70 hover:text-signal transition-colors">
+        <Info size={12} /> Slik leser du kortet
+        <span className="ml-auto text-cream/35 group-open:rotate-180 transition-transform">▾</span>
+      </summary>
+      <div className="px-4 pb-4 pt-1 border-t border-cream/8">
+        <ol className="list-none p-0 m-0 grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-3 mt-3">
+          {points.map((p) => (
+            <li key={p.tag} className="flex gap-2.5 items-baseline">
+              <span
+                className={`shrink-0 inline-flex items-center justify-center w-[18px] h-[18px] rounded-full text-[10px] font-mono ${
+                  p.tone === "win" ? "bg-win/15 text-win" : "bg-signal/15 text-signal"
+                }`}
+              >
+                {p.tag}
+              </span>
+              <span className="text-[13px] leading-relaxed text-cream/80">
+                <span className="text-cream font-semibold">{p.title}</span> — {p.body}
+              </span>
+            </li>
+          ))}
+        </ol>
+
+        <div className="mt-4 pt-3 border-t border-cream/8">
+          <div className="text-[11px] text-cream/55 mb-2">De tre tilstandene på en celle:</div>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+            {states.map((s) => (
+              <div key={s.label} className={`border rounded p-2.5 ${s.cls.split(" ")[0]}`}>
+                <div className={`text-[12px] font-semibold mb-0.5 ${s.cls.split(" ")[1]}`}>
+                  {s.label}
+                </div>
+                <div className="text-[12px] text-cream/55 leading-snug">{s.body}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <p className="mt-4 text-[11px] text-cream/45 leading-relaxed">
+          Grønt er beslutningsstøtte, ikke en garanti. Modellen måles mot et marked
+          med 90+ bookmakere som vanligvis er skarpere enn en lavdata-modell — derfor
+          flagges bare små, troverdige edges.
+        </p>
+      </div>
+    </details>
   );
 }
 
