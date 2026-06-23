@@ -246,12 +246,12 @@ function FixtureRow({
       </div>
 
       <div>
-        <div className={`font-mono text-[9px] tracking-[1.3px] font-bold ${live ? "text-signal" : "text-cream/35"}`}>
+        <div className={`font-mono text-[9px] tracking-[1.3px] font-bold ${live ? "text-signal" : "text-cream/50"}`}>
           {live ? "LIVE · 67′" : stageLabel(fixture)}
         </div>
         <div className="font-serif text-base md:text-lg font-semibold leading-tight tracking-editorial mt-0.5">
           {teamName(home)}
-          <span className="text-cream/35 mx-2 font-normal">vs</span>
+          <span className="text-cream/50 mx-2 font-normal">vs</span>
           {teamName(away)}
         </div>
       </div>
@@ -269,7 +269,7 @@ function TopScorersBoard({ scorers }: { scorers: TournamentScorer[] }) {
       {scorers.map((s, i) => {
         const inner = (
           <li className="flex items-center gap-3 px-4 py-3">
-            <span className="font-serif text-base text-cream/45 w-6 text-right stat-num shrink-0">
+            <span className="font-serif text-base text-cream/60 w-6 text-right stat-num shrink-0">
               {i + 1}
             </span>
             {s.teamFlag && <HoloFlag code={s.teamFlag} w={22} radius={2} />}
@@ -280,7 +280,7 @@ function TopScorersBoard({ scorers }: { scorers: TournamentScorer[] }) {
               <div className="text-[10px] uppercase tracking-kicker font-mono text-cream/55 truncate">
                 {s.teamName}
                 {s.penalties > 0 && (
-                  <span className="ml-1.5 text-cream/35">· {s.penalties} str.</span>
+                  <span className="ml-1.5 text-cream/50">· {s.penalties} str.</span>
                 )}
               </div>
             </div>

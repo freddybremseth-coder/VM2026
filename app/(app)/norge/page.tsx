@@ -213,7 +213,7 @@ export default async function NorgePage() {
                 <span
                   className={`font-mono text-[11px] text-right font-semibold stat-num ${
                     row.played === 0
-                      ? "text-cream/35"
+                      ? "text-cream/50"
                       : row.goalDiff > 0
                       ? "text-win"
                       : row.goalDiff < 0
@@ -228,7 +228,7 @@ export default async function NorgePage() {
                 <span
                   className={`font-serif text-xl font-semibold text-right stat-num ${
                     row.points === 0 && row.played === 0
-                      ? "text-cream/35"
+                      ? "text-cream/50"
                       : isNorway
                       ? "text-signal"
                       : "text-cream"
@@ -332,13 +332,13 @@ function NorgeFixtureCard({ fixture }: { fixture: Fixture }) {
       </div>
       <div className="flex items-center gap-3">
         <HoloFlag code="no" w={26} radius={3} />
-        <span className="text-cream/35 font-mono text-xs">{norgeAtHome ? "vs" : "@"}</span>
+        <span className="text-cream/50 font-mono text-xs">{norgeAtHome ? "vs" : "@"}</span>
         <HoloFlag code={opp.flag} w={26} radius={3} />
         <span className="font-serif text-sm font-semibold flex-1 tracking-editorial">
           {opp.name}
         </span>
       </div>
-      <div className="mt-2 text-[10px] text-cream/45 font-mono">
+      <div className="mt-2 text-[10px] text-cream/60 font-mono">
         {formatDateLabel(fixture.kickoff).split(",")[0]}
       </div>
     </Link>

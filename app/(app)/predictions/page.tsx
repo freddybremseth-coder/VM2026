@@ -132,7 +132,7 @@ export default async function PredictionsPage() {
       </section>
 
       <section className="surface p-4 flex items-start gap-3">
-        <Lock size={14} className="text-cream/45 shrink-0 mt-0.5" />
+        <Lock size={14} className="text-cream/60 shrink-0 mt-0.5" />
         <p className="text-xs text-cream/55 leading-relaxed">
           {t.predictions.knockoutNote}
         </p>
@@ -196,7 +196,7 @@ function DaySection({
         <span className="text-[10px] uppercase tracking-kicker font-semibold text-cream font-mono">
           {formatDateLabel(day + "T12:00:00Z")}
         </span>
-        <span className="text-[10px] font-mono text-cream/45 stat-num">
+        <span className="text-[10px] font-mono text-cream/60 stat-num">
           {fixtures.length} {fixtures.length === 1 ? "kamp" : "kamper"}
         </span>
       </div>

@@ -154,7 +154,7 @@ export function AuthPredictionsBoard({
               <span className="text-[10px] uppercase tracking-kicker font-semibold text-cream font-mono">
                 {formatDateLabel(d.day + "T12:00:00Z")}
               </span>
-              <span className="text-[10px] font-mono text-cream/45 stat-num">
+              <span className="text-[10px] font-mono text-cream/60 stat-num">
                 {d.fixtures.length} {d.fixtures.length === 1 ? "kamp" : "kamper"}
               </span>
             </div>
@@ -203,14 +203,14 @@ export function AuthPredictionsBoard({
                     {dirtyIds.length === 1 ? "tips" : "tips"} ikke lagret
                   </span>
                 ) : (
-                  <span className="text-cream/45">Alle tips lagret</span>
+                  <span className="text-cream/60">Alle tips lagret</span>
                 )}
               </div>
               <button
                 type="button"
                 onClick={saveAll}
                 disabled={pending || dirtyIds.length === 0}
-                className="flex items-center gap-1.5 bg-signal hover:bg-signalD disabled:bg-paper disabled:text-cream/35 text-cream text-xs font-semibold px-4 py-2 transition-colors shrink-0"
+                className="flex items-center gap-1.5 bg-signal hover:bg-signalD disabled:bg-paper disabled:text-cream/50 text-cream text-xs font-semibold px-4 py-2 transition-colors shrink-0"
               >
                 <Save size={13} />
                 {pending
@@ -262,7 +262,7 @@ function PredictionRow({
         <TeamSide team={home} align="right" />
         <div className="flex items-center justify-center gap-2">
           <ScoreInput value={value.home} onChange={(n) => onScore("home", n)} />
-          <span className="text-cream/35 font-serif italic">·</span>
+          <span className="text-cream/50 font-serif italic">·</span>
           <ScoreInput value={value.away} onChange={(n) => onScore("away", n)} />
         </div>
         <TeamSide team={away} align="left" />
@@ -332,13 +332,13 @@ function LockedRow({
               <div className="w-14 h-12 flex items-center justify-center font-serif text-2xl font-semibold stat-num text-amber bg-canvas border border-cream/8">
                 {savedValue.home}
               </div>
-              <span className="text-cream/35 font-serif italic">·</span>
+              <span className="text-cream/50 font-serif italic">·</span>
               <div className="w-14 h-12 flex items-center justify-center font-serif text-2xl font-semibold stat-num text-amber bg-canvas border border-cream/8">
                 {savedValue.away}
               </div>
             </>
           ) : (
-            <span className="text-[11px] font-mono text-cream/45 italic max-w-[10rem] text-center leading-snug">
+            <span className="text-[11px] font-mono text-cream/60 italic max-w-[10rem] text-center leading-snug">
               Du tippet ikke denne kampen
             </span>
           )}
@@ -384,7 +384,7 @@ function TeamSide({ team, align }: { team: BoardTeam; align: "left" | "right" })
         <div className="font-serif text-sm font-semibold tracking-editorial text-cream truncate">
           {team.name}
         </div>
-        <div className="text-[10px] uppercase tracking-kicker text-cream/45 font-mono">
+        <div className="text-[10px] uppercase tracking-kicker text-cream/60 font-mono">
           {team.shortName}
         </div>
       </div>

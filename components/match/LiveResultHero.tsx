@@ -86,7 +86,7 @@ export function LiveResultHero({ match }: Props) {
           {teams.home ? (
             <TeamSide team={teams.home} align="right" />
           ) : (
-            <div className="font-mono text-cream/35 text-lg text-right">TBD</div>
+            <div className="font-mono text-cream/50 text-lg text-right">TBD</div>
           )}
 
           <div className="flex flex-col items-center min-w-0">
@@ -96,16 +96,16 @@ export function LiveResultHero({ match }: Props) {
                 aria-label={`${score.home}-${score.away}`}
               >
                 <span className="text-5xl sm:text-7xl text-cream">{score.home}</span>
-                <span className="text-3xl sm:text-5xl text-cream/35">–</span>
+                <span className="text-3xl sm:text-5xl text-cream/50">–</span>
                 <span className="text-5xl sm:text-7xl text-cream">{score.away}</span>
               </div>
             ) : (
-              <div className="font-serif text-3xl sm:text-5xl text-cream/35 italic">
+              <div className="font-serif text-3xl sm:text-5xl text-cream/50 italic">
                 vs
               </div>
             )}
             {status === "finished" && (
-              <div className="mt-2 text-[10px] uppercase tracking-kicker font-mono text-cream/45">
+              <div className="mt-2 text-[10px] uppercase tracking-kicker font-mono text-cream/60">
                 Sluttresultat
               </div>
             )}
@@ -114,7 +114,7 @@ export function LiveResultHero({ match }: Props) {
           {teams.away ? (
             <TeamSide team={teams.away} align="left" />
           ) : (
-            <div className="font-mono text-cream/35 text-lg">TBD</div>
+            <div className="font-mono text-cream/50 text-lg">TBD</div>
           )}
         </div>
 

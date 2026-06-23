@@ -8,6 +8,8 @@ import {
   recordMatchResultAction,
   triggerFetchResultsAction,
   triggerSyncGoalsAction,
+  triggerAfProbeAction,
+  type AfProbeResult,
 } from "./actions";
 import type { FixtureRow } from "./page";
 
@@ -45,6 +47,7 @@ export function ResultsForm({
   const [globalFeedback, setGlobalFeedback] = useState<string | null>(null);
   const [savingId, setSavingId] = useState<number | null>(null);
   const [pending, startTransition] = useTransition();
+  const [probe, setProbe] = useState<AfProbeResult | null>(null);
 
   function setField(matchId: number, patch: Partial<Draft>) {
     setDrafts((prev) => ({ ...prev, [matchId]: { ...prev[matchId], ...patch } }));
@@ -93,6 +96,16 @@ export function ResultsForm({
     });
   }
 
+  function triggerProbe() {
+    setProbe(null);
+    setGlobalFeedback("Tester API-Football…");
+    startTransition(async () => {
+      const res = await triggerAfProbeAction();
+      setProbe(res);
+      setGlobalFeedback(null);
+    });
+  }
+
   return (
     <>
       <div className="flex items-center gap-3 flex-wrap">
@@ -100,7 +113,7 @@ export function ResultsForm({
           type="button"
           onClick={triggerFetch}
           disabled={!hasApiKey || pending}
-          className="flex items-center gap-1.5 bg-signal hover:bg-signalD disabled:bg-paper disabled:text-cream/35 text-cream text-xs font-semibold px-3 py-2 transition-colors"
+          className="flex items-center gap-1.5 bg-signal hover:bg-signalD disabled:bg-paper disabled:text-cream/50 text-cream text-xs font-semibold px-3 py-2 transition-colors"
         >
           <RefreshCw size={13} className={pending ? "animate-spin" : ""} />
           Hent live fra API-Football
@@ -138,7 +151,7 @@ export function ResultsForm({
                   <div className="text-[10px] font-mono uppercase tracking-kicker text-cream/55">
                     {r.stageLabel}
                   </div>
-                  <div className="text-[11px] font-mono text-cream/45 mt-0.5">
+                  <div className="text-[11px] font-mono text-cream/60 mt-0.5">
                     {formatDateLabel(r.kickoff)} · {formatKickoff(r.kickoff)}
                   </div>
                 </div>
@@ -161,7 +174,7 @@ export function ResultsForm({
                     value={draft.home}
                     onChange={(n) => setField(r.matchId, { home: n })}
                   />
-                  <span className="text-cream/35 font-serif italic">·</span>
+                  <span className="text-cream/50 font-serif italic">·</span>
                   <ScoreInput
                     value={draft.away}
                     onChange={(n) => setField(r.matchId, { away: n })}

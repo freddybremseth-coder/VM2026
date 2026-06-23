@@ -38,7 +38,7 @@ export function MatchOddsCard({ match }: { match: MatchView }) {
       {/* Teams */}
       <div className="flex items-center justify-between gap-3 mb-4">
         <TeamLabel name={match.homeTeam} flag={homeFlag} />
-        <span className="font-mono text-[10px] uppercase tracking-kicker text-cream/45 shrink-0">
+        <span className="font-mono text-[10px] uppercase tracking-kicker text-cream/60 shrink-0">
           vs
         </span>
         <TeamLabel name={match.awayTeam} flag={awayFlag} align="right" />
@@ -92,7 +92,7 @@ function MarketSection({
 }) {
   return (
     <div className="mt-3 pt-3 border-t border-cream/8">
-      <h3 className="text-[9px] uppercase tracking-kicker font-mono text-cream/45 mb-2">
+      <h3 className="text-[9px] uppercase tracking-kicker font-mono text-cream/60 mb-2">
         {title}
       </h3>
       <div className="grid grid-cols-2 gap-2">
@@ -133,7 +133,7 @@ function OutcomeCell({ outcome }: { outcome: OutcomeView }) {
           {outcome.label}
         </span>
         {fairPct !== null && (
-          <span className="font-mono text-[9px] text-cream/45 stat-num">
+          <span className="font-mono text-[9px] text-cream/60 stat-num">
             {fairPct.toFixed(0)}%
           </span>
         )}
@@ -148,7 +148,7 @@ function OutcomeCell({ outcome }: { outcome: OutcomeView }) {
           >
             {outcome.best.price.toFixed(2)}
           </div>
-          <div className="text-[9px] uppercase tracking-kicker font-mono text-cream/45 truncate mt-0.5">
+          <div className="text-[9px] uppercase tracking-kicker font-mono text-cream/60 truncate mt-0.5">
             {outcome.best.bookmaker}
           </div>
 
@@ -179,7 +179,7 @@ function OutcomeCell({ outcome }: { outcome: OutcomeView }) {
 
           {/* Sharp reference */}
           {outcome.sharp !== null && (
-            <div className="mt-0.5 text-[9px] font-mono text-cream/45 stat-num">
+            <div className="mt-0.5 text-[9px] font-mono text-cream/60 stat-num">
               P {outcome.sharp.toFixed(2)}
             </div>
           )}
@@ -204,7 +204,7 @@ function OutcomeCell({ outcome }: { outcome: OutcomeView }) {
           )}
           {outcome.modelDiverges && (
             <div
-              className="mt-1.5 inline-flex items-center gap-1 px-1.5 py-0.5 bg-cream/8 text-cream/45 text-[9px] font-mono"
+              className="mt-1.5 inline-flex items-center gap-1 px-1.5 py-0.5 bg-cream/8 text-cream/60 text-[9px] font-mono"
               title="Modellen avviker for mye fra markedet til å være troverdig verdi — vises som info, ikke som spilltips."
             >
               modell uenig
@@ -212,12 +212,12 @@ function OutcomeCell({ outcome }: { outcome: OutcomeView }) {
           )}
         </>
       ) : (
-        <div className="font-mono text-[10px] text-cream/35 italic mt-1">
+        <div className="font-mono text-[10px] text-cream/50 italic mt-1">
           ingen pris
         </div>
       )}
 
-      <div className="mt-1 text-[9px] font-mono text-cream/35 stat-num">
+      <div className="mt-1 text-[9px] font-mono text-cream/50 stat-num">
         {outcome.bookCount} {outcome.bookCount === 1 ? "bok" : "bøker"}
       </div>
     </div>

@@ -147,7 +147,7 @@ export default async function LeagueDetailPage({
                   {banter.headline}
                 </div>
               </div>
-              <div className="text-[10px] uppercase tracking-kicker text-cream/45 font-mono mb-3">
+              <div className="text-[10px] uppercase tracking-kicker text-cream/60 font-mono mb-3">
                 ChatGenius · banter-rapport
               </div>
               <div className="space-y-2 text-sm text-cream/85 leading-relaxed">
@@ -168,7 +168,7 @@ export default async function LeagueDetailPage({
         <div className="surface overflow-hidden mt-3">
           <table className="w-full text-sm">
             <thead>
-              <tr className="text-[10px] uppercase tracking-kicker text-cream/45 border-b border-cream/8 font-mono">
+              <tr className="text-[10px] uppercase tracking-kicker text-cream/60 border-b border-cream/8 font-mono">
                 <th className="text-left px-4 py-2.5 w-12">#</th>
                 <th className="text-left px-4 py-2.5">Spiller</th>
                 <th className="text-right px-4 py-2.5 w-24">Poeng</th>

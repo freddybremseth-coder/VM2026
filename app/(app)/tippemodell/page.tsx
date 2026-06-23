@@ -74,7 +74,7 @@ function Legend() {
   return (
     <div className="surface p-3 mb-5 flex flex-wrap items-center gap-x-5 gap-y-2 text-[10px] uppercase tracking-kicker font-mono text-cream/55">
       <span className="flex items-center gap-1.5">
-        <Info size={11} className="text-cream/45" /> Slik leser du:
+        <Info size={11} className="text-cream/60" /> Slik leser du:
       </span>
       <span>
         <span className="font-mono font-bold stat-num text-cream">2.45</span>{" "}
@@ -121,7 +121,7 @@ function HowToRead() {
     <details className="surface mb-5 group">
       <summary className="flex items-center gap-2 p-3 cursor-pointer list-none text-[11px] uppercase tracking-kicker font-mono text-cream/70 hover:text-signal transition-colors">
         <Info size={12} /> Slik leser du kortet
-        <span className="ml-auto text-cream/35 group-open:rotate-180 transition-transform">▾</span>
+        <span className="ml-auto text-cream/50 group-open:rotate-180 transition-transform">▾</span>
       </summary>
       <div className="px-4 pb-4 pt-1 border-t border-cream/8">
         <ol className="list-none p-0 m-0 grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-3 mt-3">
@@ -155,7 +155,7 @@ function HowToRead() {
           </div>
         </div>
 
-        <p className="mt-4 text-[11px] text-cream/45 leading-relaxed">
+        <p className="mt-4 text-[11px] text-cream/60 leading-relaxed">
           Grønt er beslutningsstøtte, ikke en garanti. Modellen måles mot et marked
           med 90+ bookmakere som vanligvis er skarpere enn en lavdata-modell — derfor
           flagges bare små, troverdige edges.
@@ -207,7 +207,7 @@ function NotConfigured() {
 function EmptyState() {
   return (
     <div className="surface p-8 text-center">
-      <Info size={18} className="text-cream/35 mx-auto mb-3" />
+      <Info size={18} className="text-cream/50 mx-auto mb-3" />
       <h2 className="font-serif text-lg tracking-editorial text-cream/85 mb-1">
         Ingen odds registrert ennå
       </h2>
@@ -221,7 +221,7 @@ function EmptyState() {
 
 function Disclaimer() {
   return (
-    <div className="mt-8 pt-5 border-t border-cream/8 text-[10px] text-cream/45 font-mono leading-relaxed max-w-3xl">
+    <div className="mt-8 pt-5 border-t border-cream/8 text-[10px] text-cream/60 font-mono leading-relaxed max-w-3xl">
       Til eget bruk · beslutningsstøtte, ikke gevinstgaranti. Bookmakernes
       margin gjør at det er vanskelig å slå markedet over tid selv med gode
       modeller. Spill ansvarlig — sett grenser og ta pauser. Hjelpelinjen for

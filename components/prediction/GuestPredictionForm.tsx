@@ -100,7 +100,7 @@ export function GuestPredictionForm({
         <TeamSide team={home} align="right" />
         <div className="flex items-center justify-center gap-2">
           <ScoreInput value={homeScore} onChange={setHomeScore} disabled={limitReached} />
-          <span className="text-cream/35 font-serif italic">·</span>
+          <span className="text-cream/50 font-serif italic">·</span>
           <ScoreInput value={awayScore} onChange={setAwayScore} disabled={limitReached} />
         </div>
         <TeamSide team={away} align="left" />
@@ -141,7 +141,7 @@ export function GuestPredictionForm({
         <button
           type="submit"
           disabled={limitReached}
-          className="flex items-center gap-1.5 bg-signal hover:bg-signalD disabled:bg-paper disabled:text-cream/35 text-cream text-xs font-semibold px-3 py-1.5 transition-colors"
+          className="flex items-center gap-1.5 bg-signal hover:bg-signalD disabled:bg-paper disabled:text-cream/50 text-cream text-xs font-semibold px-3 py-1.5 transition-colors"
         >
           <Save size={12} />
           {hasTip ? "Oppdater" : "Lagre"}
@@ -170,7 +170,7 @@ function TeamSide({
         <div className="font-serif text-sm font-semibold tracking-editorial text-cream truncate">
           {teamName(team)}
         </div>
-        <div className="text-[10px] uppercase tracking-kicker text-cream/45 font-mono">
+        <div className="text-[10px] uppercase tracking-kicker text-cream/60 font-mono">
           {team.shortName}
         </div>
       </div>

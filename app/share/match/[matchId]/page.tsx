@@ -4,7 +4,6 @@ import type { Metadata } from "next";
 import { ArrowRight, Share2 } from "lucide-react";
 import { fixtureById } from "@/lib/wc26-fixtures";
 import { teamById, teamName } from "@/lib/wc26-data";
-import { buildPreview } from "@/lib/ai-preview";
 import { TeamFlag } from "@/components/shared/TeamFlag";
 import { AppLogoWordmark } from "@/components/shared/Logo";
 import { CopyLinkButton } from "@/components/shared/CopyLinkButton";
@@ -34,7 +33,6 @@ export default function MatchSharePage({ params }: Params) {
   const home = fixture.homeId ? teamById(fixture.homeId) : undefined;
   const away = fixture.awayId ? teamById(fixture.awayId) : undefined;
   if (!home || !away) notFound();
-  const preview = buildPreview(fixture.id);
 
   return (
     <div className="min-h-screen flex items-center justify-center px-4 grid-lines">
@@ -83,12 +81,6 @@ export default function MatchSharePage({ params }: Params) {
               </div>
             </div>
 
-            {preview && (
-              <div className="rounded-md bg-data-500/10 ring-1 ring-data-500/30 p-4 text-sm text-pitch-200 leading-relaxed">
-                <span className="text-data-300 font-mono text-xs mr-2 font-bold">AI</span>
-                {preview.recommendation}
-              </div>
-            )}
           </div>
         </div>
 

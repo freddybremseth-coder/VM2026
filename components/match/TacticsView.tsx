@@ -92,7 +92,7 @@ export function TacticsView({ info }: Props) {
   if (!hasFormation && !hasLineups && pairs.length === 0) {
     return (
       <div className="surface p-8 text-center">
-        <BarChart2 size={20} className="text-cream/35 mx-auto mb-3" />
+        <BarChart2 size={20} className="text-cream/50 mx-auto mb-3" />
         <h2 className="font-serif text-lg tracking-editorial text-cream/85 mb-1">
           Taktikkdata er ikke klar ennå
         </h2>
@@ -124,7 +124,7 @@ export function TacticsView({ info }: Props) {
                 {info.home.formation ?? "—"}
               </div>
             </div>
-            <div className="font-mono text-[10px] uppercase tracking-kicker text-cream/35">
+            <div className="font-mono text-[10px] uppercase tracking-kicker text-cream/50">
               vs
             </div>
             <div>

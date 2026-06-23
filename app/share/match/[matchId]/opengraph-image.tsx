@@ -1,7 +1,6 @@
 import { ImageResponse } from "next/og";
 import { fixtureById } from "@/lib/wc26-fixtures";
 import { teamById, teamName, venueById } from "@/lib/wc26-data";
-import { buildPreview } from "@/lib/ai-preview";
 import { OG, OG_SIZE, OG_BG, BrandMark, FlagBlock, Footer, loadFraunces } from "@/lib/og/shared";
 
 export const runtime = "edge";
@@ -18,7 +17,6 @@ export default async function MatchShareImage({
   const home = fixture?.homeId ? teamById(fixture.homeId) : undefined;
   const away = fixture?.awayId ? teamById(fixture.awayId) : undefined;
   const venue = fixture ? venueById(fixture.venueId) : undefined;
-  const preview = fixture ? buildPreview(fixture.id) : null;
   const fonts = await loadFraunces();
 
   const stageLabel =
@@ -115,28 +113,6 @@ export default async function MatchShareImage({
             </div>
           </div>
         </div>
-
-        {/* AI recommendation */}
-        {preview && (
-          <div
-            style={{
-              marginTop: 28,
-              marginBottom: 24,
-              padding: 20,
-              background: "rgba(230,57,70,0.08)",
-              border: "1px solid rgba(230,57,70,0.28)",
-              fontSize: 21,
-              color: OG.cream,
-              display: "flex",
-              gap: 16,
-              alignItems: "flex-start",
-              lineHeight: 1.4,
-            }}
-          >
-            <div style={{ fontSize: 14, color: OG.signal, fontWeight: 700, letterSpacing: 2, paddingTop: 4 }}>AI</div>
-            <div style={{ display: "flex" }}>{preview.recommendation}</div>
-          </div>
-        )}
 
         <Footer note={venue ? `${venue.name} · ${venue.city}` : "VM 2026"} />
       </div>

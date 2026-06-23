@@ -69,7 +69,7 @@ export default async function PlayerProfilePage({
                   <HoloFlag code={team.flag} w={18} radius={2} /> {team.name}
                 </Link>
               )}
-              <span className="text-cream/35">·</span>
+              <span className="text-cream/50">·</span>
               <span>{player.position}</span>
               {player.isCaptain && <span className="text-signal">· (C)</span>}
             </div>
@@ -203,7 +203,7 @@ function Stat({
   return (
     <div>
       <div className="text-[10px] uppercase tracking-kicker text-cream/55 mb-1 flex items-center gap-1 font-mono">
-        {icon && <span className="text-cream/45">{icon}</span>}
+        {icon && <span className="text-cream/60">{icon}</span>}
         {label}
       </div>
       <div
@@ -212,7 +212,7 @@ function Stat({
         {value}
       </div>
       {hint && (
-        <div className="text-[9px] uppercase tracking-kicker text-cream/45 mt-1 font-mono">
+        <div className="text-[9px] uppercase tracking-kicker text-cream/60 mt-1 font-mono">
           {hint}
         </div>
       )}

@@ -38,7 +38,7 @@ export function GuestMigrationPrompt() {
           <span className="font-semibold text-signal stat-num">{done.imported}</span>{" "}
           gjeste-tips inn på kontoen din.
           {done.skipped > 0 && (
-            <span className="text-cream/45 ml-2 font-mono text-xs">
+            <span className="text-cream/60 ml-2 font-mono text-xs">
               ({done.skipped} hoppet over — allerede tippet eller startet)
             </span>
           )}
@@ -99,7 +99,7 @@ export function GuestMigrationPrompt() {
           type="button"
           onClick={migrate}
           disabled={pending}
-          className="bg-signal hover:bg-signalD disabled:bg-paper disabled:text-cream/35 text-cream text-xs font-semibold px-3 py-1.5 transition-colors"
+          className="bg-signal hover:bg-signalD disabled:bg-paper disabled:text-cream/50 text-cream text-xs font-semibold px-3 py-1.5 transition-colors"
         >
           {pending ? "Importerer…" : "Importer"}
         </button>

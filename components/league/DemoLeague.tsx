@@ -80,7 +80,7 @@ export function DemoLeague() {
                 {DEMO_LEAGUE.name}
               </div>
               <div className="text-xs text-cream/55 mt-0.5">{DEMO_LEAGUE.description}</div>
-              <div className="flex items-center gap-3 mt-1.5 text-[11px] text-cream/45 font-mono">
+              <div className="flex items-center gap-3 mt-1.5 text-[11px] text-cream/60 font-mono">
                 <span className="flex items-center gap-1">
                   <Users size={10} /> {DEMO_LEAGUE.members} deltakere
                 </span>
@@ -97,7 +97,7 @@ export function DemoLeague() {
           {/* Share button (disabled in demo) */}
           <button
             disabled
-            className="shrink-0 flex items-center gap-1.5 bg-paper text-cream/45 text-xs font-semibold px-3 py-1.5 cursor-not-allowed"
+            className="shrink-0 flex items-center gap-1.5 bg-paper text-cream/60 text-xs font-semibold px-3 py-1.5 cursor-not-allowed"
             title="Tilgjengelig etter innlogging"
           >
             <Share2 size={12} /> Del
@@ -119,7 +119,7 @@ export function DemoLeague() {
             <div className="font-serif text-sm font-semibold tracking-editorial text-cream truncate">
               {DEMO_LEAGUE.banterHeadline}
             </div>
-            <div className="text-[10px] uppercase tracking-kicker text-cream/45 font-mono">
+            <div className="text-[10px] uppercase tracking-kicker text-cream/60 font-mono">
               ChatGenius · ukentlig banter-rapport
             </div>
           </div>
@@ -148,14 +148,14 @@ export function DemoLeague() {
             <Trophy size={12} className="text-amber" />
             <Kicker tone="muted">Ledertavle</Kicker>
           </div>
-          <span className="text-[10px] font-mono text-cream/45 stat-num">
+          <span className="text-[10px] font-mono text-cream/60 stat-num">
             Etter runde 1
           </span>
         </div>
 
         <table className="w-full text-sm">
           <thead>
-            <tr className="text-[10px] uppercase tracking-kicker text-cream/45 border-b border-cream/8 font-mono">
+            <tr className="text-[10px] uppercase tracking-kicker text-cream/60 border-b border-cream/8 font-mono">
               <th className="text-left px-4 py-2 w-10">#</th>
               <th className="text-left px-4 py-2">Spiller</th>
               <th className="text-right px-4 py-2 font-mono hidden sm:table-cell">Eks.</th>
@@ -219,7 +219,7 @@ export function DemoLeague() {
           <p className="text-[11px] text-cream/55 font-mono">
             3 p for eksakt score · 1 p for riktig utfall
           </p>
-          <span className="text-[10px] text-cream/35 italic font-serif">Demo</span>
+          <span className="text-[10px] text-cream/50 italic font-serif">Demo</span>
         </div>
       </div>
 

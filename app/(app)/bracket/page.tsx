@@ -228,7 +228,7 @@ function PathColumn({
                   <span className="text-[10px] uppercase tracking-kicker font-mono font-semibold text-cream/55">
                     {r}
                   </span>
-                  <span className="text-[10px] font-mono text-cream/35 stat-num">
+                  <span className="text-[10px] font-mono text-cream/50 stat-num">
                     {opp.match}
                   </span>
                 </div>
@@ -236,7 +236,7 @@ function PathColumn({
                   vs <span className="text-cream/85">{opp.who}</span>
                 </div>
                 {opp.hint && (
-                  <div className="text-[10px] text-cream/45 font-mono mt-0.5 italic">
+                  <div className="text-[10px] text-cream/60 font-mono mt-0.5 italic">
                     {opp.hint}
                   </div>
                 )}
@@ -293,7 +293,7 @@ function GroupCard({
     <div className="bg-paper p-4">
       <div className="flex items-center justify-between mb-3">
         <Kicker tone="signal">Gruppe {group}</Kicker>
-        <div className="text-[9px] font-mono text-cream/35 uppercase tracking-kicker">
+        <div className="text-[9px] font-mono text-cream/50 uppercase tracking-kicker">
           PL · V · U · T · MF · P
         </div>
       </div>
@@ -310,7 +310,7 @@ function GroupCard({
               >
                 <span
                   className={`font-mono w-3 text-right stat-num ${
-                    advanced ? "text-signal font-bold" : "text-cream/45"
+                    advanced ? "text-signal font-bold" : "text-cream/60"
                   }`}
                 >
                   {i + 1}
@@ -330,7 +330,7 @@ function GroupCard({
           );
         })}
       </ul>
-      <div className="mt-3 pt-3 border-t border-cream/8 text-[10px] uppercase tracking-kicker font-mono text-cream/45">
+      <div className="mt-3 pt-3 border-t border-cream/8 text-[10px] uppercase tracking-kicker font-mono text-cream/60">
         Topp 2 + beste 3.-plass → R32
       </div>
     </div>
@@ -365,7 +365,7 @@ function KnockoutTree({
               >
                 {r.label}
               </span>
-              <span className="text-[10px] font-mono text-cream/45 stat-num">
+              <span className="text-[10px] font-mono text-cream/60 stat-num">
                 {r.fixtures.length}
               </span>
             </div>
@@ -461,7 +461,7 @@ function KnockoutTree({
                         score={result?.home_score ?? null}
                         finished={isFinished || isLive}
                       />
-                      <div className="text-cream/35 text-[10px] font-mono italic my-0.5">
+                      <div className="text-cream/50 text-[10px] font-mono italic my-0.5">
                         {isFinished || isLive ? "—" : "vs"}
                       </div>
                       <TeamLine
@@ -472,7 +472,7 @@ function KnockoutTree({
                       />
                     </div>
                     {venue && (
-                      <div className="text-[10px] text-cream/45 mt-1.5 flex items-center gap-1 truncate font-mono">
+                      <div className="text-[10px] text-cream/60 mt-1.5 flex items-center gap-1 truncate font-mono">
                         <MapPin size={9} /> {venue.city}
                       </div>
                     )}
@@ -488,7 +488,7 @@ function KnockoutTree({
           Bronsefinale:{" "}
           <span className="text-cream/85">18. juli · Hard Rock Stadium, Miami</span>.
         </div>
-        <div className="mt-1 text-cream/45">
+        <div className="mt-1 text-cream/60">
           Røde kort = Norges potensielle rute. K# = match-nummer. Faktiske lag
           fylles inn etter siste gruppespill-runde 27. juni.
         </div>

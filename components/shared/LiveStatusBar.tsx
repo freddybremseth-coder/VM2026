@@ -103,7 +103,7 @@ export function LiveStatusBar() {
                     : "vs"}
                 </span>
                 {m.awayFlag && <HoloFlag code={m.awayFlag} w={16} radius={1} />}
-                <span className="text-[10px] font-mono text-cream/45 hidden sm:inline">
+                <span className="text-[10px] font-mono text-cream/60 hidden sm:inline">
                   {m.homeName} · {m.awayName}
                 </span>
               </Link>
@@ -161,7 +161,7 @@ export function LiveStatusBar() {
               localStorage.setItem(DISMISS_KEY, "1");
               setDismissed(true);
             }}
-            className={`${next ? "" : "ml-auto"} shrink-0 p-1 text-cream/45 hover:text-cream transition-colors`}
+            className={`${next ? "" : "ml-auto"} shrink-0 p-1 text-cream/60 hover:text-cream transition-colors`}
             aria-label="Skjul"
             title="Skjul"
           >

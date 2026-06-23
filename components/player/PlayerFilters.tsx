@@ -62,13 +62,13 @@ export function PlayerFilters({ players }: Props) {
         <label className="relative flex-1">
           <Search
             size={13}
-            className="absolute left-3 top-1/2 -translate-y-1/2 text-cream/45"
+            className="absolute left-3 top-1/2 -translate-y-1/2 text-cream/60"
           />
           <input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder='Søk — prøv "norge haa" eller "arsenal"…'
-            className="w-full bg-canvas border border-cream/8 pl-9 pr-3 py-2 text-sm text-cream placeholder:text-cream/45 focus:outline-none focus:border-signal/50"
+            className="w-full bg-canvas border border-cream/8 pl-9 pr-3 py-2 text-sm text-cream placeholder:text-cream/60 focus:outline-none focus:border-signal/50"
           />
         </label>
 
@@ -104,14 +104,14 @@ export function PlayerFilters({ players }: Props) {
         </div>
       </div>
 
-      <div className="text-xs text-cream/45 mb-3 font-mono stat-num uppercase tracking-kicker">
+      <div className="text-xs text-cream/60 mb-3 font-mono stat-num uppercase tracking-kicker">
         {filtered.length} {filtered.length === 1 ? "spiller" : "spillere"}
       </div>
 
       <div className="surface overflow-hidden">
         <table className="w-full text-sm">
           <thead>
-            <tr className="text-[10px] uppercase tracking-kicker text-cream/45 border-b border-cream/8 font-mono">
+            <tr className="text-[10px] uppercase tracking-kicker text-cream/60 border-b border-cream/8 font-mono">
               <th className="text-left px-4 py-2.5 w-10">#</th>
               <th className="text-left px-4 py-2.5 w-14">Pos</th>
               <th className="text-left px-4 py-2.5">Spiller</th>
@@ -130,7 +130,7 @@ export function PlayerFilters({ players }: Props) {
                   key={p.id}
                   className="border-b border-cream/8 last:border-b-0 hover:bg-cream/5 transition-colors"
                 >
-                  <td className="px-4 py-2 font-mono text-cream/45 stat-num">
+                  <td className="px-4 py-2 font-mono text-cream/60 stat-num">
                     {p.number || "—"}
                   </td>
                   <td className="px-4 py-2">
@@ -179,7 +179,7 @@ export function PlayerFilters({ players }: Props) {
             })}
             {filtered.length === 0 && (
               <tr>
-                <td colSpan={8} className="text-center text-sm text-cream/45 py-6 italic font-serif">
+                <td colSpan={8} className="text-center text-sm text-cream/60 py-6 italic font-serif">
                   Ingen spillere matcher filteret.
                 </td>
               </tr>

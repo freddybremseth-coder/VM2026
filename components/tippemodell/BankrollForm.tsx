@@ -36,7 +36,7 @@ export function BankrollForm({ current }: { current: number }) {
           onChange={(e) => setValue(e.target.value)}
           className="w-28 bg-paper border border-cream/15 px-2 py-1 font-mono text-sm text-cream stat-num focus:border-signal outline-none"
         />
-        <span className="font-mono text-xs text-cream/45">kr</span>
+        <span className="font-mono text-xs text-cream/60">kr</span>
       </div>
       <button
         onClick={submit}

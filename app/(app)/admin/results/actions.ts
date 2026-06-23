@@ -155,3 +155,108 @@ export async function triggerSyncGoalsAction(matchIds?: number[]): Promise<CronT
   revalidatePath("/", "layout");
   return result;
 }
+
+/**
+ * Probe API-Football directly so we can SEE what the key is allowed to
+ * pull. Used when the resolver reports 0 fixtures, to distinguish a
+ * plan/coverage issue from a wrong league/season.
+ */
+export interface AfProbeResult {
+  apiKeySet: boolean;
+  statusOk: boolean;
+  statusBody?: string;
+  leagueOk: boolean;
+  leagueCoverage?: string;
+  fixturesAllOk: boolean;
+  fixturesAllCount: number;
+  fixturesAllSample?: string[];
+  fixturesDatedOk: boolean;
+  fixturesDatedCount: number;
+  errors: string[];
+}
+
+export async function triggerAfProbeAction(): Promise<AfProbeResult> {
+  const supabase = createSupabaseServerClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  const baseFail: AfProbeResult = {
+    apiKeySet: Boolean(process.env.API_FOOTBALL_KEY),
+    statusOk: false,
+    leagueOk: false,
+    fixturesAllOk: false,
+    fixturesAllCount: 0,
+    fixturesDatedOk: false,
+    fixturesDatedCount: 0,
+    errors: [],
+  };
+  if (!user) return { ...baseFail, errors: ["Du må være innlogget."] };
+  if (!isAdmin(user.id)) return { ...baseFail, errors: ["Mangler admin-tilgang."] };
+
+  const key = process.env.API_FOOTBALL_KEY;
+  if (!key) return { ...baseFail, errors: ["API_FOOTBALL_KEY ikke satt."] };
+
+  const result: AfProbeResult = { ...baseFail, apiKeySet: true };
+  const BASE = "https://v3.football.api-sports.io";
+  const headers = { "x-apisports-key": key } as const;
+
+  // 1) /status — verifies key + plan quota
+  try {
+    const r = await fetch(`${BASE}/status`, { headers, cache: "no-store" });
+    if (!r.ok) throw new Error(`status: HTTP ${r.status}`);
+    const j = (await r.json()) as { response?: { account?: { firstname?: string }; subscription?: { plan?: string; end?: string }; requests?: { current?: number; limit_day?: number } } };
+    result.statusOk = true;
+    result.statusBody = `plan=${j.response?.subscription?.plan ?? "?"} · requests=${
+      j.response?.requests?.current ?? "?"
+    }/${j.response?.requests?.limit_day ?? "?"}`;
+  } catch (e) {
+    result.errors.push(`/status: ${e instanceof Error ? e.message : String(e)}`);
+  }
+
+  // 2) /leagues?id=1&season=2026 — does the WC league exist on this plan?
+  try {
+    const r = await fetch(`${BASE}/leagues?id=1&season=2026`, { headers, cache: "no-store" });
+    if (!r.ok) throw new Error(`leagues: HTTP ${r.status}`);
+    const j = (await r.json()) as { response?: Array<{ league?: { name?: string }; seasons?: Array<{ year: number; coverage?: { fixtures?: { events?: boolean } } }> }> };
+    const found = j.response?.[0];
+    result.leagueOk = Boolean(found);
+    if (found) {
+      const s2026 = found.seasons?.find((x) => x.year === 2026);
+      result.leagueCoverage = `league=${found.league?.name ?? "?"} · season-2026 events=${
+        s2026?.coverage?.fixtures?.events ?? "?"
+      }`;
+    }
+  } catch (e) {
+    result.errors.push(`/leagues: ${e instanceof Error ? e.message : String(e)}`);
+  }
+
+  // 3) /fixtures?league=1&season=2026 — full WC fixture set (no date filter)
+  try {
+    const r = await fetch(`${BASE}/fixtures?league=1&season=2026`, { headers, cache: "no-store" });
+    if (!r.ok) throw new Error(`fixtures-all: HTTP ${r.status}`);
+    const j = (await r.json()) as { response?: Array<{ teams: { home: { name: string }; away: { name: string } }; fixture: { date: string } }> };
+    const arr = j.response ?? [];
+    result.fixturesAllOk = arr.length > 0;
+    result.fixturesAllCount = arr.length;
+    result.fixturesAllSample = arr
+      .slice(0, 3)
+      .map((f) => `${f.teams.home.name} vs ${f.teams.away.name} @ ${f.fixture.date.slice(0, 16)}`);
+  } catch (e) {
+    result.errors.push(`/fixtures (all): ${e instanceof Error ? e.message : String(e)}`);
+  }
+
+  // 4) /fixtures?league=1&season=2026&from=…&to=… for a known WC date — does
+  //    the date filter reduce to 0? (Compares against #3.)
+  try {
+    const r = await fetch(
+      `${BASE}/fixtures?league=1&season=2026&from=2026-06-11&to=2026-06-12&timezone=UTC`,
+      { headers, cache: "no-store" },
+    );
+    if (!r.ok) throw new Error(`fixtures-dated: HTTP ${r.status}`);
+    const j = (await r.json()) as { response?: unknown[] };
+    result.fixturesDatedOk = (j.response?.length ?? 0) > 0;
+    result.fixturesDatedCount = j.response?.length ?? 0;
+  } catch (e) {
+    result.errors.push(`/fixtures (date): ${e instanceof Error ? e.message : String(e)}`);
+  }
+
+  return result;
+}

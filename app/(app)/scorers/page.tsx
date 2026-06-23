@@ -67,7 +67,7 @@ export default async function ScorersPage() {
 
       {scorers.length === 0 ? (
         <div className="surface p-8 text-center">
-          <Sparkles size={20} className="text-cream/35 mx-auto mb-3" />
+          <Sparkles size={20} className="text-cream/50 mx-auto mb-3" />
           <h2 className="font-serif text-lg tracking-editorial text-cream/85 mb-1">
             Ingen mål registrert ennå
           </h2>

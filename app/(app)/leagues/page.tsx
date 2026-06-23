@@ -103,7 +103,7 @@ export default async function LeaguesPage() {
                         {m.mini_leagues.description}
                       </div>
                     )}
-                    <div className="mt-2 flex items-center gap-3 text-[11px] font-mono text-cream/45">
+                    <div className="mt-2 flex items-center gap-3 text-[11px] font-mono text-cream/60">
                       <span className="flex items-center gap-1">
                         <Users size={11} /> Deltakere
                       </span>
@@ -116,7 +116,7 @@ export default async function LeaguesPage() {
                   </div>
                   <ChevronRight
                     size={14}
-                    className="text-cream/45 group-hover:text-signal mt-1 shrink-0 transition-colors"
+                    className="text-cream/60 group-hover:text-signal mt-1 shrink-0 transition-colors"
                   />
                 </div>
               </Link>
@@ -150,7 +150,7 @@ export default async function LeaguesPage() {
                       {l.description}
                     </div>
                   )}
-                  <div className="mt-1 flex items-center gap-1.5 text-[10px] uppercase tracking-kicker font-mono text-cream/45">
+                  <div className="mt-1 flex items-center gap-1.5 text-[10px] uppercase tracking-kicker font-mono text-cream/60">
                     <Globe size={10} /> Åpen liga
                   </div>
                 </div>

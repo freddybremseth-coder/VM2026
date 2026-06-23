@@ -33,7 +33,7 @@ export function TeamStarsCard({ teamId }: Props) {
         <h2 className="text-[10px] uppercase tracking-kicker font-mono font-semibold text-cream/70">
           Lagets stjerner
         </h2>
-        <span className="text-[9px] uppercase tracking-kicker text-cream/45 font-mono ml-auto">
+        <span className="text-[9px] uppercase tracking-kicker text-cream/60 font-mono ml-auto">
           all-time int.
         </span>
       </div>
@@ -88,11 +88,11 @@ function StarTile({
   if (!leader) {
     return (
       <div className="bg-paper p-3">
-        <div className="flex items-center gap-1.5 text-[10px] uppercase tracking-kicker text-cream/45 font-mono mb-2">
+        <div className="flex items-center gap-1.5 text-[10px] uppercase tracking-kicker text-cream/60 font-mono mb-2">
           {icon}
           {label}
         </div>
-        <div className="text-cream/35 text-xs italic">Ingen data</div>
+        <div className="text-cream/50 text-xs italic">Ingen data</div>
       </div>
     );
   }
@@ -122,7 +122,7 @@ function StarTile({
       <div className="mt-2 font-serif text-sm font-semibold text-cream truncate group-hover:text-amber transition-colors">
         {leader.player.name}
       </div>
-      <div className="text-[10px] text-cream/45 truncate font-mono mt-0.5">
+      <div className="text-[10px] text-cream/60 truncate font-mono mt-0.5">
         #{leader.player.number || "—"} · {leader.player.position}
       </div>
     </Link>

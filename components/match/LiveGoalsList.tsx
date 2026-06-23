@@ -29,7 +29,7 @@ export function LiveGoalsList({ goals, home, away }: Props) {
             Målscorere
           </h2>
         </div>
-        <p className="text-xs text-cream/45 italic">Ingen mål ennå.</p>
+        <p className="text-xs text-cream/60 italic">Ingen mål ennå.</p>
       </div>
     );
   }
@@ -41,7 +41,7 @@ export function LiveGoalsList({ goals, home, away }: Props) {
         <h2 className="text-[10px] uppercase tracking-kicker font-mono font-semibold text-cream/70">
           Målscorere
         </h2>
-        <span className="text-[9px] uppercase tracking-kicker text-cream/45 font-mono ml-auto">
+        <span className="text-[9px] uppercase tracking-kicker text-cream/60 font-mono ml-auto">
           {goals.length} {goals.length === 1 ? "mål" : "mål"}
         </span>
       </div>
@@ -93,7 +93,7 @@ function GoalRow({
         <div className="min-w-0 pr-4 text-right">
           {nameNode}
           {goal.assistName && (
-            <div className="text-[10px] text-cream/45 font-mono mt-0.5 truncate">
+            <div className="text-[10px] text-cream/60 font-mono mt-0.5 truncate">
               assist: {goal.assistName}
             </div>
           )}
@@ -115,7 +115,7 @@ function GoalRow({
             {goal.minute}'
           </span>
         </div>
-        <div className="text-[10px] uppercase tracking-kicker font-mono text-cream/35 pl-4">
+        <div className="text-[10px] uppercase tracking-kicker font-mono text-cream/50 pl-4">
           {teamLabel}
         </div>
       </>
@@ -123,7 +123,7 @@ function GoalRow({
   }
   return (
     <>
-      <div className="text-[10px] uppercase tracking-kicker font-mono text-cream/35 pr-4 text-right">
+      <div className="text-[10px] uppercase tracking-kicker font-mono text-cream/50 pr-4 text-right">
         {teamLabel}
       </div>
       <div className="text-center px-2 border-l border-r border-cream/10 self-stretch flex items-center">
@@ -134,7 +134,7 @@ function GoalRow({
       <div className="min-w-0 pl-4">
         {nameNode}
         {goal.assistName && (
-          <div className="text-[10px] text-cream/45 font-mono mt-0.5 truncate">
+          <div className="text-[10px] text-cream/60 font-mono mt-0.5 truncate">
             assist: {goal.assistName}
           </div>
         )}

@@ -115,7 +115,7 @@ function DaySection({
         <Kicker tone="cream" className="!text-cream">
           {dateLabel}
         </Kicker>
-        <span className="text-[10px] font-mono text-cream/45">
+        <span className="text-[10px] font-mono text-cream/60">
           {fixtures.length} {fixtures.length === 1 ? "kamp" : "kamper"}
         </span>
       </div>
@@ -177,12 +177,12 @@ function FixtureCard({
             {result.home}–{result.away}
           </div>
         ) : (
-          <div className="font-serif text-base text-cream/35 italic">vs</div>
+          <div className="font-serif text-base text-cream/50 italic">vs</div>
         )}
         <TeamSide team={away} align="left" />
       </div>
       {venue && (
-        <div className="mt-3 text-[10px] text-cream/45 font-mono flex items-center gap-1">
+        <div className="mt-3 text-[10px] text-cream/60 font-mono flex items-center gap-1">
           <MapPin size={10} /> {venue.name} · {venue.city}
         </div>
       )}
@@ -200,7 +200,7 @@ function TeamSide({
   if (!team) {
     return (
       <div
-        className={`font-mono text-xs text-cream/35 ${
+        className={`font-mono text-xs text-cream/50 ${
           align === "right" ? "text-right" : ""
         }`}
       >
@@ -219,7 +219,7 @@ function TeamSide({
         <div className="font-serif text-sm sm:text-base font-semibold tracking-editorial leading-tight [overflow-wrap:anywhere]">
           {teamName(team)}
         </div>
-        <div className="text-[10px] uppercase tracking-kicker font-mono text-cream/45">
+        <div className="text-[10px] uppercase tracking-kicker font-mono text-cream/60">
           {team.shortName}
         </div>
       </div>

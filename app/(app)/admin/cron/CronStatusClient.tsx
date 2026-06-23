@@ -85,7 +85,7 @@ export function CronStatusClient() {
         <div className="surface p-6 text-cream/55 text-sm italic font-serif">Laster…</div>
       ) : !data.hasRun ? (
         <div className="surface p-6 text-center">
-          <Clock size={24} className="text-cream/45 mx-auto mb-2" />
+          <Clock size={24} className="text-cream/60 mx-auto mb-2" />
           <div className="text-sm text-cream/85 font-serif tracking-editorial">
             Cron har ikke kjørt ennå på denne instansen.
           </div>
@@ -134,7 +134,7 @@ function ReportView({ report }: { report: CronRunReport }) {
               Daglig budsjett (estimat)
             </div>
             <div className={`font-serif text-2xl font-semibold stat-num ${budgetTone}`}>
-              ~{dailyBudget} <span className="text-cream/45 text-xs font-mono font-normal">/ 100 calls</span>
+              ~{dailyBudget} <span className="text-cream/60 text-xs font-mono font-normal">/ 100 calls</span>
             </div>
           </div>
           <div>
@@ -142,7 +142,7 @@ function ReportView({ report }: { report: CronRunReport }) {
               Denne kjøringen
             </div>
             <div className="font-serif text-2xl font-semibold stat-num text-cream">
-              {callsMade} <span className="text-cream/45 text-xs font-mono font-normal">calls</span>
+              {callsMade} <span className="text-cream/60 text-xs font-mono font-normal">calls</span>
             </div>
           </div>
         </div>
@@ -207,7 +207,7 @@ function TaskCard({ task }: { task: CronTaskResult }) {
         </span>
       </div>
       <div className="text-sm text-cream mb-1">{task.summary ?? "(ingen oppsummering)"}</div>
-      <div className="text-[10px] text-cream/45 font-mono stat-num">{task.durationMs}ms</div>
+      <div className="text-[10px] text-cream/60 font-mono stat-num">{task.durationMs}ms</div>
       {task.detail !== undefined && task.detail !== null && (
         <details className="mt-2">
           <summary className="text-[11px] text-cream/55 cursor-pointer hover:text-cream font-mono">

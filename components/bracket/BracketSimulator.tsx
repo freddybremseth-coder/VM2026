@@ -191,7 +191,7 @@ export function BracketSimulator() {
                 >
                   {round.name}
                 </span>
-                <span className="text-[10px] font-mono text-cream/45 stat-num">
+                <span className="text-[10px] font-mono text-cream/60 stat-num">
                   {round.ties.length}
                 </span>
               </div>
@@ -205,7 +205,7 @@ export function BracketSimulator() {
                 }}
               >
                 {round.ties.length === 0 && (
-                  <div className="text-[11px] text-cream/45 italic font-serif">
+                  <div className="text-[11px] text-cream/60 italic font-serif">
                     Velg vinnere over for å låse opp denne runden.
                   </div>
                 )}
@@ -274,13 +274,13 @@ function CoachLine({
             <div className="font-serif text-sm font-semibold tracking-editorial text-cream">
               AI bracket coach
             </div>
-            <span className="text-[10px] uppercase tracking-kicker text-cream/45 font-mono truncate">
+            <span className="text-[10px] uppercase tracking-kicker text-cream/60 font-mono truncate">
               ChatGenius{model ? ` · ${model}` : ""}
             </span>
           </div>
           <div className="text-sm text-cream/85 leading-relaxed">
             {loading && !text ? (
-              <span className="text-cream/45 italic font-serif">Tenker…</span>
+              <span className="text-cream/60 italic font-serif">Tenker…</span>
             ) : (
               text ?? "—"
             )}
@@ -366,7 +366,7 @@ function TeamRow({
         picked
           ? "text-signal font-semibold"
           : hasOther
-            ? "text-cream/35"
+            ? "text-cream/50"
             : "text-cream hover:bg-cream/5"
       }`}
     >

@@ -94,15 +94,15 @@ export default async function MatchLayout({
                 {fixture.teams.home ? (
                   <FixtureTeamRow team={fixture.teams.home} align="right" />
                 ) : (
-                  <div className="font-mono text-cream/35 text-lg sm:text-right">TBD</div>
+                  <div className="font-mono text-cream/50 text-lg sm:text-right">TBD</div>
                 )}
-                <div className="font-serif text-3xl sm:text-5xl text-cream/35 text-center italic">
+                <div className="font-serif text-3xl sm:text-5xl text-cream/50 text-center italic">
                   vs
                 </div>
                 {fixture.teams.away ? (
                   <FixtureTeamRow team={fixture.teams.away} align="left" />
                 ) : (
-                  <div className="font-mono text-cream/35 text-lg">TBD</div>
+                  <div className="font-mono text-cream/50 text-lg">TBD</div>
                 )}
               </div>
 

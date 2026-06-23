@@ -75,7 +75,7 @@ export function PredictionForm({
         <TeamSide team={home} align="right" />
         <div className="flex items-center justify-center gap-2">
           <ScoreInput ref={homeRef} name="homeScore" defaultValue={existing?.home_score ?? 0} />
-          <span className="text-cream/35 font-serif italic">·</span>
+          <span className="text-cream/50 font-serif italic">·</span>
           <ScoreInput ref={awayRef} name="awayScore" defaultValue={existing?.away_score ?? 0} />
         </div>
         <TeamSide team={away} align="left" />
@@ -143,7 +143,7 @@ function TeamSide({
         <div className="font-serif text-sm font-semibold tracking-editorial text-cream truncate">
           {teamName(team)}
         </div>
-        <div className="text-[10px] uppercase tracking-kicker text-cream/45 font-mono">
+        <div className="text-[10px] uppercase tracking-kicker text-cream/60 font-mono">
           {team.shortName}
         </div>
       </div>
@@ -221,7 +221,7 @@ function SubmitButton({ hasExisting }: { hasExisting: boolean }) {
     <button
       type="submit"
       disabled={pending}
-      className="flex items-center gap-1.5 bg-signal hover:bg-signalD disabled:bg-paper disabled:text-cream/35 text-cream text-xs font-semibold px-3 py-1.5 transition-colors"
+      className="flex items-center gap-1.5 bg-signal hover:bg-signalD disabled:bg-paper disabled:text-cream/50 text-cream text-xs font-semibold px-3 py-1.5 transition-colors"
     >
       <Save size={12} />
       {pending ? "Lagrer…" : hasExisting ? "Oppdater" : "Lagre tips"}

@@ -33,7 +33,7 @@ export function TopScorersList({ title, leaders, metric, subtitle }: Props) {
           </h2>
         </div>
         {subtitle && (
-          <span className="text-[9px] uppercase tracking-kicker text-cream/45 font-mono">
+          <span className="text-[9px] uppercase tracking-kicker text-cream/60 font-mono">
             {subtitle}
           </span>
         )}
@@ -44,7 +44,7 @@ export function TopScorersList({ title, leaders, metric, subtitle }: Props) {
           const team = teamById(leader.teamId);
           return (
             <li key={leader.player.id} className="flex items-center gap-3 text-sm">
-              <span className="font-serif text-base text-cream/45 w-5 text-right stat-num shrink-0">
+              <span className="font-serif text-base text-cream/60 w-5 text-right stat-num shrink-0">
                 {i + 1}
               </span>
               {team && (
@@ -62,7 +62,7 @@ export function TopScorersList({ title, leaders, metric, subtitle }: Props) {
               >
                 {leader.player.name}
               </Link>
-              <span className="text-[10px] text-cream/45 font-mono shrink-0 hidden sm:inline uppercase tracking-kicker">
+              <span className="text-[10px] text-cream/60 font-mono shrink-0 hidden sm:inline uppercase tracking-kicker">
                 {leader.player.position}
               </span>
               <span className={`font-mono font-bold stat-num shrink-0 text-lg ${valueTone}`}>

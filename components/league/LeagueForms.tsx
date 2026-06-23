@@ -92,7 +92,7 @@ function Field({
       </span>
       <input
         name={name}
-        className="mt-1 w-full bg-canvas border border-cream/8 px-3 py-2 text-sm text-cream placeholder:text-cream/45 focus:outline-none focus:border-signal/50"
+        className="mt-1 w-full bg-canvas border border-cream/8 px-3 py-2 text-sm text-cream placeholder:text-cream/60 focus:outline-none focus:border-signal/50"
         {...rest}
       />
     </label>
@@ -109,7 +109,7 @@ function Submit({ label, tone = "signal" }: { label: string; tone?: "signal" | "
     <button
       type="submit"
       disabled={pending}
-      className={`${bg} disabled:bg-paper disabled:text-cream/35 text-xs font-semibold px-4 py-2 mt-1 transition-colors`}
+      className={`${bg} disabled:bg-paper disabled:text-cream/50 text-xs font-semibold px-4 py-2 mt-1 transition-colors`}
     >
       {pending ? "…" : label}
     </button>

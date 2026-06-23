@@ -73,7 +73,7 @@ export function MatchHeader({ match }: Props) {
                 )}
               </>
             ) : (
-              <div className="font-serif text-3xl sm:text-4xl text-cream/35 italic">vs</div>
+              <div className="font-serif text-3xl sm:text-4xl text-cream/50 italic">vs</div>
             )}
           </div>
           <TeamBlock team={away} align="left" live={live} />

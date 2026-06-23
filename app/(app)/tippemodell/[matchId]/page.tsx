@@ -53,7 +53,7 @@ export default async function LineMovementPage({
 
       {movement.snapshots < 2 ? (
         <div className="surface p-8 text-center">
-          <TrendingUp size={18} className="text-cream/35 mx-auto mb-3" />
+          <TrendingUp size={18} className="text-cream/50 mx-auto mb-3" />
           <h2 className="font-serif text-lg tracking-editorial text-cream/85 mb-1">
             Ikke nok historikk ennå
           </h2>
@@ -75,7 +75,7 @@ export default async function LineMovementPage({
             homeTeam={movement.homeTeam}
             awayTeam={movement.awayTeam}
           />
-          <div className="mt-4 pt-3 border-t border-cream/8 text-[10px] text-cream/45 font-mono leading-relaxed">
+          <div className="mt-4 pt-3 border-t border-cream/8 text-[10px] text-cream/60 font-mono leading-relaxed">
             Hver linje er den beste tilgjengelige oddsen på tvers av alle
             bookmakere for det utfallet, målt ved hvert cron-øyeblikksbilde.
             Stigende linje = utfallet blir mindre sannsynlig i markedet;

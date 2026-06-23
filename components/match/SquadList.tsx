@@ -68,12 +68,12 @@ function SectionHeader({
       <span
         className={cn(
           "text-[10px] uppercase tracking-kicker font-semibold font-mono",
-          muted ? "text-cream/45" : "text-signal",
+          muted ? "text-cream/60" : "text-signal",
         )}
       >
         {label}
       </span>
-      <span className="text-[10px] font-mono text-cream/45 stat-num">{count}</span>
+      <span className="text-[10px] font-mono text-cream/60 stat-num">{count}</span>
     </div>
   );
 }
@@ -85,13 +85,13 @@ function PlayerRow({ player, muted }: { player: Player; muted?: boolean }) {
         href={`/players/${player.id}`}
         className="grid grid-cols-[28px_36px_1fr_auto] sm:grid-cols-[28px_36px_1fr_auto_auto] gap-3 items-center py-1.5 px-1 -mx-1 hover:bg-cream/5 transition-colors group"
       >
-        <span className="font-mono text-[11px] text-cream/45 text-right stat-num">
+        <span className="font-mono text-[11px] text-cream/60 text-right stat-num">
           {player.number}
         </span>
         <span
           className={cn(
             "px-1.5 py-0.5 text-[10px] font-mono font-semibold text-center",
-            muted ? "bg-paper text-cream/45" : "bg-signal/15 text-signal",
+            muted ? "bg-paper text-cream/60" : "bg-signal/15 text-signal",
           )}
         >
           {player.position}
@@ -107,7 +107,7 @@ function PlayerRow({ player, muted }: { player: Player; muted?: boolean }) {
             <span className="ml-1.5 text-signal text-[10px] font-mono">(C)</span>
           )}
         </span>
-        <span className="hidden sm:flex items-center gap-3 text-[10px] font-mono text-cream/45 shrink-0">
+        <span className="hidden sm:flex items-center gap-3 text-[10px] font-mono text-cream/60 shrink-0">
           {typeof player.caps === "number" && (
             <span title="caps">
               <span className="stat-num text-cream/70">{player.caps}</span>c
@@ -124,7 +124,7 @@ function PlayerRow({ player, muted }: { player: Player; muted?: boolean }) {
             </span>
           )}
         </span>
-        <span className="text-[10px] text-cream/45 truncate max-w-[110px] hidden md:inline font-mono">
+        <span className="text-[10px] text-cream/60 truncate max-w-[110px] hidden md:inline font-mono">
           {player.club}
         </span>
       </Link>

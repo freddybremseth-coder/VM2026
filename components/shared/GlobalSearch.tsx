@@ -114,7 +114,7 @@ export function GlobalSearch({ placeholder }: { placeholder: string }) {
       <label className="relative block">
         <Search
           size={14}
-          className="absolute left-3 top-1/2 -translate-y-1/2 text-cream/45 pointer-events-none"
+          className="absolute left-3 top-1/2 -translate-y-1/2 text-cream/60 pointer-events-none"
         />
         <input
           type="text"
@@ -130,14 +130,14 @@ export function GlobalSearch({ placeholder }: { placeholder: string }) {
             setOpen(true);
           }}
           onKeyDown={onKeyDown}
-          className="w-full bg-paper border border-cream/8 pl-9 pr-3 py-1.5 text-sm text-cream placeholder:text-cream/45 focus:outline-none focus:border-signal/50"
+          className="w-full bg-paper border border-cream/8 pl-9 pr-3 py-1.5 text-sm text-cream placeholder:text-cream/60 focus:outline-none focus:border-signal/50"
           aria-label={placeholder}
           autoComplete="off"
         />
         {loading && (
           <Loader2
             size={14}
-            className="absolute right-3 top-1/2 -translate-y-1/2 text-cream/45 animate-spin"
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-cream/60 animate-spin"
           />
         )}
       </label>
@@ -168,11 +168,11 @@ export function GlobalSearch({ placeholder }: { placeholder: string }) {
                   <div className="text-sm text-cream font-serif tracking-editorial truncate">
                     {entry.name}
                   </div>
-                  <div className="text-[11px] text-cream/45 font-mono truncate">
+                  <div className="text-[11px] text-cream/60 font-mono truncate">
                     {entry.sub}
                   </div>
                 </div>
-                <span className="shrink-0 text-cream/35">
+                <span className="shrink-0 text-cream/50">
                   {entry.type === "team" ? <Users size={13} /> : <User size={13} />}
                 </span>
               </button>

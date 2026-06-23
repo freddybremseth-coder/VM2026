@@ -44,7 +44,7 @@ export function LineupCard({ side, teamName, prominent = false }: Props) {
         )}
       </div>
 
-      <div className="text-[10px] uppercase tracking-kicker font-mono text-cream/45 mb-2">
+      <div className="text-[10px] uppercase tracking-kicker font-mono text-cream/60 mb-2">
         Startoppstilling
       </div>
       <ul className="space-y-1 mb-4">
@@ -52,7 +52,7 @@ export function LineupCard({ side, teamName, prominent = false }: Props) {
           <PlayerRow key={p.espnId} player={p} />
         ))}
         {side.starters.length === 0 && (
-          <li className="text-[10px] text-cream/45 italic">
+          <li className="text-[10px] text-cream/60 italic">
             Ikke publisert ennå
           </li>
         )}
@@ -60,7 +60,7 @@ export function LineupCard({ side, teamName, prominent = false }: Props) {
 
       {side.bench.length > 0 && (
         <>
-          <div className="text-[10px] uppercase tracking-kicker font-mono text-cream/45 mb-2">
+          <div className="text-[10px] uppercase tracking-kicker font-mono text-cream/60 mb-2">
             Innbyttere
           </div>
           <ul className="space-y-1">
@@ -87,7 +87,7 @@ function PlayerRow({
         muted ? "text-cream/55" : "text-cream"
       }`}
     >
-      <span className="font-mono text-[11px] stat-num w-5 text-right text-cream/45 shrink-0">
+      <span className="font-mono text-[11px] stat-num w-5 text-right text-cream/60 shrink-0">
         {player.jersey ?? "—"}
       </span>
       <span className="font-serif tracking-editorial truncate">{player.name}</span>

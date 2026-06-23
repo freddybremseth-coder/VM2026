@@ -37,7 +37,7 @@ export default async function LineupsPage({
     <div className="space-y-5">
       <div className="flex items-baseline justify-between">
         <Kicker tone="signal">Oppstilling</Kicker>
-        <span className="text-[10px] uppercase tracking-kicker font-mono text-cream/45">
+        <span className="text-[10px] uppercase tracking-kicker font-mono text-cream/60">
           via ESPN
         </span>
       </div>
@@ -57,7 +57,7 @@ function NotReady({
 }) {
   return (
     <div className="surface p-8 text-center">
-      <AlertTriangle size={20} className="text-cream/35 mx-auto mb-3" />
+      <AlertTriangle size={20} className="text-cream/50 mx-auto mb-3" />
       <h2 className="font-serif text-lg tracking-editorial text-cream/85 mb-1">
         Oppstilling er ikke klar ennå
       </h2>

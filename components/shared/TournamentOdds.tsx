@@ -44,7 +44,7 @@ export function TournamentOdds({ prediction, title = "Sannsynlighet" }: Props) {
               style={{ width: `${Math.round(prediction.pR32 * 100)}%` }}
             />
           </div>
-          <div className="mt-2 text-[10px] uppercase tracking-kicker font-mono text-cream/45">
+          <div className="mt-2 text-[10px] uppercase tracking-kicker font-mono text-cream/60">
             Topp 2: {Math.round(prediction.pTop2 * 100)}% · Beste 3.-plass:{" "}
             {Math.round(prediction.pThirdQualify * 100)}%
           </div>

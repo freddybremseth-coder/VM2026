@@ -235,7 +235,7 @@ function FixtureCard({
             {fixture.result.homeScore}–{fixture.result.awayScore}
           </span>
         ) : (
-          <span className="text-cream/35 font-serif italic text-sm">vs</span>
+          <span className="text-cream/50 font-serif italic text-sm">vs</span>
         )}
         <span className="font-serif text-base font-semibold tracking-editorial text-cream truncate">
           {fixture.awayName}
@@ -298,7 +298,7 @@ function KickoffOrStatus({
   }
   if (fixture.status === "finished") {
     return (
-      <span className="text-[10px] font-mono uppercase tracking-kicker text-cream/45">
+      <span className="text-[10px] font-mono uppercase tracking-kicker text-cream/60">
         Slutt
       </span>
     );
@@ -306,7 +306,7 @@ function KickoffOrStatus({
   // Future scheduled — show kickoff + countdown
   const ms = new Date(fixture.kickoff).getTime() - now.getTime();
   return (
-    <span className="text-[10px] font-mono text-cream/45 stat-num">
+    <span className="text-[10px] font-mono text-cream/60 stat-num">
       {formatKickoff(fixture.kickoff)} · om {formatCountdown(ms)}
     </span>
   );
@@ -337,12 +337,12 @@ function LockedTipsList({
   const ms = new Date(fixture.kickoff).getTime() - now.getTime();
   return (
     <div className="surface bg-canvas border border-cream/8 p-4 flex items-start gap-3">
-      <Lock size={14} className="text-cream/45 shrink-0 mt-0.5" />
+      <Lock size={14} className="text-cream/60 shrink-0 mt-0.5" />
       <div className="flex-1 min-w-0">
         <div className="text-sm text-cream/85 font-serif tracking-editorial leading-snug">
           De andre deltakernes tips blir synlige når kampen starter.
         </div>
-        <div className="text-[11px] font-mono text-cream/45 mt-1 stat-num">
+        <div className="text-[11px] font-mono text-cream/60 mt-1 stat-num">
           Låses opp om {formatCountdown(ms)} · {formatKickoff(fixture.kickoff)} (din lokale tid)
         </div>
         {ownTip ? (
@@ -353,7 +353,7 @@ function LockedTipsList({
             </span>
           </div>
         ) : (
-          <div className="text-[11px] font-mono text-cream/45 mt-2 italic">
+          <div className="text-[11px] font-mono text-cream/60 mt-2 italic">
             Du har ikke tippet denne kampen.
           </div>
         )}
@@ -430,7 +430,7 @@ function RevealedTipsList({
                     : g === "outcome"
                       ? "text-amber"
                       : g === "miss"
-                        ? "text-cream/45 line-through"
+                        ? "text-cream/60 line-through"
                         : "text-amber"
                 }`}
                 title={
@@ -445,13 +445,13 @@ function RevealedTipsList({
               >
                 {tip.homeScore}–{tip.awayScore}
                 {agree > 1 && (
-                  <span className="text-[9px] font-mono text-cream/45 uppercase tracking-kicker">
+                  <span className="text-[9px] font-mono text-cream/60 uppercase tracking-kicker">
                     ×{agree}
                   </span>
                 )}
               </span>
             ) : (
-              <span className="font-mono text-cream/35 text-[11px] italic shrink-0">
+              <span className="font-mono text-cream/50 text-[11px] italic shrink-0">
                 tippet ikke
               </span>
             )}

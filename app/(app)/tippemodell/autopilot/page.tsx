@@ -62,7 +62,7 @@ export default async function AutopilotPage() {
         <Dashboard summary={summary} />
       ) : null}
 
-      <p className="mt-8 pt-5 border-t border-cream/8 text-[10px] text-cream/45 font-mono leading-relaxed max-w-3xl">
+      <p className="mt-8 pt-5 border-t border-cream/8 text-[10px] text-cream/60 font-mono leading-relaxed max-w-3xl">
         Simulering til eget bruk. En positiv kurve her er nødvendig, men ikke
         tilstrekkelig, før ekte penger vurderes — markedet med 90+ bookmakere er
         skarpt, og marginen gjør det vanskelig å slå over tid. Spill ansvarlig.
@@ -82,7 +82,7 @@ function Dashboard({ summary }: { summary: PaperSummary }) {
     <>
       <div className="surface p-4 mb-5 flex flex-wrap items-center justify-between gap-3">
         <BankrollForm current={summary.startingBankroll} />
-        <span className="text-[10px] font-mono text-cream/45">
+        <span className="text-[10px] font-mono text-cream/60">
           {summary.openBets.length} åpne · {summary.won + summary.lost} avgjort
         </span>
       </div>
@@ -130,9 +130,9 @@ function Stat({
   const color = tone === "win" ? "text-win" : tone === "loss" ? "text-loss" : "text-cream";
   return (
     <div className="surface p-3">
-      <div className="text-[9px] uppercase tracking-kicker font-mono text-cream/45 mb-1">{label}</div>
+      <div className="text-[9px] uppercase tracking-kicker font-mono text-cream/60 mb-1">{label}</div>
       <div className={`font-mono text-lg font-bold stat-num ${color}`}>{value}</div>
-      <div className="text-[9px] font-mono text-cream/45 mt-0.5 stat-num">{sub}</div>
+      <div className="text-[9px] font-mono text-cream/60 mt-0.5 stat-num">{sub}</div>
     </div>
   );
 }
@@ -149,10 +149,10 @@ function BetList({
   return (
     <div className="surface p-4">
       <h2 className="text-[10px] uppercase tracking-kicker font-mono font-semibold text-cream/70 mb-3">
-        {title} <span className="text-cream/35">({bets.length})</span>
+        {title} <span className="text-cream/50">({bets.length})</span>
       </h2>
       {bets.length === 0 ? (
-        <p className="text-xs text-cream/45 font-mono">Ingen ennå.</p>
+        <p className="text-xs text-cream/60 font-mono">Ingen ennå.</p>
       ) : (
         <ul className="flex flex-col divide-y divide-cream/8">
           {bets.slice(0, 40).map((b) => {
@@ -161,7 +161,7 @@ function BetList({
               <li key={b.id} className="py-2 flex items-center justify-between gap-3">
                 <div className="min-w-0">
                   <div className="text-[12px] text-cream/85 truncate">{b.label}</div>
-                  <div className="text-[9px] font-mono text-cream/45 stat-num">
+                  <div className="text-[9px] font-mono text-cream/60 stat-num">
                     {kind === "open"
                       ? `${formatDateLabel(b.commenceAt)} · ${formatKickoff(b.commenceAt)} · @ ${b.placedOdds.toFixed(2)}`
                       : `innsats ${kr(b.stake)} · @ ${b.placedOdds.toFixed(2)}`}
@@ -206,7 +206,7 @@ function SetupNotice({ error }: { error: string }) {
             </code>{" "}
             ledgeren automatisk.
           </p>
-          <p className="mt-2 text-[10px] font-mono text-cream/35">{error}</p>
+          <p className="mt-2 text-[10px] font-mono text-cream/50">{error}</p>
         </div>
       </div>
     </div>
