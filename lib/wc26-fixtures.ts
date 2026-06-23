@@ -102,7 +102,7 @@ const GROUP_FIXTURES: RawGroupFixture[] = [
   { id: 39, group: "H", matchday: 2, utc: "2026-06-21T16:00:00Z", home: "ESP", away: "KSA", venue: "mercedes",  channel: "NRK" },
   { id: 40, group: "H", matchday: 2, utc: "2026-06-21T22:00:00Z", home: "URU", away: "CPV", venue: "hardrock",  channel: "TV 2" },
   { id: 41, group: "I", matchday: 2, utc: "2026-06-22T21:00:00Z", home: "FRA", away: "IRQ", venue: "lincoln",   channel: "NRK" },
-  { id: 42, group: "I", matchday: 2, utc: "2026-06-23T21:00:00Z", home: "NOR", away: "SEN", venue: "metlife",   channel: "NRK" },
+  { id: 42, group: "I", matchday: 2, utc: "2026-06-23T00:00:00Z", home: "NOR", away: "SEN", venue: "metlife",   channel: "NRK" },
   { id: 43, group: "J", matchday: 2, utc: "2026-06-22T17:00:00Z", home: "ARG", away: "AUT", venue: "att",       channel: "TV 2" },
   { id: 44, group: "J", matchday: 2, utc: "2026-06-23T03:00:00Z", home: "JOR", away: "ALG", venue: "levis",     channel: "TV 2" },
   { id: 45, group: "K", matchday: 2, utc: "2026-06-23T17:00:00Z", home: "POR", away: "UZB", venue: "nrg",       channel: "TV 2" },
