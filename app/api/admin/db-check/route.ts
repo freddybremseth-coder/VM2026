@@ -75,5 +75,49 @@ export async function GET(req: NextRequest) {
     markets: [...(byMatch[m.id] ?? [])],
   }));
 
-  return NextResponse.json({ markets, perMarket, dashboardMatches });
+  // Sample the totals + btts latest odds with match name + commence time, to
+  // confirm the ingested rows are real (and which matches own them).
+  const totalsId = (markets ?? []).find(
+    (m: { key: string }) => m.key === "totals",
+  )?.id;
+  const bttsId = (markets ?? []).find(
+    (m: { key: string }) => m.key === "btts",
+  )?.id;
+  const sampleFor = async (marketId: number | undefined) => {
+    if (marketId === undefined) return [];
+    const { data } = await db
+      .from("tm_latest_odds")
+      .select("match_id, outcome, price, tm_matches(home_team, away_team, commence_at)")
+      .eq("market_id", marketId)
+      .limit(8);
+    return (data ?? []) as unknown as Array<{
+      match_id: number;
+      outcome: string;
+      price: number;
+      tm_matches: { home_team: string; away_team: string; commence_at: string } | null;
+    }>;
+  };
+  const now = new Date().toISOString();
+  const totalsSample = (await sampleFor(totalsId)).map((r) => ({
+    match: r.tm_matches ? `${r.tm_matches.home_team} v ${r.tm_matches.away_team}` : `#${r.match_id}`,
+    commence_at: r.tm_matches?.commence_at,
+    past: r.tm_matches ? r.tm_matches.commence_at < now : null,
+    outcome: r.outcome,
+    price: r.price,
+  }));
+  const bttsSample = (await sampleFor(bttsId)).map((r) => ({
+    match: r.tm_matches ? `${r.tm_matches.home_team} v ${r.tm_matches.away_team}` : `#${r.match_id}`,
+    commence_at: r.tm_matches?.commence_at,
+    past: r.tm_matches ? r.tm_matches.commence_at < now : null,
+    outcome: r.outcome,
+    price: r.price,
+  }));
+
+  return NextResponse.json({
+    markets,
+    perMarket,
+    dashboardMatches,
+    totalsSample,
+    bttsSample,
+  });
 }
