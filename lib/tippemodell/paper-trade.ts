@@ -271,10 +271,13 @@ export async function getPaperSummary(): Promise<PaperSummary> {
   const db = createSupabaseServerClient();
   const starting = await startingBankroll(db);
 
-  const { data: betsRaw } = await db
+  const { data: betsRaw, error } = await db
     .from("tm_paper_bets")
     .select("*")
     .order("commence_at", { ascending: true });
+  // supabase-js doesn't throw on a missing table — surface it so the page
+  // shows the "run the migration" notice instead of a misleading empty ledger.
+  if (error) throw new Error(error.message);
   const bets = ((betsRaw ?? []) as BetRow[]).map(rowToBet);
 
   const open = bets.filter((b) => b.status === "open");
