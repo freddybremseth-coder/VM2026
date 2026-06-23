@@ -53,27 +53,38 @@ export async function GET(req: NextRequest) {
   }));
 
   const deleteParam = req.nextUrl.searchParams.get("delete");
-  if (!deleteParam) {
+  const leaveParam = req.nextUrl.searchParams.get("leave");
+  if (!deleteParam && !leaveParam) {
     return NextResponse.json({ count: listing.length, profiles: listing });
   }
 
-  const wanted = deleteParam.split(",").map((s) => s.trim().toLowerCase()).filter(Boolean);
+  const param = deleteParam ?? leaveParam ?? "";
+  const wanted = param.split(",").map((s) => s.trim().toLowerCase()).filter(Boolean);
   const targets = profiles.filter(
     (p) =>
       wanted.includes((p.display_name ?? "").toLowerCase()) ||
       wanted.includes(p.username.toLowerCase()),
   );
 
-  const removed: Array<{ id: string; displayName: string | null; ok: boolean; error?: string }> = [];
+  const result: Array<{
+    id: string;
+    label: string;
+    action: "deleted" | "left-leagues";
+    ok: boolean;
+    error?: string;
+  }> = [];
   for (const t of targets) {
-    const { error } = await admin.auth.admin.deleteUser(t.id);
-    removed.push({
-      id: t.id,
-      displayName: t.display_name,
-      ok: !error,
-      error: error?.message,
-    });
+    const label = t.display_name || t.username;
+    if (deleteParam) {
+      // Full account delete — cascades to predictions + league_members.
+      const { error } = await admin.auth.admin.deleteUser(t.id);
+      result.push({ id: t.id, label, action: "deleted", ok: !error, error: error?.message });
+    } else {
+      // Just remove from every league (keep the account + its tips).
+      const { error } = await admin.from("league_members").delete().eq("user_id", t.id);
+      result.push({ id: t.id, label, action: "left-leagues", ok: !error, error: error?.message });
+    }
   }
 
-  return NextResponse.json({ requested: wanted, removed });
+  return NextResponse.json({ requested: wanted, matched: targets.length, result });
 }
