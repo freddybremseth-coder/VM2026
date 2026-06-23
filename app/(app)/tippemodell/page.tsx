@@ -14,7 +14,7 @@
  */
 
 import Link from "next/link";
-import { TrendingUp, AlertCircle, Info } from "lucide-react";
+import { TrendingUp, AlertCircle, Info, Bot } from "lucide-react";
 import { Kicker, Headline } from "@/components/shared/EditorialKicker";
 import { MatchOddsCard } from "@/components/tippemodell/MatchOddsCard";
 import { getTippemodellDashboard } from "@/lib/tippemodell/dashboard";
@@ -41,6 +41,12 @@ export default async function TippemodellPage() {
           fra skarpe linjer (margin fjernet), og en verdi-markering når
           markedet betaler bedre enn fair-linja tilsier.
         </p>
+        <Link
+          href="/tippemodell/autopilot"
+          className="mt-4 inline-flex items-center gap-1.5 px-3 py-1.5 bg-signal/15 text-signal hover:bg-signal/25 text-[10px] uppercase tracking-kicker font-mono transition-colors"
+        >
+          <Bot size={12} /> Auto-pilot: tjener modellen penger? →
+        </Link>
       </header>
 
       {!apiConfigured ? (
