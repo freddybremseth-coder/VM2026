@@ -82,39 +82,44 @@ export async function GET(req: NextRequest) {
     summary[marketId] = rows;
   }
 
-  // Try to fetch a market-name reference so we map ids → names instead of
-  // guessing. Probe several plausible endpoints; return whatever responds.
-  const metaProbes = [
-    "/markets?sportId=10",
-    "/markets",
-    "/sports/10/markets",
-    "/marketTypes?sportId=10",
-  ];
-  const meta: Record<string, unknown> = {};
-  for (const path of metaProbes) {
-    try {
-      const u = new URL(`https://api.oddspapi.io/v4${path.split("?")[0]}`);
-      u.searchParams.set("apiKey", apiKey);
-      const q = path.split("?")[1];
-      if (q) for (const [k, v] of new URLSearchParams(q)) u.searchParams.set(k, v);
-      const r = await fetch(u.toString(), { cache: "no-store" });
-      if (r.ok) {
-        const body = await r.json();
-        // Keep it compact — first 30 entries if array.
-        meta[path] = Array.isArray(body) ? body.slice(0, 30) : body;
-      } else {
-        meta[path] = `HTTP ${r.status}`;
-      }
-    } catch (e) {
-      meta[path] = e instanceof Error ? e.message : String(e);
+  // Pull the full reference entries for the markets we care about, so we
+  // can map outcome ids → names (Over/Under, Yes/No) precisely.
+  let reference: unknown = "n/a";
+  try {
+    const u = new URL("https://api.oddspapi.io/v4/markets");
+    u.searchParams.set("apiKey", apiKey);
+    u.searchParams.set("sportId", "10");
+    const r = await fetch(u.toString(), { cache: "no-store" });
+    if (r.ok) {
+      const body = (await r.json()) as Array<{ marketId: number }>;
+      const want = new Set([101, 104, 106, 1010]);
+      reference = body.filter((x) => want.has(x.marketId));
+    } else {
+      reference = `HTTP ${r.status}`;
     }
+  } catch (e) {
+    reference = e instanceof Error ? e.message : String(e);
+  }
+
+  // Live outcome ids (uncapped) for BTTS (104) and O/U 2.5 (1010).
+  const targetMarkets: Record<string, Array<{ outcome: string; price: number | undefined }>> = {};
+  for (const mid of ["104", "1010"]) {
+    const market = markets[mid];
+    if (!market) {
+      targetMarkets[mid] = [];
+      continue;
+    }
+    targetMarkets[mid] = Object.entries(market.outcomes ?? {}).map(
+      ([outcomeId, oc]) => ({ outcome: outcomeId, price: oc.players?.["0"]?.price }),
+    );
   }
 
   return NextResponse.json({
     match: `${m.home_team} v ${m.away_team}`,
     bookmaker: firstKey,
     marketCount: Object.keys(markets).length,
-    markets: summary,
-    marketMeta: meta,
+    allMarketIds: Object.keys(markets),
+    reference,
+    targetMarkets,
   });
 }
