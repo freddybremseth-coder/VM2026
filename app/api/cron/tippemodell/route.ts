@@ -110,13 +110,25 @@ export async function GET(req: NextRequest) {
   const toStr = ymd(toDate);
 
   let fixturesUpserted = 0;
+  const fixtureErrors: string[] = [];
   for (const league of leagues) {
-    const fixtures = await fetchFixtures({
-      sportId: SPORT_ID_FOOTBALL,
-      from: fromStr,
-      to: toStr,
-      tournamentName: league.name,
-    });
+    let fixtures: Awaited<ReturnType<typeof fetchFixtures>> = [];
+    try {
+      fixtures = await fetchFixtures({
+        sportId: SPORT_ID_FOOTBALL,
+        from: fromStr,
+        to: toStr,
+        tournamentName: league.name,
+      });
+    } catch (err) {
+      // A transient OddsPapi error (429 rate-limit, 5xx) for one league must
+      // not abort the whole run — we still ingest odds for matches already in
+      // the DB, and the next tick retries the fixtures.
+      fixtureErrors.push(
+        `${league.name}: ${err instanceof Error ? err.message : String(err)}`,
+      );
+      continue;
+    }
     for (const f of fixtures) {
       const wc26 = resolveWC26FixtureId(f.homeTeam, f.awayTeam, f.startTime);
       const { error } = await supabase.from("tm_matches").upsert(
@@ -236,6 +248,7 @@ export async function GET(req: NextRequest) {
     startedAt,
     finishedAt: new Date().toISOString(),
     fixturesUpserted,
+    fixtureErrors,
     matchesWithOdds: matches.length,
     snapshotCount,
     bookmakersCreated,
