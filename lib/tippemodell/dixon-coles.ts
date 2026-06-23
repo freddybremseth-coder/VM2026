@@ -42,6 +42,12 @@ export interface MatchProbabilities {
   home: number;
   draw: number;
   away: number;
+  /** Over/Under 2.5 total goals (the standard line we ingest). */
+  over25: number;
+  under25: number;
+  /** Both teams to score — yes / no. */
+  bttsYes: number;
+  bttsNo: number;
   /** Expected goals each side — surfaced for transparency. */
   lambdaHome: number;
   lambdaAway: number;
@@ -106,6 +112,8 @@ export function matchProbabilities(
   let pHome = 0;
   let pDraw = 0;
   let pAway = 0;
+  let pOver = 0; // total goals ≥ 3 (Over 2.5)
+  let pBtts = 0; // both sides score ≥ 1
   let total = 0;
 
   for (let i = 0; i <= MAX_GOALS; i++) {
@@ -117,15 +125,21 @@ export function matchProbabilities(
       if (i > j) pHome += cell;
       else if (i === j) pDraw += cell;
       else pAway += cell;
+      if (i + j >= 3) pOver += cell;
+      if (i >= 1 && j >= 1) pBtts += cell;
     }
   }
 
-  // Renormalise so the three outcomes sum to 1.
+  // Renormalise so each market sums to 1 (τ leaves the raw matrix slightly off).
   const norm = total > 0 ? total : 1;
   return {
     home: pHome / norm,
     draw: pDraw / norm,
     away: pAway / norm,
+    over25: pOver / norm,
+    under25: 1 - pOver / norm,
+    bttsYes: pBtts / norm,
+    bttsNo: 1 - pBtts / norm,
     lambdaHome,
     lambdaAway,
   };

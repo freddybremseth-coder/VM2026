@@ -75,7 +75,7 @@ export const VALUE_EV_THRESHOLD = 0.02;
 export const MAX_BELIEVABLE_EV = 0.15;
 
 export interface OutcomeValue {
-  outcome: OutcomeKey;
+  outcome: string;
   /** Our Dixon-Coles probability for this outcome. */
   modelProb: number;
   /** Expected value per unit at the best market price (null if no price). */
@@ -92,7 +92,39 @@ export interface OutcomeValue {
 export interface MatchValue {
   lambdaHome: number;
   lambdaAway: number;
+  /** 1X2 market. */
   outcomes: Record<OutcomeKey, OutcomeValue>;
+  /** Over/Under 2.5 goals — keyed "over" / "under". */
+  totals: Record<"over" | "under", OutcomeValue>;
+  /** Both teams to score — keyed "yes" / "no". */
+  btts: Record<"yes" | "no", OutcomeValue>;
+}
+
+/**
+ * EV / Kelly / value-band classification for one outcome, shared by every
+ * market so the honesty rules (believable-edge band, no stake on diverging
+ * lines) apply identically to 1X2, totals and BTTS.
+ */
+function evaluate(
+  outcome: string,
+  modelProb: number,
+  odds: number | null,
+): OutcomeValue {
+  let ev: number | null = null;
+  let kelly: number | null = null;
+  let isValue = false;
+  let modelDiverges = false;
+  if (odds && odds > 1) {
+    ev = expectedValue(modelProb, odds);
+    if (ev > MAX_BELIEVABLE_EV) {
+      modelDiverges = true;
+    } else if (ev > VALUE_EV_THRESHOLD) {
+      isValue = true;
+      const fullKelly = kellyFraction(modelProb, odds);
+      kelly = Math.min(KELLY_CAP, fullKelly * KELLY_FRACTION);
+    }
+  }
+  return { outcome, modelProb, ev, kelly, isValue, modelDiverges };
 }
 
 /**
@@ -100,9 +132,18 @@ export interface MatchValue {
  * `bestOddsByOutcome` carries the best market decimal odds we already
  * pulled for the dashboard, so we don't re-query.
  */
+export interface BestOdds {
+  /** 1X2 best decimal odds. */
+  h2h?: Partial<Record<OutcomeKey, number>>;
+  /** Over/Under 2.5 best decimal odds. */
+  totals?: Partial<Record<"over" | "under", number>>;
+  /** BTTS best decimal odds. */
+  btts?: Partial<Record<"yes" | "no", number>>;
+}
+
 export async function getMatchValue(
   wc26FixtureId: number,
-  bestOddsByOutcome: Partial<Record<OutcomeKey, number>>,
+  best: BestOdds,
   teamNames?: { home: string; away: string },
 ): Promise<MatchValue | null> {
   // Resolve internal team ids. Group fixtures carry homeId/awayId directly;
@@ -131,30 +172,24 @@ export async function getMatchValue(
 
   const outcomes = {} as Record<OutcomeKey, OutcomeValue>;
   for (const oc of ["home", "draw", "away"] as const) {
-    const modelProb = modelByOutcome[oc];
-    const odds = bestOddsByOutcome[oc] ?? null;
-    let ev: number | null = null;
-    let kelly: number | null = null;
-    let isValue = false;
-    let modelDiverges = false;
-    if (odds && odds > 1) {
-      ev = expectedValue(modelProb, odds);
-      if (ev > MAX_BELIEVABLE_EV) {
-        // Edge too large to be real against a deep market — treat as model
-        // overconfidence, not a bet. No stake suggested.
-        modelDiverges = true;
-      } else if (ev > VALUE_EV_THRESHOLD) {
-        isValue = true;
-        const fullKelly = kellyFraction(modelProb, odds);
-        kelly = Math.min(KELLY_CAP, fullKelly * KELLY_FRACTION);
-      }
-    }
-    outcomes[oc] = { outcome: oc, modelProb, ev, kelly, isValue, modelDiverges };
+    outcomes[oc] = evaluate(oc, modelByOutcome[oc], best.h2h?.[oc] ?? null);
   }
+
+  const totals = {
+    over: evaluate("over", probs.over25, best.totals?.over ?? null),
+    under: evaluate("under", probs.under25, best.totals?.under ?? null),
+  };
+
+  const btts = {
+    yes: evaluate("yes", probs.bttsYes, best.btts?.yes ?? null),
+    no: evaluate("no", probs.bttsNo, best.btts?.no ?? null),
+  };
 
   return {
     lambdaHome: probs.lambdaHome,
     lambdaAway: probs.lambdaAway,
     outcomes,
+    totals,
+    btts,
   };
 }

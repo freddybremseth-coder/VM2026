@@ -62,6 +62,22 @@ describe("dixon-coles", () => {
     expect(p.draw).toBeLessThan(0.34);
   });
 
+  it("over/under and btts each sum to 1", () => {
+    const p = matchProbabilities(T(1.4, 0.7), T(0.8, 1.3, 2));
+    expect(p.over25 + p.under25).toBeCloseTo(1, 6);
+    expect(p.bttsYes + p.bttsNo).toBeCloseTo(1, 6);
+  });
+
+  it("high-scoring teams push Over 2.5 and BTTS up", () => {
+    const high = matchProbabilities(T(1.8, 1.3), T(1.6, 1.4, 2));
+    const low = matchProbabilities(T(0.7, 0.6), T(0.6, 0.7, 2));
+    expect(high.over25).toBeGreaterThan(low.over25);
+    expect(high.bttsYes).toBeGreaterThan(low.bttsYes);
+    // A lopsided game (strong attack vs weak, weak attack) suppresses BTTS.
+    const lopsided = matchProbabilities(T(2.2, 0.5), T(0.4, 1.8, 2));
+    expect(lopsided.bttsYes).toBeLessThan(0.5);
+  });
+
   it("expectedValue is positive when prob beats the implied odds", () => {
     // odds 2.10 imply 47.6%; at 55% we have edge.
     expect(expectedValue(0.55, 2.1)).toBeCloseTo(0.155, 3);

@@ -116,16 +116,27 @@ interface RawOddsResponse {
   bookmakerOdds?: Record<string, RawBookmakerOdds>;
 }
 
-// Numeric market id → our canonical market key. Phase 1 = 1X2 only.
+// Numeric market id → our canonical market key. Verified against OddsPapi's
+// /markets reference for sportId 10 (football):
+//   101  Full Time Result  → h2h   (101=1, 102=X, 103=2)
+//   104  Both Teams Score  → btts  (104=Yes, 105=No)
+//   1010 Over/Under 2.5    → totals (1010=Over, 1011=Under), point 2.5
 const MARKET_ID_TO_KEY: Record<string, string> = {
   "101": "h2h",
+  "104": "btts",
+  "1010": "totals",
 };
 
-// For market 101, outcome ids map to 1X2 selections.
-const H2H_OUTCOME_ID_TO_KEY: Record<string, "home" | "draw" | "away"> = {
-  "101": "home",
-  "102": "draw",
-  "103": "away",
+// Per-market outcome-id → our canonical outcome key, from the same reference.
+const OUTCOME_ID_TO_KEY: Record<string, Record<string, string>> = {
+  "101": { "101": "home", "102": "draw", "103": "away" },
+  "104": { "104": "yes", "105": "no" },
+  "1010": { "1010": "over", "1011": "under" },
+};
+
+// The totals line (handicap) each totals market id carries. Only 2.5 for now.
+const MARKET_POINT: Record<string, number> = {
+  "1010": 2.5,
 };
 
 /** Prettify a bookmaker key into a display title ("3et" → "3ET"). */
@@ -210,14 +221,16 @@ export async function fetchOddsForFixture(
     if (bm.suspended || bm.bookmakerIsActive === false) continue;
     for (const [marketId, market] of Object.entries(bm.markets ?? {})) {
       const marketKey = MARKET_ID_TO_KEY[marketId];
-      if (!marketKey) continue; // phase 1: only market 101 (h2h)
+      if (!marketKey) continue; // we keep 1X2 (101), BTTS (104), O/U 2.5 (1010)
       if (market.marketActive === false) continue;
+      const outcomeMap = OUTCOME_ID_TO_KEY[marketId];
+      const point = MARKET_POINT[marketId];
 
       for (const [outcomeId, outcome] of Object.entries(market.outcomes ?? {})) {
-        const selection = H2H_OUTCOME_ID_TO_KEY[outcomeId];
+        const selection = outcomeMap?.[outcomeId];
         if (!selection) continue;
         // The primary line lives under players["0"]; alt lines (if any)
-        // sit under other keys — for 1X2 there's just the one.
+        // sit under other keys — we only take the main line.
         const player = outcome.players?.["0"];
         if (!player || player.active === false) continue;
         if (typeof player.price !== "number" || player.price <= 1) continue;
@@ -228,6 +241,7 @@ export async function fetchOddsForFixture(
           marketKey,
           outcome: selection,
           price: player.price,
+          ...(point !== undefined ? { point } : {}),
         });
       }
     }

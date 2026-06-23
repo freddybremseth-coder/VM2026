@@ -51,6 +51,16 @@ export function MatchOddsCard({ match }: { match: MatchView }) {
         ))}
       </div>
 
+      {/* Over/Under 2.5 */}
+      {match.totals && (
+        <MarketSection title="Over / Under 2.5 mål" outcomes={match.totals} />
+      )}
+
+      {/* Begge lag scorer */}
+      {match.btts && (
+        <MarketSection title="Begge lag scorer" outcomes={match.btts} />
+      )}
+
       {/* Footer — line-movement + wc26 link */}
       <div className="mt-3 pt-3 border-t border-cream/8 flex items-center gap-4">
         <Link
@@ -67,6 +77,28 @@ export function MatchOddsCard({ match }: { match: MatchView }) {
             Kampdetalj →
           </Link>
         )}
+      </div>
+    </div>
+  );
+}
+
+/** A secondary 2-way market (totals / BTTS) below the 1X2 grid. */
+function MarketSection({
+  title,
+  outcomes,
+}: {
+  title: string;
+  outcomes: OutcomeView[];
+}) {
+  return (
+    <div className="mt-3 pt-3 border-t border-cream/8">
+      <h3 className="text-[9px] uppercase tracking-kicker font-mono text-cream/45 mb-2">
+        {title}
+      </h3>
+      <div className="grid grid-cols-2 gap-2">
+        {outcomes.map((o) => (
+          <OutcomeCell key={o.outcome} outcome={o} />
+        ))}
       </div>
     </div>
   );

@@ -25,8 +25,8 @@ export interface BookPrice {
 export type OutcomeKey = "home" | "draw" | "away";
 
 export interface OutcomeView {
-  outcome: OutcomeKey;
-  label: "1" | "X" | "2";
+  outcome: string;
+  label: string;
   best: BookPrice | null;
   sharp: number | null;
   fairProb: number | null;
@@ -53,14 +53,20 @@ export interface MatchView {
   awayTeam: string;
   commenceAt: string;
   wc26FixtureId: number | null;
+  /** 1X2 — always present (a match is only listed if it has h2h odds). */
   outcomes: OutcomeView[];
+  /** Over/Under 2.5 goals — null when no bookmaker offered it. */
+  totals: OutcomeView[] | null;
+  /** Both teams to score — null when no bookmaker offered it. */
+  btts: OutcomeView[] | null;
 }
 
-const LABELS: Record<OutcomeKey, "1" | "X" | "2"> = {
-  home: "1",
-  draw: "X",
-  away: "2",
+const H2H_LABELS: Record<string, string> = { home: "1", draw: "X", away: "2" };
+const TOTALS_LABELS: Record<string, string> = {
+  over: "Over 2.5",
+  under: "Under 2.5",
 };
+const BTTS_LABELS: Record<string, string> = { yes: "Ja", no: "Nei" };
 
 interface MatchRow {
   id: number;
@@ -89,17 +95,108 @@ interface MarketRow {
   key: string;
 }
 
+/**
+ * Build the per-outcome view for one market: best price, sharp price, fair
+ * probability (de-vig sharp line, else de-vig best), and edge. Shared by
+ * 1X2, totals and BTTS. `keys` is the canonical outcome order.
+ */
+function buildMarketOutcomes(
+  marketOdds: Array<OddsRow & { match_id: number }>,
+  bmById: Map<number, BookmakerRow>,
+  keys: string[],
+  labels: Record<string, string>,
+): OutcomeView[] | null {
+  const outcomes: OutcomeView[] = keys.map((oc) => {
+    const rows = marketOdds
+      .filter((o) => o.outcome === oc)
+      .map((o) => {
+        const bm = bmById.get(o.bookmaker_id);
+        return {
+          bookmaker: bm?.title ?? "?",
+          isSharp: bm?.is_sharp ?? false,
+          price: Number(o.price),
+        };
+      });
+    const best = bestPrice(rows);
+    const sharpRow = rows.find((r) => r.isSharp) ?? null;
+    return {
+      outcome: oc,
+      label: labels[oc] ?? oc,
+      best,
+      sharp: sharpRow?.price ?? null,
+      fairProb: null,
+      bookCount: rows.length,
+      edge: null,
+      modelProb: null,
+      modelEv: null,
+      kelly: null,
+      modelValue: false,
+      modelDiverges: false,
+    };
+  });
+
+  // A market is only worth showing if at least one outcome has a price.
+  if (outcomes.every((o) => o.best === null)) return null;
+
+  // Fair probabilities — prefer the sharp line, fall back to best prices.
+  const sharpPrices = outcomes.map((o) => o.sharp);
+  let fair: number[] | null = null;
+  if (sharpPrices.every((p): p is number => p != null)) {
+    fair = devig(sharpPrices);
+  } else {
+    const bp = outcomes.map((o) => o.best?.price ?? null);
+    if (bp.every((p): p is number => p != null)) {
+      fair = devig(bp as number[]);
+    }
+  }
+  if (fair) {
+    outcomes.forEach((o, i) => {
+      o.fairProb = fair![i];
+      o.edge = edge(o.best?.price ?? null, fair![i]);
+    });
+  }
+  return outcomes;
+}
+
+/** Attach model probability + value metrics onto a built outcome list. */
+function applyModelValues(
+  outcomes: OutcomeView[] | null,
+  byOutcome: Record<string, OutcomeValue> | undefined,
+): void {
+  if (!outcomes || !byOutcome) return;
+  for (const o of outcomes) {
+    const v = byOutcome[o.outcome];
+    if (!v) continue;
+    o.modelProb = v.modelProb;
+    o.modelEv = v.ev;
+    o.kelly = v.kelly;
+    o.modelValue = v.isValue;
+    o.modelDiverges = v.modelDiverges;
+  }
+}
+
+function bestByOutcome(
+  outcomes: OutcomeView[] | null,
+): Record<string, number> {
+  const r: Record<string, number> = {};
+  for (const o of outcomes ?? []) if (o.best) r[o.outcome] = o.best.price;
+  return r;
+}
+
 export async function getTippemodellDashboard(): Promise<MatchView[]> {
   const supabase = createSupabaseServerClient();
 
-  // Find the h2h market id once.
-  const { data: marketData } = await supabase
+  // Market ids for the three markets we ingest.
+  const { data: marketsData } = await supabase
     .from("tm_markets")
     .select("id, key")
-    .eq("key", "h2h")
-    .maybeSingle();
-  const market = marketData as MarketRow | null;
-  if (!market) return [];
+    .in("key", ["h2h", "totals", "btts"]);
+  const marketIdByKey = new Map(
+    ((marketsData ?? []) as MarketRow[]).map((m) => [m.key, m.id]),
+  );
+  const h2hMarketId = marketIdByKey.get("h2h");
+  if (!h2hMarketId) return [];
+  const allMarketIds = [...marketIdByKey.values()];
 
   // Upcoming matches, soonest first.
   const { data: matchesData } = await supabase
@@ -116,14 +213,14 @@ export async function getTippemodellDashboard(): Promise<MatchView[]> {
 
   const matchIds = matches.map((m) => m.id);
 
-  // Latest odds for those matches + h2h market.
+  // Latest odds for those matches across all three markets.
   const { data: oddsData } = await supabase
     .from("tm_latest_odds")
-    .select("match_id, outcome, price, bookmaker_id")
+    .select("match_id, market_id, outcome, price, bookmaker_id")
     .in("match_id", matchIds)
-    .eq("market_id", market.id);
+    .in("market_id", allMarketIds);
   const oddsRows = (oddsData ?? []) as unknown as Array<
-    OddsRow & { match_id: number }
+    OddsRow & { match_id: number; market_id: number }
   >;
 
   // Bookmaker metadata.
@@ -134,88 +231,60 @@ export async function getTippemodellDashboard(): Promise<MatchView[]> {
       .from("tm_bookmakers")
       .select("id, title, is_sharp")
       .in("id", bmIds);
-    bmById = new Map(
-      ((bmsData ?? []) as BookmakerRow[]).map((b) => [b.id, b]),
-    );
+    bmById = new Map(((bmsData ?? []) as BookmakerRow[]).map((b) => [b.id, b]));
   }
+
+  const totalsMarketId = marketIdByKey.get("totals");
+  const bttsMarketId = marketIdByKey.get("btts");
 
   const out: MatchView[] = [];
   for (const m of matches) {
     const matchOdds = oddsRows.filter((o) => o.match_id === m.id);
-    if (matchOdds.length === 0) continue;
+    const h2hOdds = matchOdds.filter((o) => o.market_id === h2hMarketId);
+    if (h2hOdds.length === 0) continue; // need at least the 1X2 market
 
-    const outcomes: OutcomeView[] = (["home", "draw", "away"] as const).map(
-      (oc) => {
-        const rows = matchOdds
-          .filter((o) => o.outcome === oc)
-          .map((o) => {
-            const bm = bmById.get(o.bookmaker_id);
-            return {
-              bookmaker: bm?.title ?? "?",
-              isSharp: bm?.is_sharp ?? false,
-              price: Number(o.price),
-            };
-          });
-        const best = bestPrice(rows);
-        const sharpRow = rows.find((r) => r.isSharp) ?? null;
-        return {
-          outcome: oc,
-          label: LABELS[oc],
-          best,
-          sharp: sharpRow?.price ?? null,
-          fairProb: null,
-          bookCount: rows.length,
-          edge: null,
-          modelProb: null,
-          modelEv: null,
-          kelly: null,
-          modelValue: false,
-          modelDiverges: false,
-        };
-      },
-    );
+    const outcomes = buildMarketOutcomes(
+      h2hOdds,
+      bmById,
+      ["home", "draw", "away"],
+      H2H_LABELS,
+    )!;
+    const totals =
+      totalsMarketId !== undefined
+        ? buildMarketOutcomes(
+            matchOdds.filter((o) => o.market_id === totalsMarketId),
+            bmById,
+            ["over", "under"],
+            TOTALS_LABELS,
+          )
+        : null;
+    const btts =
+      bttsMarketId !== undefined
+        ? buildMarketOutcomes(
+            matchOdds.filter((o) => o.market_id === bttsMarketId),
+            bmById,
+            ["yes", "no"],
+            BTTS_LABELS,
+          )
+        : null;
 
-    // Compute fair probabilities — prefer sharp line, fall back to best.
-    const sharpPrices = outcomes.map((o) => o.sharp);
-    let fair: number[] | null = null;
-    if (sharpPrices.every((p): p is number => p != null)) {
-      fair = devig(sharpPrices);
-    } else {
-      const bp = outcomes.map((o) => o.best?.price ?? null);
-      if (bp.every((p): p is number => p != null)) {
-        fair = devig(bp as number[]);
-      }
-    }
-    if (fair) {
-      outcomes.forEach((o, i) => {
-        o.fairProb = fair![i];
-        o.edge = edge(o.best?.price ?? null, fair![i]);
-      });
-    }
-
-    // Dixon-Coles value model. We pass the team names so knockout fixtures
+    // Dixon-Coles value model. Passing team names lets knockout fixtures
     // (whose static fixture row carries slots, not team ids) still resolve
     // strengths from the concrete teams OddsPapi knows. wc26_fixture_id is
     // used when present; -1 lets the model fall back to name resolution.
-    {
-      const bestOdds: Partial<Record<OutcomeKey, number>> = {};
-      for (const o of outcomes) {
-        if (o.best) bestOdds[o.outcome] = o.best.price;
-      }
-      const value = await getMatchValue(m.wc26_fixture_id ?? -1, bestOdds, {
-        home: m.home_team,
-        away: m.away_team,
-      });
-      if (value) {
-        for (const o of outcomes) {
-          const v: OutcomeValue = value.outcomes[o.outcome];
-          o.modelProb = v.modelProb;
-          o.modelEv = v.ev;
-          o.kelly = v.kelly;
-          o.modelValue = v.isValue;
-          o.modelDiverges = v.modelDiverges;
-        }
-      }
+    const value = await getMatchValue(
+      m.wc26_fixture_id ?? -1,
+      {
+        h2h: bestByOutcome(outcomes) as Partial<Record<OutcomeKey, number>>,
+        totals: bestByOutcome(totals),
+        btts: bestByOutcome(btts),
+      },
+      { home: m.home_team, away: m.away_team },
+    );
+    if (value) {
+      applyModelValues(outcomes, value.outcomes);
+      applyModelValues(totals, value.totals);
+      applyModelValues(btts, value.btts);
     }
 
     out.push({
@@ -227,6 +296,8 @@ export async function getTippemodellDashboard(): Promise<MatchView[]> {
       commenceAt: m.commence_at,
       wc26FixtureId: m.wc26_fixture_id,
       outcomes,
+      totals,
+      btts,
     });
   }
 
