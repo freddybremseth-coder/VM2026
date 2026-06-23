@@ -128,6 +128,13 @@ const ALIASES: Record<string, string> = {
   // ESPN spelling: "Bosnia-Herzegovina" (hyphen). After normalisation
   // becomes "bosniaherzegovina" — needs an explicit alias.
   bosniaherzegovina: "bosniaandherzegovina",
+  // ESPN spells it "Congo DR" (→ "congodr"); our data has "DR Congo"
+  // (→ "drcongo"). Without this alias the exact-name pass misses all
+  // three DR Congo group matches and falls back to the fragile
+  // one-name+time pass. Map both to our canonical "drcongo".
+  congodr: "drcongo",
+  democraticrepublicofthecongo: "drcongo",
+  democraticrepublicofcongo: "drcongo",
 };
 
 // ---------------------------------------------------------------------------
