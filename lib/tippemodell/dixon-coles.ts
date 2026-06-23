@@ -146,6 +146,57 @@ export function matchProbabilities(
 }
 
 /**
+ * Most-points scoreline for a prediction game that pays 3 for an exact score
+ * and 1 for the correct outcome (H/D/A). We don't just take the single most
+ * likely scoreline — we pick the scoreline s that maximises EXPECTED POINTS:
+ *
+ *   E[points | s] = 3·P(score = s) + 1·P(outcome = outcome(s))
+ *
+ * so the AI literally optimises against the competition's scoring rule. The
+ * +1 outcome term tilts the pick toward the most probable result, while the
+ * 3× exact term picks the modal scoreline within it.
+ */
+export function expectedPointsScoreline(
+  home: TeamStrength,
+  away: TeamStrength,
+): { home: number; away: number; expectedPoints: number } {
+  const { lambdaHome, lambdaAway } = expectedGoals(home, away);
+
+  // Build the (renormalised) score matrix and the outcome probabilities.
+  const CAP = 6; // realistic scoreline ceiling per side
+  const cell: number[][] = [];
+  let pHome = 0;
+  let pDraw = 0;
+  let pAway = 0;
+  let total = 0;
+  for (let i = 0; i <= MAX_GOALS; i++) {
+    const pi = poissonPmf(i, lambdaHome);
+    cell[i] = [];
+    for (let j = 0; j <= MAX_GOALS; j++) {
+      const pj = poissonPmf(j, lambdaAway);
+      const c = dixonColesTau(i, j, lambdaHome, lambdaAway, RHO) * pi * pj;
+      cell[i][j] = c;
+      total += c;
+      if (i > j) pHome += c;
+      else if (i === j) pDraw += c;
+      else pAway += c;
+    }
+  }
+  const norm = total > 0 ? total : 1;
+  const pOutcome = (i: number, j: number) =>
+    (i > j ? pHome : i === j ? pDraw : pAway) / norm;
+
+  let best = { home: 0, away: 0, expectedPoints: -1 };
+  for (let i = 0; i <= CAP; i++) {
+    for (let j = 0; j <= CAP; j++) {
+      const ep = 3 * (cell[i][j] / norm) + 1 * pOutcome(i, j);
+      if (ep > best.expectedPoints) best = { home: i, away: j, expectedPoints: ep };
+    }
+  }
+  return best;
+}
+
+/**
  * Kelly stake fraction for a single bet.
  *   f* = p − (1−p)/(odds−1)
  * Returns the FULL-Kelly fraction (≥0; 0 means no edge). Callers should

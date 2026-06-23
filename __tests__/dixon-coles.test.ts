@@ -5,6 +5,7 @@ import {
   matchProbabilities,
   kellyFraction,
   expectedValue,
+  expectedPointsScoreline,
   RHO,
 } from "@/lib/tippemodell/dixon-coles";
 import type { TeamStrength } from "@/lib/tournament-sim";
@@ -76,6 +77,16 @@ describe("dixon-coles", () => {
     // A lopsided game (strong attack vs weak, weak attack) suppresses BTTS.
     const lopsided = matchProbabilities(T(2.2, 0.5), T(0.4, 1.8, 2));
     expect(lopsided.bttsYes).toBeLessThan(0.5);
+  });
+
+  it("expectedPointsScoreline backs the favourite and returns a sane scoreline", () => {
+    const strong = expectedPointsScoreline(T(1.8, 0.6), T(0.6, 1.7, 2));
+    expect(strong.home).toBeGreaterThan(strong.away); // home favourite wins
+    expect(strong.home).toBeLessThanOrEqual(6);
+    expect(strong.away).toBeGreaterThanOrEqual(0);
+    // Evenly matched, low-scoring sides → a tight scoreline, draw plausible.
+    const even = expectedPointsScoreline(T(0.9, 1.0), T(0.9, 1.0, 2));
+    expect(even.home + even.away).toBeLessThanOrEqual(3);
   });
 
   it("expectedValue is positive when prob beats the implied odds", () => {
