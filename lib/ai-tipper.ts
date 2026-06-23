@@ -64,18 +64,34 @@ interface ProfileRow {
   id: string;
 }
 
+/** Find the bot's user id by profile username, falling back to auth email. */
+async function findBotId(admin: SupabaseClient): Promise<string | null> {
+  const { data } = await admin
+    .from("profiles")
+    .select("id")
+    .eq("username", BOT_USERNAME)
+    .maybeSingle();
+  const byName = (data as ProfileRow | null)?.id;
+  if (byName) return byName;
+
+  // The signup trigger may have stored a fallback username, so the profile
+  // lookup can miss even though the auth user exists. Resolve by email.
+  for (let page = 1; page <= 20; page++) {
+    const { data: list, error } = await admin.auth.admin.listUsers({ page, perPage: 200 });
+    if (error || !list?.users?.length) break;
+    const u = list.users.find((x) => x.email === BOT_EMAIL);
+    if (u) return u.id;
+    if (list.users.length < 200) break;
+  }
+  return null;
+}
+
 /**
  * Ensure the bot's auth user + profile exist and it's a member of every
  * mini-league. Idempotent — returns the bot's user id.
  */
 export async function ensureBotUser(admin: SupabaseClient): Promise<string> {
-  // Already provisioned?
-  const { data: existing } = await admin
-    .from("profiles")
-    .select("id")
-    .eq("username", BOT_USERNAME)
-    .maybeSingle();
-  let botId = (existing as ProfileRow | null)?.id ?? null;
+  let botId = await findBotId(admin);
 
   if (!botId) {
     const { data, error } = await admin.auth.admin.createUser({
@@ -85,16 +101,23 @@ export async function ensureBotUser(admin: SupabaseClient): Promise<string> {
       user_metadata: { username: BOT_USERNAME, display_name: BOT_DISPLAY_NAME },
     });
     if (error || !data.user) {
-      throw new Error(`create bot user: ${error?.message ?? "no user returned"}`);
+      // Race / prior partial run: the auth user exists but the profile
+      // lookup missed it. Recover by resolving the existing user by email.
+      botId = await findBotId(admin);
+      if (!botId) {
+        throw new Error(`create bot user: ${error?.message ?? "no user returned"}`);
+      }
+    } else {
+      botId = data.user.id;
     }
-    botId = data.user.id;
-    // The on_auth_user_created trigger inserts the profile; make sure the
-    // display name is set even if metadata didn't carry through.
-    await admin
-      .from("profiles")
-      .update({ display_name: BOT_DISPLAY_NAME, username: BOT_USERNAME })
-      .eq("id", botId);
   }
+
+  // Make sure the profile carries the canonical username + display name, even
+  // if the signup trigger stored a fallback. (No-op if already correct.)
+  await admin
+    .from("profiles")
+    .update({ display_name: BOT_DISPLAY_NAME, username: BOT_USERNAME })
+    .eq("id", botId);
 
   // Join every mini-league so Freddy shows up in each standings table.
   const { data: leagues } = await admin.from("mini_leagues").select("id");
