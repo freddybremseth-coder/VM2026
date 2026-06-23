@@ -90,7 +90,7 @@ function Dashboard({ summary }: { summary: PaperSummary }) {
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-5">
         <Stat label="Bankroll nå" value={kr(summary.bankroll)} sub={`${up ? "+" : ""}${kr(delta)}`} tone={up ? "win" : "loss"} />
         <Stat label="ROI" value={roiPct !== null ? `${roiPct >= 0 ? "+" : ""}${roiPct.toFixed(1)}%` : "—"} sub={`av ${kr(summary.totalStaked)} satset`} tone={roiPct !== null && roiPct >= 0 ? "win" : roiPct !== null ? "loss" : "neutral"} />
-        <Stat label="Resultat" value={`${summary.won}–${summary.lost}`} sub={hitPct !== null ? `${hitPct.toFixed(0)}% treff` : "ingen avgjort"} tone="neutral" />
+        <Stat label="Vunnet / tapt" value={`${summary.won} V · ${summary.lost} T`} sub={hitPct !== null ? `${hitPct.toFixed(0)}% treff` : "ingen avgjort"} tone="neutral" />
         <Stat label="Åpen eksponering" value={kr(summary.openExposure)} sub={`${summary.openBets.length} spill`} tone="neutral" />
       </div>
 

@@ -163,6 +163,12 @@ export async function placeNewBets(db: Db): Promise<number> {
 
   const rows: Array<Record<string, unknown>> = [];
   for (const m of dashboard) {
+    // CRITICAL: settlement joins match_results, which is keyed by the wc26
+    // fixture id — NOT tm_matches.id. Key paper bets by wc26FixtureId so they
+    // grade against the right match. Skip fixtures we can't link (can't be
+    // settled anyway).
+    const fixtureId = m.wc26FixtureId;
+    if (fixtureId === null) continue;
     const markets: Array<{ key: string; list: typeof m.outcomes }> = [
       { key: "h2h", list: m.outcomes },
       { key: "totals", list: m.totals ?? [] },
@@ -171,13 +177,13 @@ export async function placeNewBets(db: Db): Promise<number> {
     for (const { key, list } of markets) {
       for (const o of list) {
         if (!o.modelValue || !o.best || o.kelly === null || o.modelProb === null) continue;
-        const id = `${m.matchId}|${key}|${o.outcome}`;
+        const id = `${fixtureId}|${key}|${o.outcome}`;
         if (held.has(id)) continue;
         const stake = Math.round(o.kelly * bankroll * 100) / 100;
         if (stake < MIN_STAKE) continue;
         held.add(id);
         rows.push({
-          match_id: m.matchId,
+          match_id: fixtureId,
           market_key: key,
           outcome: o.outcome,
           label: pickLabel(m, key, o.label),
@@ -196,6 +202,15 @@ export async function placeNewBets(db: Db): Promise<number> {
   const { error } = await db.from("tm_paper_bets").insert(rows);
   if (error) throw new Error(`place bets: ${error.message}`);
   return rows.length;
+}
+
+/** Wipe the entire paper ledger. Used to recover from corrupted state. */
+export async function resetAllBets(db: Db): Promise<number> {
+  const { data } = await db.from("tm_paper_bets").select("id");
+  const n = (data ?? []).length;
+  // Delete every row (filter matches all positive ids).
+  await db.from("tm_paper_bets").delete().gte("id", 0);
+  return n;
 }
 
 /**

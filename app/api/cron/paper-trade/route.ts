@@ -13,7 +13,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
-import { settleOpenBets, placeNewBets } from "@/lib/tippemodell/paper-trade";
+import { settleOpenBets, placeNewBets, resetAllBets } from "@/lib/tippemodell/paper-trade";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -31,7 +31,17 @@ export async function GET(req: NextRequest) {
 
   let settled = 0;
   let placed = 0;
+  let reset = 0;
   const errors: string[] = [];
+
+  // ?reset=1 wipes the ledger first — used to recover after the id-space fix.
+  if (req.nextUrl.searchParams.get("reset") === "1") {
+    try {
+      reset = await resetAllBets(admin);
+    } catch (e) {
+      errors.push(`reset: ${e instanceof Error ? e.message : String(e)}`);
+    }
+  }
 
   try {
     settled = await settleOpenBets(admin);
@@ -48,6 +58,7 @@ export async function GET(req: NextRequest) {
     ok: errors.length === 0,
     startedAt,
     finishedAt: new Date().toISOString(),
+    reset,
     settled,
     placed,
     errors,
