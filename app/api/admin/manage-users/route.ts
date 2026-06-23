@@ -52,6 +52,16 @@ export async function GET(req: NextRequest) {
     predictions: predCount.get(p.id) ?? 0,
   }));
 
+  // Debug: raw league_members rows for a given user id.
+  const rawFor = req.nextUrl.searchParams.get("rawLeagues");
+  if (rawFor) {
+    const { data, error } = await admin
+      .from("league_members")
+      .select("league_id, user_id, points")
+      .eq("user_id", rawFor);
+    return NextResponse.json({ rawFor, rows: data, error: error?.message });
+  }
+
   const deleteParam = req.nextUrl.searchParams.get("delete");
   const leaveParam = req.nextUrl.searchParams.get("leave");
   if (!deleteParam && !leaveParam) {
