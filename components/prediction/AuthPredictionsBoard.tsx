@@ -46,7 +46,14 @@ type Score = { home: number; away: number };
  * round-trip — so filling in dozens of matches no longer means dozens of
  * clicks. Per-card save is gone; the bar is the single commit point.
  */
-export function AuthPredictionsBoard({ days }: { days: BoardDay[] }) {
+export function AuthPredictionsBoard({
+  days,
+  modelTips = {},
+}: {
+  days: BoardDay[];
+  /** Freddy's model-optimal scoreline per matchId (same engine as the bot). */
+  modelTips?: Record<number, { home: number; away: number }>;
+}) {
   // Server truth, seeded from existing predictions.
   const [saved, setSaved] = useState<Record<number, Score>>(() => {
     const seed: Record<number, Score> = {};
@@ -98,6 +105,13 @@ export function AuthPredictionsBoard({ days }: { days: BoardDay[] }) {
 
   function applyAITip(matchId: number, mode: TipMode) {
     const tip = suggestTip(matchId, mode);
+    if (!tip) return;
+    setFeedback(null);
+    setDraft((prev) => ({ ...prev, [matchId]: { home: tip.home, away: tip.away } }));
+  }
+
+  function applyModelTip(matchId: number) {
+    const tip = modelTips[matchId];
     if (!tip) return;
     setFeedback(null);
     setDraft((prev) => ({ ...prev, [matchId]: { home: tip.home, away: tip.away } }));
@@ -159,8 +173,10 @@ export function AuthPredictionsBoard({ days }: { days: BoardDay[] }) {
                     value={valueFor(f.matchId)}
                     savedValue={saved[f.matchId]}
                     isDirty={dirtyIds.includes(f.matchId)}
+                    modelTip={modelTips[f.matchId]}
                     onScore={(side, n) => setScore(f.matchId, side, n)}
                     onAITip={(mode) => applyAITip(f.matchId, mode)}
+                    onModelTip={() => applyModelTip(f.matchId)}
                   />
                 ),
               )}
@@ -216,15 +232,19 @@ function PredictionRow({
   value,
   savedValue,
   isDirty,
+  modelTip,
   onScore,
   onAITip,
+  onModelTip,
 }: {
   fixture: BoardFixture;
   value: Score;
   savedValue?: Score;
   isDirty: boolean;
+  modelTip?: { home: number; away: number };
   onScore: (side: "home" | "away", n: number) => void;
   onAITip: (mode: TipMode) => void;
+  onModelTip: () => void;
 }) {
   const { home, away, stageLabel, kickoff, venueLabel, matchId } = fixture;
   return (
@@ -248,7 +268,7 @@ function PredictionRow({
         <TeamSide team={away} align="left" />
       </div>
 
-      <AITipChips onPick={onAITip} />
+      <AITipChips onPick={onAITip} modelTip={modelTip} onModelTip={onModelTip} />
 
       <div className="mt-4 pt-3 border-t border-cream/8 flex items-center justify-between gap-3">
         <div className="min-h-[18px] text-[11px] flex items-center gap-1.5 font-mono">
@@ -393,15 +413,34 @@ function ScoreInput({
   );
 }
 
-function AITipChips({ onPick }: { onPick: (mode: TipMode) => void }) {
+function AITipChips({
+  onPick,
+  modelTip,
+  onModelTip,
+}: {
+  onPick: (mode: TipMode) => void;
+  modelTip?: { home: number; away: number };
+  onModelTip: () => void;
+}) {
   return (
     <div className="mt-3 pt-3 border-t border-cream/8">
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-2 flex-wrap">
         <Cpu size={11} className="text-amber" />
         <span className="text-[10px] uppercase tracking-kicker text-cream/55 font-mono">
           AI tippehjelp
         </span>
-        <div className="flex gap-1 ml-auto">
+        <div className="flex gap-1 ml-auto items-center">
+          {modelTip && (
+            <button
+              type="button"
+              onClick={onModelTip}
+              title="Spill med Freddy — modellens poeng-optimale tips (Dixon-Coles)"
+              className="flex items-center gap-1 px-2 py-1 text-[10px] uppercase tracking-kicker font-mono font-semibold ring-1 bg-win/15 text-win ring-win/40 hover:brightness-125 transition"
+            >
+              <span aria-hidden>🤖</span>
+              Freddy {modelTip.home}–{modelTip.away}
+            </button>
+          )}
           {(Object.keys(TIP_MODE_META) as TipMode[]).map((m) => {
             const meta = TIP_MODE_META[m];
             return (

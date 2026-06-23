@@ -12,6 +12,7 @@ import { formatDateLabel } from "@/lib/utils";
 import { nextFixtures, type Fixture } from "@/lib/wc26-fixtures";
 import { teamById, teamName, venueById } from "@/lib/wc26-data";
 import { getDictionary } from "@/lib/i18n";
+import { suggestScorelines } from "@/lib/ai-tipper";
 
 const STAGE_LABEL_KO: Record<string, string> = {
   R32: "Runde av 32",
@@ -58,6 +59,7 @@ export default async function PredictionsPage() {
   const days = Array.from(byDay.entries()).sort(([a], [b]) => a.localeCompare(b));
 
   let existingByMatch = new Map<number, { home_score: number; away_score: number }>();
+  let modelTips: Record<number, { home: number; away: number }> = {};
   if (user && open.length > 0) {
     const ids = open.map((f) => f.id);
     const { data } = await supabase
@@ -70,6 +72,10 @@ export default async function PredictionsPage() {
         data.map((r) => [r.match_id, { home_score: r.home_score, away_score: r.away_score }]),
       );
     }
+    // Freddy's model-optimal scorelines (same engine as the AI competitor),
+    // offered as a one-tap tip suggestion. Computed once for the whole board.
+    const tips = await suggestScorelines(ids);
+    modelTips = Object.fromEntries([...tips].map(([id, s]) => [id, s]));
   }
 
   return (
@@ -106,7 +112,10 @@ export default async function PredictionsPage() {
             {t.predictions.none}
           </div>
         ) : user ? (
-          <AuthPredictionsBoard days={buildBoardDays(days, existingByMatch)} />
+          <AuthPredictionsBoard
+            days={buildBoardDays(days, existingByMatch)}
+            modelTips={modelTips}
+          />
         ) : (
           <div className="space-y-8">
             {days.map(([day, fixtures]) => (
