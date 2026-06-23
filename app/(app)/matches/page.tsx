@@ -216,7 +216,7 @@ function TeamSide({
     >
       <HoloFlag code={team.flag} w={26} radius={3} />
       <div className="min-w-0">
-        <div className="font-serif text-base font-semibold truncate tracking-editorial">
+        <div className="font-serif text-sm sm:text-base font-semibold tracking-editorial leading-tight [overflow-wrap:anywhere]">
           {teamName(team)}
         </div>
         <div className="text-[10px] uppercase tracking-kicker font-mono text-cream/45">
