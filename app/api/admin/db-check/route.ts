@@ -40,5 +40,40 @@ export async function GET(req: NextRequest) {
     };
   }
 
-  return NextResponse.json({ markets, perMarket });
+  // Mirror the dashboard's match window, then report per-market presence
+  // for exactly those matches.
+  const { data: upcoming } = await db
+    .from("tm_matches")
+    .select("id, home_team, away_team, commence_at")
+    .eq("status", "upcoming")
+    .gte("commence_at", new Date().toISOString())
+    .order("commence_at", { ascending: true })
+    .limit(30);
+  const upMatches = (upcoming ?? []) as Array<{
+    id: number;
+    home_team: string;
+    away_team: string;
+    commence_at: string;
+  }>;
+  const upIds = upMatches.map((m) => m.id);
+
+  const marketById = new Map(
+    ((markets ?? []) as Array<{ id: number; key: string }>).map((m) => [m.id, m.key]),
+  );
+  const { data: latestForUp } = await db
+    .from("tm_latest_odds")
+    .select("match_id, market_id, outcome")
+    .in("match_id", upIds.length ? upIds : [-1]);
+  const byMatch: Record<number, Set<string>> = {};
+  for (const r of (latestForUp ?? []) as Array<{ match_id: number; market_id: number }>) {
+    const key = marketById.get(r.market_id) ?? String(r.market_id);
+    (byMatch[r.match_id] ??= new Set()).add(key);
+  }
+  const dashboardMatches = upMatches.map((m) => ({
+    match: `${m.home_team} v ${m.away_team}`,
+    commence_at: m.commence_at,
+    markets: [...(byMatch[m.id] ?? [])],
+  }));
+
+  return NextResponse.json({ markets, perMarket, dashboardMatches });
 }
