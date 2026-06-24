@@ -99,8 +99,8 @@ export interface MatchValue {
   totals: Record<"over" | "under", OutcomeValue>;
   /** Both teams to score — keyed "yes" / "no". */
   btts: Record<"yes" | "no", OutcomeValue>;
-  /** Most likely scoreline (maximises expected 3/1 points). */
-  predictedScore: { home: number; away: number };
+  /** Most likely scoreline (maximises expected 3/1 points) + its probability. */
+  predictedScore: { home: number; away: number; prob: number };
 }
 
 /**
@@ -196,6 +196,6 @@ export async function getMatchValue(
     outcomes,
     totals,
     btts,
-    predictedScore: { home: score.home, away: score.away },
+    predictedScore: { home: score.home, away: score.away, prob: score.prob },
   };
 }

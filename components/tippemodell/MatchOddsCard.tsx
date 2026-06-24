@@ -56,6 +56,9 @@ export function MatchOddsCard({ match }: { match: MatchView }) {
           <span className="font-serif text-base font-bold stat-num text-amber">
             {match.predictedScore.home}–{match.predictedScore.away}
           </span>
+          <span className="font-mono text-[10px] text-cream/60 stat-num">
+            {(match.predictedScore.prob * 100).toFixed(0)}% sjanse
+          </span>
         </div>
       )}
 

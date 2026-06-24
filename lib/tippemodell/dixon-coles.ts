@@ -159,7 +159,7 @@ export function matchProbabilities(
 export function expectedPointsScoreline(
   home: TeamStrength,
   away: TeamStrength,
-): { home: number; away: number; expectedPoints: number } {
+): { home: number; away: number; expectedPoints: number; prob: number } {
   const { lambdaHome, lambdaAway } = expectedGoals(home, away);
 
   // Build the (renormalised) score matrix and the outcome probabilities.
@@ -186,11 +186,14 @@ export function expectedPointsScoreline(
   const pOutcome = (i: number, j: number) =>
     (i > j ? pHome : i === j ? pDraw : pAway) / norm;
 
-  let best = { home: 0, away: 0, expectedPoints: -1 };
+  let best = { home: 0, away: 0, expectedPoints: -1, prob: 0 };
   for (let i = 0; i <= CAP; i++) {
     for (let j = 0; j <= CAP; j++) {
-      const ep = 3 * (cell[i][j] / norm) + 1 * pOutcome(i, j);
-      if (ep > best.expectedPoints) best = { home: i, away: j, expectedPoints: ep };
+      const exact = cell[i][j] / norm;
+      const ep = 3 * exact + 1 * pOutcome(i, j);
+      if (ep > best.expectedPoints) {
+        best = { home: i, away: j, expectedPoints: ep, prob: exact };
+      }
     }
   }
   return best;
