@@ -59,6 +59,8 @@ export interface MatchView {
   totals: OutcomeView[] | null;
   /** Both teams to score — null when no bookmaker offered it. */
   btts: OutcomeView[] | null;
+  /** Model's most likely scoreline (home–away), null off-model. */
+  predictedScore: { home: number; away: number } | null;
 }
 
 const H2H_LABELS: Record<string, string> = { home: "1", draw: "X", away: "2" };
@@ -298,6 +300,7 @@ export async function getTippemodellDashboard(): Promise<MatchView[]> {
       outcomes,
       totals,
       btts,
+      predictedScore: value?.predictedScore ?? null,
     });
   }
 

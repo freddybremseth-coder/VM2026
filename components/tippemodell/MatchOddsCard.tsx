@@ -44,6 +44,21 @@ export function MatchOddsCard({ match }: { match: MatchView }) {
         <TeamLabel name={match.awayTeam} flag={awayFlag} align="right" />
       </div>
 
+      {/* Model's most likely scoreline */}
+      {match.predictedScore && (
+        <div
+          className="mb-4 flex items-center justify-center gap-2.5 py-1.5 bg-paper/60 border border-cream/8"
+          title="Modellens mest sannsynlige resultat — scorelinjen som maksimerer forventede tippepoeng (Dixon-Coles)."
+        >
+          <span className="text-[9px] uppercase tracking-kicker font-mono text-cream/60">
+            Sannsynlig resultat
+          </span>
+          <span className="font-serif text-base font-bold stat-num text-amber">
+            {match.predictedScore.home}–{match.predictedScore.away}
+          </span>
+        </div>
+      )}
+
       {/* 1X2 grid */}
       <div className="grid grid-cols-3 gap-2">
         {match.outcomes.map((o) => (

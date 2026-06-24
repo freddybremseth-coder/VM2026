@@ -19,6 +19,7 @@ import { TEAMS } from "@/lib/wc26-data";
 import { getTeamStrengths } from "@/lib/tournament-predictions";
 import {
   matchProbabilities,
+  expectedPointsScoreline,
   kellyFraction,
   expectedValue,
 } from "@/lib/tippemodell/dixon-coles";
@@ -98,6 +99,8 @@ export interface MatchValue {
   totals: Record<"over" | "under", OutcomeValue>;
   /** Both teams to score — keyed "yes" / "no". */
   btts: Record<"yes" | "no", OutcomeValue>;
+  /** Most likely scoreline (maximises expected 3/1 points). */
+  predictedScore: { home: number; away: number };
 }
 
 /**
@@ -185,11 +188,14 @@ export async function getMatchValue(
     no: evaluate("no", probs.bttsNo, best.btts?.no ?? null),
   };
 
+  const score = expectedPointsScoreline(home, away);
+
   return {
     lambdaHome: probs.lambdaHome,
     lambdaAway: probs.lambdaAway,
     outcomes,
     totals,
     btts,
+    predictedScore: { home: score.home, away: score.away },
   };
 }
