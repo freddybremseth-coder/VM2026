@@ -156,15 +156,24 @@ export async function GET(req: NextRequest) {
     ((marketsRaw ?? []) as MarketRow[]).map((m) => [m.key, m.id]),
   );
 
-  const horizon = new Date();
-  horizon.setDate(horizon.getDate() + 3);
+  // OddsPapi free tier = 250 requests/day. Each run costs 1 fixtures call +
+  // 1 odds call per match fetched, so fetching every upcoming match within 3
+  // days (~35 matches) at an 8×/day cadence blew past 250 → 429s, no odds.
+  // Only fetch odds for matches kicking off in the next ODDS_WINDOW_H hours
+  // (the ones that actually matter for betting + line movement), and skip
+  // already-started matches. Bounds per-run cost to the soonest LIMIT matches.
+  const ODDS_WINDOW_H = 48;
+  const LIMIT = 24;
+  const now = new Date();
+  const horizon = new Date(now.getTime() + ODDS_WINDOW_H * 3_600_000);
   const { data: upcomingRaw } = await supabase
     .from("tm_matches")
     .select("id, external_id, home_team, away_team")
     .eq("status", "upcoming")
+    .gte("commence_at", now.toISOString())
     .lte("commence_at", horizon.toISOString())
     .order("commence_at", { ascending: true })
-    .limit(40);
+    .limit(LIMIT);
   const matches = (upcomingRaw ?? []) as MatchRow[];
 
   let snapshotCount = 0;
