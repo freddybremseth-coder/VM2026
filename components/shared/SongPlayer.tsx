@@ -171,69 +171,97 @@ function Equalizer() {
 }
 
 /**
+ * Songs. `LATEST_SONG` is the freshest drop — exported so the login news
+ * banner and the pin share one source of truth. `PREV_SONGS` keeps the
+ * earlier YouTube anthems accessible below it.
+ */
+export const LATEST_SONG = {
+  youtubeId: "o8-YeV5IuHE",
+  title: "Norge til sluttspill",
+  credit: "Re.Master Freddy · ny VM-sang",
+};
+export const LATEST_SONG_URL = `https://www.youtube.com/watch?v=${LATEST_SONG.youtubeId}`;
+
+const PREV_SONGS = [
+  { youtubeId: "XEovg1JKKIg", title: "Heia Norge" },
+];
+
+/**
  * NEW-SONG pin — opens the latest VM anthem on YouTube. Sits ABOVE the
  * existing "La oss stråle" card so users notice the new drop. Pulsing
  * "NY"-badge + YouTube thumbnail makes the new-content cue unmissable.
+ * Older YouTube anthems render as compact links beneath it.
  */
-const NEW_SONG = {
-  youtubeId: "XEovg1JKKIg",
-  title: "Heia Norge — ny VM-sang",
-  credit: "Hør den nyeste sangen før kamp",
-};
-
 export function NewSongPin() {
-  const ytUrl = `https://www.youtube.com/watch?v=${NEW_SONG.youtubeId}`;
-  const thumb = `https://i.ytimg.com/vi/${NEW_SONG.youtubeId}/mqdefault.jpg`;
+  const thumb = `https://i.ytimg.com/vi/${LATEST_SONG.youtubeId}/mqdefault.jpg`;
   return (
-    <Link
-      href={ytUrl}
-      target="_blank"
-      rel="noopener noreferrer"
-      className="block surface relative overflow-hidden group ring-1 ring-signal/40 hover:ring-signal/70 transition-all"
-      aria-label={`${NEW_SONG.title} — åpne på YouTube`}
-    >
-      {/* Pulsing accent glow */}
-      <div
-        aria-hidden
-        className="absolute inset-0 pointer-events-none"
-        style={{
-          background:
-            "linear-gradient(120deg, rgba(230,57,70,.22) 0%, rgba(255,183,46,.14) 60%, transparent 100%)",
-        }}
-      />
-      <div className="relative flex items-center gap-2.5 p-2.5">
-        {/* Thumbnail with play overlay */}
-        <div className="relative h-12 w-[68px] shrink-0 overflow-hidden bg-canvas">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={thumb}
-            alt=""
-            className="w-full h-full object-cover"
-            loading="lazy"
-          />
-          <div className="absolute inset-0 flex items-center justify-center bg-black/30 group-hover:bg-black/45 transition-colors">
-            <Play size={16} className="text-cream drop-shadow ml-0.5" />
+    <div className="space-y-1.5">
+      <Link
+        href={LATEST_SONG_URL}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="block surface relative overflow-hidden group ring-1 ring-signal/40 hover:ring-signal/70 transition-all"
+        aria-label={`${LATEST_SONG.title} — åpne på YouTube`}
+      >
+        {/* Pulsing accent glow */}
+        <div
+          aria-hidden
+          className="absolute inset-0 pointer-events-none"
+          style={{
+            background:
+              "linear-gradient(120deg, rgba(230,57,70,.22) 0%, rgba(255,183,46,.14) 60%, transparent 100%)",
+          }}
+        />
+        <div className="relative flex items-center gap-2.5 p-2.5">
+          {/* Thumbnail with play overlay */}
+          <div className="relative h-12 w-[68px] shrink-0 overflow-hidden bg-canvas">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={thumb}
+              alt=""
+              className="w-full h-full object-cover"
+              loading="lazy"
+            />
+            <div className="absolute inset-0 flex items-center justify-center bg-black/30 group-hover:bg-black/45 transition-colors">
+              <Play size={16} className="text-cream drop-shadow ml-0.5" />
+            </div>
           </div>
-        </div>
 
-        <div className="min-w-0 flex-1">
-          <div className="flex items-center gap-1.5 mb-0.5">
-            <span className="inline-flex items-center px-1.5 py-0 text-[9px] font-extrabold tracking-[1.4px] uppercase bg-signal text-cream animate-pulse">
-              Ny
-            </span>
-            <span className="text-[9px] uppercase tracking-kicker font-mono text-cream/70">
-              VM-sang
-            </span>
-          </div>
-          <div className="font-serif text-sm font-semibold tracking-editorial text-cream truncate">
-            {NEW_SONG.title}
-          </div>
-          <div className="flex items-center gap-1 text-[10px] uppercase tracking-kicker font-mono text-cream/55 truncate">
-            {NEW_SONG.credit}
-            <ExternalLink size={9} className="shrink-0" />
+          <div className="min-w-0 flex-1">
+            <div className="flex items-center gap-1.5 mb-0.5">
+              <span className="inline-flex items-center px-1.5 py-0 text-[9px] font-extrabold tracking-[1.4px] uppercase bg-signal text-cream animate-pulse">
+                Ny
+              </span>
+              <span className="text-[9px] uppercase tracking-kicker font-mono text-cream/70">
+                VM-sang
+              </span>
+            </div>
+            <div className="font-serif text-sm font-semibold tracking-editorial text-cream truncate">
+              {LATEST_SONG.title}
+            </div>
+            <div className="flex items-center gap-1 text-[10px] uppercase tracking-kicker font-mono text-cream/55 truncate">
+              {LATEST_SONG.credit}
+              <ExternalLink size={9} className="shrink-0" />
+            </div>
           </div>
         </div>
-      </div>
-    </Link>
+      </Link>
+
+      {/* Earlier YouTube anthems — compact links so they're not lost. */}
+      {PREV_SONGS.map((s) => (
+        <Link
+          key={s.youtubeId}
+          href={`https://www.youtube.com/watch?v=${s.youtubeId}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex items-center gap-2 px-2.5 py-1.5 surface text-cream/70 hover:text-amber transition-colors"
+          aria-label={`${s.title} — åpne på YouTube`}
+        >
+          <Music4 size={11} className="shrink-0 text-cream/55" />
+          <span className="font-serif text-[13px] tracking-editorial truncate">{s.title}</span>
+          <ExternalLink size={9} className="shrink-0 ml-auto text-cream/45" />
+        </Link>
+      ))}
+    </div>
   );
 }
