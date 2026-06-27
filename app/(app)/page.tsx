@@ -3,7 +3,6 @@ import { Search, Menu, ArrowUpRight, Trophy } from "lucide-react";
 import { HoloFlag } from "@/components/shared/HoloFlag";
 import { Kicker, Headline } from "@/components/shared/EditorialKicker";
 import { StadiumBackdrop } from "@/components/shared/StadiumBackdrop";
-import { NewSongBanner } from "@/components/shared/NewSongBanner";
 import { teamById, teamName, TOURNAMENT } from "@/lib/wc26-data";
 import { nextFixtures, fixturesOn } from "@/lib/wc26-fixtures";
 import { formatKickoff, formatDateLabel } from "@/lib/utils";
@@ -87,18 +86,13 @@ export default async function DashboardPage() {
   // cron picks up the first finished match's events, in which case the
   // section below renders the honest placeholder.
   const supabase = createSupabaseServerClient();
-  const [topScorers, norgePin, userRes] = await Promise.all([
+  const [topScorers, norgePin] = await Promise.all([
     getTournamentTopScorersLive(supabase, 8),
     loadNorgePinData(supabase),
-    supabase.auth.getUser(),
   ]);
-  const isLoggedIn = Boolean(userRes.data.user);
 
   return (
     <div className="min-h-screen">
-      {/* New-song news banner — shown to logged-in users until dismissed */}
-      {isLoggedIn && <NewSongBanner />}
-
       {/* Cinematic hero — football crowd photo behind the editorial atmosphere */}
       <StadiumBackdrop
         height={400}
