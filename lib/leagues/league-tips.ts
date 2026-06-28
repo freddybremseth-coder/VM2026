@@ -15,6 +15,8 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { FIXTURES, type Fixture } from "@/lib/wc26-fixtures";
 import { teamById, teamName } from "@/lib/wc26-data";
 import type { FixtureStatus } from "@/lib/predictions-visibility";
+import { computeAllGroupStandings, type ResultRow } from "@/lib/group-standings";
+import { resolveAllKnockout } from "@/lib/knockout-resolve";
 
 const WINDOW_PAST_MS = 36 * 60 * 60 * 1000;
 const WINDOW_FUTURE_MS = 36 * 60 * 60 * 1000;
@@ -126,14 +128,62 @@ export async function getLeagueTipsData(
     }),
   );
 
+  // ─── Resolve knockout teams (so sluttspill ties show up too) ───
+  // Load all results once: drives the standings + slot resolution and the
+  // per-fixture result display below.
+  const { data: allResultsData } = await supabase
+    .from("match_results")
+    .select("match_id, home_score, away_score, status, minute");
+  const allResultRows = ((allResultsData as Array<{
+    match_id: number;
+    home_score: number | null;
+    away_score: number | null;
+    status: string;
+    minute: number | null;
+  }> | null) ?? []).filter((r) => r.home_score !== null && r.away_score !== null);
+  const resultRowsForStandings: ResultRow[] = allResultRows.map((r) => ({
+    match_id: r.match_id,
+    home_score: r.home_score as number,
+    away_score: r.away_score as number,
+    status: r.status,
+  }));
+  const resultsByMatchAll = new Map(
+    resultRowsForStandings.map((r) => [r.match_id, r]),
+  );
+  const standings = computeAllGroupStandings(resultRowsForStandings);
+  const koTeams = resolveAllKnockout(standings, resultsByMatchAll);
+
+  /** Effective team ids for any fixture (group direct, knockout resolved). */
+  const teamsOf = (f: Fixture): { homeId: number | null; awayId: number | null } => {
+    const r = koTeams.get(f.id);
+    return {
+      homeId: f.homeId ?? r?.homeId ?? null,
+      awayId: f.awayId ?? r?.awayId ?? null,
+    };
+  };
+
   // ─── Window around now ───
+  // Past + a 36h base future window, but ALWAYS extend to cover the whole of
+  // the next match-day — even if those games are 2+ days away (rest days
+  // between knockout rounds) — so the league board never goes blank.
   const now = opts.now ?? new Date();
   const nowMs = now.getTime();
   const windowStart = nowMs - WINDOW_PAST_MS;
-  const windowEnd = nowMs + WINDOW_FUTURE_MS;
+  let windowEnd = nowMs + WINDOW_FUTURE_MS;
+
+  const nextUp = FIXTURES.filter((f) => {
+    const { homeId, awayId } = teamsOf(f);
+    return homeId && awayId && new Date(f.kickoff).getTime() > nowMs;
+  }).sort((a, b) => a.kickoff.localeCompare(b.kickoff));
+  if (nextUp.length > 0) {
+    const firstDay = nextUp[0].kickoff.slice(0, 10); // YYYY-MM-DD
+    const endOfFirstDay = Date.parse(`${firstDay}T23:59:59Z`);
+    if (endOfFirstDay > windowEnd) windowEnd = endOfFirstDay;
+  }
 
   const candidateFixtures = FIXTURES.filter((f) => {
-    if (!f.homeId || !f.awayId) return false;
+    const { homeId, awayId } = teamsOf(f);
+    if (!homeId || !awayId) return false;
     const ts = new Date(f.kickoff).getTime();
     return ts >= windowStart && ts <= windowEnd;
   }).sort((a, b) => b.kickoff.localeCompare(a.kickoff));
@@ -175,32 +225,21 @@ export async function getLeagueTipsData(
   }
 
   // ─── Recorded results (for showing actual score / grading colour) ───
+  // Reuse the single results load from above.
   const resultByMatch = new Map<number, BoardResult>();
-  if (matchIds.length > 0) {
-    const { data: results } = await supabase
-      .from("match_results")
-      .select("match_id, home_score, away_score, status, minute")
-      .in("match_id", matchIds);
-    type R = {
-      match_id: number;
-      home_score: number;
-      away_score: number;
-      status: string;
-      minute: number | null;
-    };
-    for (const r of (results as R[] | null) ?? []) {
-      resultByMatch.set(r.match_id, {
-        homeScore: r.home_score,
-        awayScore: r.away_score,
-        status: r.status,
-        minute: r.minute,
-      });
-    }
+  for (const r of allResultRows) {
+    resultByMatch.set(r.match_id, {
+      homeScore: r.home_score as number,
+      awayScore: r.away_score as number,
+      status: r.status,
+      minute: r.minute,
+    });
   }
 
   const fixtures: BoardFixture[] = candidateFixtures.map((f) => {
-    const home = teamById(f.homeId!);
-    const away = teamById(f.awayId!);
+    const { homeId, awayId } = teamsOf(f);
+    const home = homeId ? teamById(homeId) : undefined;
+    const away = awayId ? teamById(awayId) : undefined;
     const fromDb = statusByMatch.get(f.id);
     return {
       matchId: f.id,
