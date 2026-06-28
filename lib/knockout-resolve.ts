@@ -15,8 +15,10 @@
  * where it counts.)
  */
 
+import type { SupabaseClient } from "@supabase/supabase-js";
 import { FIXTURES, type Fixture } from "@/lib/wc26-fixtures";
 import {
+  computeAllGroupStandings,
   resolveSlotToTeam,
   type GroupStandingRow,
   type ResultRow,
@@ -149,4 +151,41 @@ export function resolveAllKnockout(
     out.set(f.id, resolveFixtureTeams(f, standings, resultsByMatch, bestThirds));
   }
   return out;
+}
+
+/** Load results from the DB and resolve every knockout tie's teams. */
+export async function loadKnockoutTeams(
+  supabase: SupabaseClient,
+): Promise<Map<number, ResolvedTeams>> {
+  const { data } = await supabase
+    .from("match_results")
+    .select("match_id, home_score, away_score, status");
+  const rows = ((data as Array<{
+    match_id: number;
+    home_score: number | null;
+    away_score: number | null;
+    status: string;
+  }> | null) ?? [])
+    .filter((r) => r.home_score !== null && r.away_score !== null)
+    .map((r) => ({
+      match_id: r.match_id,
+      home_score: r.home_score as number,
+      away_score: r.away_score as number,
+      status: r.status,
+    })) as ResultRow[];
+  const resultsByMatch = new Map(rows.map((r) => [r.match_id, r]));
+  const standings = computeAllGroupStandings(rows);
+  return resolveAllKnockout(standings, resultsByMatch);
+}
+
+/** Effective home/away ids: group fixtures direct, knockout resolved. */
+export function effectiveTeams(
+  fixture: Fixture,
+  koTeams: Map<number, ResolvedTeams>,
+): { homeId: number | null; awayId: number | null } {
+  const r = koTeams.get(fixture.id);
+  return {
+    homeId: fixture.homeId ?? r?.homeId ?? null,
+    awayId: fixture.awayId ?? r?.awayId ?? null,
+  };
 }

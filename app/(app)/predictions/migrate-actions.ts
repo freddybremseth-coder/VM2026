@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { fixtureById } from "@/lib/wc26-fixtures";
+import { loadKnockoutTeams, effectiveTeams } from "@/lib/knockout-resolve";
 
 export interface MigrationResult {
   ok?: true;
@@ -41,6 +42,7 @@ export async function migrateGuestPredictionsAction(
     .eq("user_id", user.id)
     .in("match_id", matchIds);
   const existingMatchIds = new Set((existing ?? []).map((r) => r.match_id));
+  const koTeams = await loadKnockoutTeams(supabase);
 
   for (const entry of raw) {
     const matchId = Number(entry.matchId);
@@ -55,7 +57,8 @@ export async function migrateGuestPredictionsAction(
     const fixture = fixtureById(matchId);
     if (!fixture) { skipped++; continue; }
     if (new Date(fixture.kickoff).getTime() <= now) { skipped++; continue; }
-    if (!fixture.homeId || !fixture.awayId) { skipped++; continue; }
+    const { homeId, awayId } = effectiveTeams(fixture, koTeams);
+    if (!homeId || !awayId) { skipped++; continue; }
 
     const { error } = await supabase.from("predictions").insert({
       user_id: user.id,

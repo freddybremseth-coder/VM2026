@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { fixtureById } from "@/lib/wc26-fixtures";
 import { canStillEdit, type FixtureStatus } from "@/lib/predictions-visibility";
+import { loadKnockoutTeams, effectiveTeams } from "@/lib/knockout-resolve";
 
 /**
  * Server-side lock check. Pulls the trusted status from public.fixtures so
@@ -47,16 +48,20 @@ export async function savePredictionAction(
 
   const fixture = fixtureById(matchId);
   if (!fixture) return { error: "Match not found." };
-  if (fixture.stage.kind === "knockout" && (!fixture.homeId || !fixture.awayId)) {
+
+  const supabase = createSupabaseServerClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { error: "You must be signed in." };
+
+  // Resolve teams (knockout slots → ids); reject only if still unknown.
+  const koTeams = await loadKnockoutTeams(supabase);
+  const { homeId, awayId } = effectiveTeams(fixture, koTeams);
+  if (!homeId || !awayId) {
     return { error: "Knockout pairing not yet known." };
   }
   if (await isEditLocked(matchId)) {
     return { error: "Kickoff has passed — predictions are locked." };
   }
-
-  const supabase = createSupabaseServerClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return { error: "You must be signed in." };
 
   const { error } = await supabase
     .from("predictions")
@@ -118,6 +123,7 @@ export async function savePredictionsBatchAction(
       dbByMatch.set(r.id, { kickoff: r.kickoff, status: r.status });
     }
   }
+  const koTeams = await loadKnockoutTeams(supabase);
 
   const now = new Date();
   const rows: Array<{
@@ -139,7 +145,9 @@ export async function savePredictionsBatchAction(
 
     const fixture = fixtureById(matchId);
     if (!fixture) { skipped++; continue; }
-    if (!fixture.homeId || !fixture.awayId) { skipped++; continue; }
+    // Require both teams known — resolving knockout slots so R32+ ties save.
+    const { homeId, awayId } = effectiveTeams(fixture, koTeams);
+    if (!homeId || !awayId) { skipped++; continue; }
     const db = dbByMatch.get(matchId);
     const kickoff = db?.kickoff ?? fixture.kickoff;
     const status: FixtureStatus = db?.status ?? "scheduled";
