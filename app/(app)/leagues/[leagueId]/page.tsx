@@ -9,6 +9,8 @@ import { LiveTipsBoard } from "@/components/leagues/LiveTipsBoard";
 import { Kicker } from "@/components/shared/EditorialKicker";
 import { buildBanterReportLive, type BanterMember } from "@/lib/banter-report";
 import { getLeagueTipsData } from "@/lib/leagues/league-tips";
+import { getPointsProgression } from "@/lib/leagues/points-progression";
+import { PointsProgressionChart } from "@/components/leagues/PointsProgressionChart";
 
 interface MemberRow {
   user_id: string;
@@ -61,12 +63,21 @@ export default async function LeagueDetailPage({
   // render is the same data shape, just with empty tip lists.
   const liveTipsData = await getLeagueTipsData(supabase, league.id);
 
+  const labelFor = (m: MemberRow) =>
+    m.profiles?.display_name || m.profiles?.username || "(anonym)";
+
   const banterMembers: BanterMember[] = rows.map((m) => ({
-    username: m.profiles?.display_name || m.profiles?.username || "(anonym)",
+    username: labelFor(m),
     points: m.points,
     isYou: m.user_id === user.id,
   }));
   const banter = await buildBanterReportLive(league.name, banterMembers);
+
+  // Day-by-day points development for the progression chart.
+  const progression = await getPointsProgression(
+    supabase,
+    rows.map((m) => ({ userId: m.user_id, label: labelFor(m) })),
+  );
 
   return (
     <div className="px-4 sm:px-6 md:px-10 py-8 max-w-[1100px] mx-auto space-y-5">
@@ -224,6 +235,22 @@ export default async function LeagueDetailPage({
           slutt.
         </p>
       </section>
+
+      {progression && (
+        <section>
+          <Kicker tone="muted">Poengutvikling</Kicker>
+          <div className="surface p-4 sm:p-5 mt-3">
+            <PointsProgressionChart data={progression} />
+            <p className="mt-3 text-[10px] text-cream/55 font-mono leading-relaxed">
+              Kumulative poeng per dag en kamp ble avgjort. Brattere linje =
+              bedre form. Pilen viser trend mot forrige avgjorte dag:{" "}
+              <span className="text-win">▲ økende</span>,{" "}
+              <span className="text-loss">▼ fallende</span>,{" "}
+              <span className="text-cream/45">▬ stabil</span>.
+            </p>
+          </div>
+        </section>
+      )}
 
       {liveTipsData && (
         <LiveTipsBoard leagueId={league.id} initialData={liveTipsData} />
