@@ -12,7 +12,20 @@ import { formatDateLabel } from "@/lib/utils";
 import { nextFixtures, type Fixture } from "@/lib/wc26-fixtures";
 import { teamById, teamName, venueById } from "@/lib/wc26-data";
 import { getDictionary } from "@/lib/i18n";
-import { suggestScorelines } from "@/lib/ai-tipper";
+import { suggestScorelinesFor } from "@/lib/ai-tipper";
+import {
+  computeAllGroupStandings,
+  resolveSlotToTeam,
+  type ResultRow,
+} from "@/lib/group-standings";
+
+/** A fixture with its two teams resolved — directly for group games, or via
+ *  group standings / earlier results for knockout slots. */
+interface EnrichedFixture {
+  fx: Fixture;
+  homeId: number;
+  awayId: number;
+}
 
 const STAGE_LABEL_KO: Record<string, string> = {
   R32: "Runde av 32",
@@ -46,22 +59,44 @@ export default async function PredictionsPage() {
   const cutoffIso = user
     ? new Date(now.getTime() - 6 * 60 * 60 * 1000).toISOString()
     : now.toISOString();
-  const open = nextFixtures(cutoffIso, 200).filter(
-    (f) => f.homeId && f.awayId,
+  // Resolve teams for every upcoming fixture — group games carry homeId/awayId
+  // directly; knockout fixtures carry slots ("2A", "W74") that we resolve from
+  // the live group standings + earlier results, so they become tippable the
+  // moment their two teams are known.
+  const { data: resultData } = await supabase
+    .from("match_results")
+    .select("match_id, home_score, away_score, status");
+  const resultRows = ((resultData as ResultRow[] | null) ?? []).filter(
+    (r) =>
+      r.home_score !== null &&
+      r.away_score !== null &&
+      (r.status === "finished" || r.status === "live" || r.status === "halftime"),
   );
+  const resultsByMatch = new Map<number, ResultRow>();
+  for (const r of resultRows) resultsByMatch.set(r.match_id, r);
+  const standings = computeAllGroupStandings(resultRows);
 
-  const byDay = new Map<string, Fixture[]>();
-  for (const f of open) {
-    const k = dayKey(f.kickoff);
+  const open: EnrichedFixture[] = [];
+  for (const f of nextFixtures(cutoffIso, 200)) {
+    const homeId =
+      f.homeId ?? resolveSlotToTeam(f.homeSlot, standings, resultsByMatch);
+    const awayId =
+      f.awayId ?? resolveSlotToTeam(f.awaySlot, standings, resultsByMatch);
+    if (homeId && awayId) open.push({ fx: f, homeId, awayId });
+  }
+
+  const byDay = new Map<string, EnrichedFixture[]>();
+  for (const e of open) {
+    const k = dayKey(e.fx.kickoff);
     if (!byDay.has(k)) byDay.set(k, []);
-    byDay.get(k)!.push(f);
+    byDay.get(k)!.push(e);
   }
   const days = Array.from(byDay.entries()).sort(([a], [b]) => a.localeCompare(b));
 
   let existingByMatch = new Map<number, { home_score: number; away_score: number }>();
   let modelTips: Record<number, { home: number; away: number }> = {};
   if (user && open.length > 0) {
-    const ids = open.map((f) => f.id);
+    const ids = open.map((e) => e.fx.id);
     const { data } = await supabase
       .from("predictions")
       .select("match_id, home_score, away_score")
@@ -72,9 +107,11 @@ export default async function PredictionsPage() {
         data.map((r) => [r.match_id, { home_score: r.home_score, away_score: r.away_score }]),
       );
     }
-    // Freddy's model-optimal scorelines (same engine as the AI competitor),
-    // offered as a one-tap tip suggestion. Computed once for the whole board.
-    const tips = await suggestScorelines(ids);
+    // Freddy's model-optimal scorelines (same engine as the value model),
+    // resolved from the concrete teams so knockout ties get a suggestion too.
+    const tips = await suggestScorelinesFor(
+      open.map((e) => ({ matchId: e.fx.id, homeId: e.homeId, awayId: e.awayId })),
+    );
     modelTips = Object.fromEntries([...tips].map(([id, s]) => [id, s]));
   }
 
@@ -146,27 +183,27 @@ export default async function PredictionsPage() {
  * serializable shape the client board needs.
  */
 function buildBoardDays(
-  days: Array<[string, Fixture[]]>,
+  days: Array<[string, EnrichedFixture[]]>,
   existingByMatch: Map<number, { home_score: number; away_score: number }>,
 ): BoardDay[] {
   return days
     .map(([day, fixtures]) => ({
       day,
       fixtures: fixtures
-        .map((f) => {
-          const home = teamById(f.homeId!);
-          const away = teamById(f.awayId!);
+        .map(({ fx, homeId, awayId }) => {
+          const home = teamById(homeId);
+          const away = teamById(awayId);
           if (!home || !away) return null;
-          const venue = venueById(f.venueId);
-          const existing = existingByMatch.get(f.id);
+          const venue = venueById(fx.venueId);
+          const existing = existingByMatch.get(fx.id);
           return {
-            matchId: f.id,
-            stageLabel: stageLabel(f),
-            kickoff: f.kickoff,
+            matchId: fx.id,
+            stageLabel: stageLabel(fx),
+            kickoff: fx.kickoff,
             venueLabel: venue?.city ?? "TBD",
             // Lock once kickoff has passed — the card becomes read-only and
             // the saved tip is the headline rather than score inputs.
-            locked: new Date(f.kickoff).getTime() <= Date.now(),
+            locked: new Date(fx.kickoff).getTime() <= Date.now(),
             home: { id: home.id, name: teamName(home), shortName: home.shortName, flag: home.flag },
             away: { id: away.id, name: teamName(away), shortName: away.shortName, flag: away.flag },
             existing: existing
@@ -185,7 +222,7 @@ function DaySection({
   fixtures,
 }: {
   day: string;
-  fixtures: Fixture[];
+  fixtures: EnrichedFixture[];
   user: { id: string } | null;
   existingByMatch: Map<number, { home_score: number; away_score: number }>;
 }) {
@@ -201,17 +238,17 @@ function DaySection({
         </span>
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-        {fixtures.map((f) => {
-          const home = teamById(f.homeId!);
-          const away = teamById(f.awayId!);
-          const venue = venueById(f.venueId);
+        {fixtures.map(({ fx, homeId, awayId }) => {
+          const home = teamById(homeId);
+          const away = teamById(awayId);
+          const venue = venueById(fx.venueId);
           if (!home || !away) return null;
           return (
             <GuestPredictionForm
-              key={f.id}
-              matchId={f.id}
-              stageLabel={stageLabel(f)}
-              kickoff={f.kickoff}
+              key={fx.id}
+              matchId={fx.id}
+              stageLabel={stageLabel(fx)}
+              kickoff={fx.kickoff}
               venueLabel={venue?.city ?? "TBD"}
               home={home}
               away={away}

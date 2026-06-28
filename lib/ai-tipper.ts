@@ -50,3 +50,20 @@ export async function suggestScorelines(
   }
   return out;
 }
+
+/**
+ * Suggestions from explicit (matchId, homeId, awayId) triples — for knockout
+ * fixtures whose teams are resolved from group standings at request time, not
+ * stored on the static fixture.
+ */
+export async function suggestScorelinesFor(
+  pairs: Array<{ matchId: number; homeId: number; awayId: number }>,
+): Promise<Map<number, Scoreline>> {
+  const strengths = await getTeamStrengths();
+  const out = new Map<number, Scoreline>();
+  for (const p of pairs) {
+    const s = suggestScoreline(p.homeId, p.awayId, strengths);
+    if (s) out.set(p.matchId, s);
+  }
+  return out;
+}

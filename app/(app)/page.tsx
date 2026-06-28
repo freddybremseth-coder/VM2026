@@ -3,6 +3,8 @@ import { Search, Menu, ArrowUpRight, Trophy } from "lucide-react";
 import { HoloFlag } from "@/components/shared/HoloFlag";
 import { Kicker, Headline } from "@/components/shared/EditorialKicker";
 import { StadiumBackdrop } from "@/components/shared/StadiumBackdrop";
+import { KnockoutStrip } from "@/components/dashboard/KnockoutStrip";
+import { getKnockoutSummary } from "@/lib/knockout-summary";
 import { teamById, teamName, TOURNAMENT } from "@/lib/wc26-data";
 import { nextFixtures, fixturesOn } from "@/lib/wc26-fixtures";
 import { formatKickoff, formatDateLabel } from "@/lib/utils";
@@ -86,10 +88,14 @@ export default async function DashboardPage() {
   // cron picks up the first finished match's events, in which case the
   // section below renders the honest placeholder.
   const supabase = createSupabaseServerClient();
-  const [topScorers, norgePin] = await Promise.all([
+  const [topScorers, norgePin, knockout] = await Promise.all([
     getTournamentTopScorersLive(supabase, 8),
     loadNorgePinData(supabase),
+    getKnockoutSummary(supabase),
   ]);
+  // Once the group stage is done, the bracket is what matters — feature it
+  // high. (During the group stage it stays hidden; the group table leads.)
+  const showKnockout = knockout.phase !== "group";
 
   return (
     <div className="min-h-screen">
@@ -160,6 +166,12 @@ export default async function DashboardPage() {
             ))}
         </div>
       </section>
+
+      {/* Knockout strip — promoted to the top of the page once the group
+          stage is done; it's what matters going into the finals. */}
+      {showKnockout && (
+        <KnockoutStrip matches={knockout.matches} phase={knockout.phase} />
+      )}
 
       {/* Norge promo strip */}
       <section className="px-5 md:px-10 mt-7">
