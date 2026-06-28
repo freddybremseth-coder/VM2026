@@ -8,11 +8,8 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { FIXTURES } from "@/lib/wc26-fixtures";
 import { teamById } from "@/lib/wc26-data";
-import {
-  computeAllGroupStandings,
-  resolveSlotToTeam,
-  type ResultRow,
-} from "@/lib/group-standings";
+import { computeAllGroupStandings, type ResultRow } from "@/lib/group-standings";
+import { resolveAllKnockout, type ResolvedTeams } from "@/lib/knockout-resolve";
 
 export type TournamentPhase = "group" | "knockout" | "done";
 
@@ -37,6 +34,8 @@ export interface KnockoutSummary {
   phase: TournamentPhase;
   /** Matches to feature (next not-yet-finished round; or last results if done). */
   matches: KnockoutMatch[];
+  /** fixtureId → resolved teams, so other home-page surfaces agree. */
+  koTeams: Map<number, ResolvedTeams>;
 }
 
 const ROUND_LABEL: Record<string, string> = {
@@ -87,16 +86,16 @@ export async function getKnockoutSummary(
   const resultsByMatch = new Map<number, ResultRow>();
   for (const r of rows) resultsByMatch.set(r.match_id, r);
   const standings = computeAllGroupStandings(rows);
+  const koTeams = resolveAllKnockout(standings, resultsByMatch);
 
   const koFixtures = FIXTURES.filter((f) => f.stage.kind === "knockout").sort(
     (a, b) => a.kickoff.localeCompare(b.kickoff),
   );
 
   const all: KnockoutMatch[] = koFixtures.map((f) => {
-    const homeId =
-      f.homeId ?? resolveSlotToTeam(f.homeSlot, standings, resultsByMatch);
-    const awayId =
-      f.awayId ?? resolveSlotToTeam(f.awaySlot, standings, resultsByMatch);
+    const resolved = koTeams.get(f.id);
+    const homeId = f.homeId ?? resolved?.homeId ?? null;
+    const awayId = f.awayId ?? resolved?.awayId ?? null;
     const r = resultsByMatch.get(f.id);
     const round = f.stage.kind === "knockout" ? f.stage.round : "";
     return {
@@ -146,5 +145,5 @@ export async function getKnockoutSummary(
     matches = (upcoming.length > 0 ? upcoming : all).slice(0, 8);
   }
 
-  return { phase, matches };
+  return { phase, matches, koTeams };
 }

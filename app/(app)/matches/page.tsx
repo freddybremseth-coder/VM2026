@@ -6,6 +6,8 @@ import { FIXTURES, type Fixture } from "@/lib/wc26-fixtures";
 import { teamById, teamName, venueById } from "@/lib/wc26-data";
 import { formatKickoff, formatDateLabel } from "@/lib/utils";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { computeAllGroupStandings, type ResultRow } from "@/lib/group-standings";
+import { resolveAllKnockout, type ResolvedTeams } from "@/lib/knockout-resolve";
 
 interface ResultLite {
   home: number;
@@ -14,13 +16,17 @@ interface ResultLite {
   minute: number | null;
 }
 
-async function fetchResults(): Promise<Map<number, ResultLite>> {
+async function fetchResults(): Promise<{
+  map: Map<number, ResultLite>;
+  koTeams: Map<number, ResolvedTeams>;
+}> {
   try {
     const supabase = createSupabaseServerClient();
     const { data } = await supabase
       .from("match_results")
       .select("match_id, home_score, away_score, status, minute");
     const map = new Map<number, ResultLite>();
+    const rows: ResultRow[] = [];
     for (const r of (data as Array<{
       match_id: number;
       home_score: number | null;
@@ -35,10 +41,19 @@ async function fetchResults(): Promise<Map<number, ResultLite>> {
         status: r.status,
         minute: r.minute,
       });
+      rows.push({
+        match_id: r.match_id,
+        home_score: r.home_score,
+        away_score: r.away_score,
+        status: r.status,
+      });
     }
-    return map;
+    const resultsByMatch = new Map(rows.map((r) => [r.match_id, r]));
+    const standings = computeAllGroupStandings(rows);
+    const koTeams = resolveAllKnockout(standings, resultsByMatch);
+    return { map, koTeams };
   } catch {
-    return new Map();
+    return { map: new Map(), koTeams: new Map() };
   }
 }
 
@@ -72,7 +87,7 @@ export default async function MatchesPage() {
 
   const groupMatches = FIXTURES.filter((f) => f.stage.kind === "group").length;
   const koMatches = FIXTURES.length - groupMatches;
-  const results = await fetchResults();
+  const { map: results, koTeams } = await fetchResults();
 
   return (
     <div className="px-5 md:px-10 py-8 max-w-[1400px] mx-auto">
@@ -92,7 +107,13 @@ export default async function MatchesPage() {
 
       <div className="space-y-10">
         {days.map(([day, fixtures]) => (
-          <DaySection key={day} day={day} fixtures={fixtures} results={results} />
+          <DaySection
+            key={day}
+            day={day}
+            fixtures={fixtures}
+            results={results}
+            koTeams={koTeams}
+          />
         ))}
       </div>
     </div>
@@ -103,10 +124,12 @@ function DaySection({
   day,
   fixtures,
   results,
+  koTeams,
 }: {
   day: string;
   fixtures: Fixture[];
   results: Map<number, ResultLite>;
+  koTeams: Map<number, ResolvedTeams>;
 }) {
   const dateLabel = formatDateLabel(day + "T12:00:00Z");
   return (
@@ -123,7 +146,12 @@ function DaySection({
         {fixtures
           .sort((a, b) => a.kickoff.localeCompare(b.kickoff))
           .map((f) => (
-            <FixtureCard key={f.id} fixture={f} result={results.get(f.id)} />
+            <FixtureCard
+              key={f.id}
+              fixture={f}
+              result={results.get(f.id)}
+              resolved={koTeams.get(f.id)}
+            />
           ))}
       </div>
     </section>
@@ -133,12 +161,17 @@ function DaySection({
 function FixtureCard({
   fixture,
   result,
+  resolved,
 }: {
   fixture: Fixture;
   result?: ResultLite;
+  resolved?: ResolvedTeams;
 }) {
-  const home = fixture.homeId ? teamById(fixture.homeId) : undefined;
-  const away = fixture.awayId ? teamById(fixture.awayId) : undefined;
+  // Knockout fixtures carry slots; use the resolved team when available.
+  const homeId = fixture.homeId ?? resolved?.homeId ?? null;
+  const awayId = fixture.awayId ?? resolved?.awayId ?? null;
+  const home = homeId ? teamById(homeId) : undefined;
+  const away = awayId ? teamById(awayId) : undefined;
   const venue = venueById(fixture.venueId);
   const isKnockout = fixture.stage.kind === "knockout";
   const isLive = result?.status === "live" || result?.status === "halftime";

@@ -162,7 +162,12 @@ export default async function DashboardPage() {
           {(tournamentLive && todayFixtures.length > 0 ? todayFixtures : upcoming)
             .slice(0, 5)
             .map((f, i) => (
-              <FixtureRow key={f.id} fixture={f} first={i === 0} />
+              <FixtureRow
+                key={f.id}
+                fixture={f}
+                first={i === 0}
+                resolved={knockout.koTeams.get(f.id)}
+              />
             ))}
         </div>
       </section>
@@ -220,12 +225,16 @@ export default async function DashboardPage() {
 function FixtureRow({
   fixture,
   first,
+  resolved,
 }: {
   fixture: ReturnType<typeof nextFixtures>[number];
   first?: boolean;
+  resolved?: { homeId: number | null; awayId: number | null };
 }) {
-  const home = fixture.homeId ? teamById(fixture.homeId) : undefined;
-  const away = fixture.awayId ? teamById(fixture.awayId) : undefined;
+  const homeId = fixture.homeId ?? resolved?.homeId ?? null;
+  const awayId = fixture.awayId ?? resolved?.awayId ?? null;
+  const home = homeId ? teamById(homeId) : undefined;
+  const away = awayId ? teamById(awayId) : undefined;
   // `live` should come from match-state — placeholder logic here.
   const live = false;
 

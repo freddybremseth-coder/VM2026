@@ -13,11 +13,8 @@ import { nextFixtures, type Fixture } from "@/lib/wc26-fixtures";
 import { teamById, teamName, venueById } from "@/lib/wc26-data";
 import { getDictionary } from "@/lib/i18n";
 import { suggestScorelinesFor } from "@/lib/ai-tipper";
-import {
-  computeAllGroupStandings,
-  resolveSlotToTeam,
-  type ResultRow,
-} from "@/lib/group-standings";
+import { computeAllGroupStandings, type ResultRow } from "@/lib/group-standings";
+import { resolveAllKnockout } from "@/lib/knockout-resolve";
 
 /** A fixture with its two teams resolved — directly for group games, or via
  *  group standings / earlier results for knockout slots. */
@@ -75,13 +72,13 @@ export default async function PredictionsPage() {
   const resultsByMatch = new Map<number, ResultRow>();
   for (const r of resultRows) resultsByMatch.set(r.match_id, r);
   const standings = computeAllGroupStandings(resultRows);
+  const koTeams = resolveAllKnockout(standings, resultsByMatch);
 
   const open: EnrichedFixture[] = [];
   for (const f of nextFixtures(cutoffIso, 200)) {
-    const homeId =
-      f.homeId ?? resolveSlotToTeam(f.homeSlot, standings, resultsByMatch);
-    const awayId =
-      f.awayId ?? resolveSlotToTeam(f.awaySlot, standings, resultsByMatch);
+    const r = koTeams.get(f.id);
+    const homeId = f.homeId ?? r?.homeId ?? null;
+    const awayId = f.awayId ?? r?.awayId ?? null;
     if (homeId && awayId) open.push({ fx: f, homeId, awayId });
   }
 

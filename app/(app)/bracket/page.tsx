@@ -8,9 +8,9 @@ import { GROUPS, teamName, teamById, venueById, type WCTeam, type GroupId } from
 import { fixturesByRound } from "@/lib/wc26-fixtures";
 import { formatKickoff } from "@/lib/utils";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { resolveAllKnockout } from "@/lib/knockout-resolve";
 import {
   computeAllGroupStandings,
-  resolveSlotToTeam,
   type GroupStandingRow,
   type ResultRow,
 } from "@/lib/group-standings";
@@ -352,6 +352,9 @@ function KnockoutTree({
     { key: "FINAL" as const, label: "Finale", fixtures: fixturesByRound("FINAL") },
   ];
 
+  // Resolve every knockout tie once (includes best-third-place assignment).
+  const koTeams = resolveAllKnockout(standings, resultsByMatch);
+
   return (
     <div className="surface p-5 overflow-x-auto">
       <div className="flex gap-5 min-w-max">
@@ -386,18 +389,12 @@ function KnockoutTree({
                   month: "short",
                 });
 
-                // Try to resolve each side to a real team — preferring the
-                // fixture's known id (group stage) and falling back to the
-                // slot resolver (knockout slots become real teams once their
-                // feeder finishes or the group is decided).
-                const homeId =
-                  f.homeId ??
-                  resolveSlotToTeam(f.homeSlot, standings, resultsByMatch);
-                const awayId =
-                  f.awaySlot
-                    ? f.awayId ??
-                      resolveSlotToTeam(f.awaySlot, standings, resultsByMatch)
-                    : (f.awayId ?? null);
+                // Resolve each side to a real team — the shared resolver
+                // handles group placings, match winners, and the best-third
+                // assignment once the group stage is complete.
+                const koResolved = koTeams.get(f.id);
+                const homeId = f.homeId ?? koResolved?.homeId ?? null;
+                const awayId = f.awayId ?? koResolved?.awayId ?? null;
                 const homeTeam = homeId ? teamById(homeId) : undefined;
                 const awayTeam = awayId ? teamById(awayId) : undefined;
 
