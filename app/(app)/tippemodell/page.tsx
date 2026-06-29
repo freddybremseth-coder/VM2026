@@ -18,7 +18,7 @@ import { TrendingUp, AlertCircle, Info, Bot } from "lucide-react";
 import { Kicker, Headline } from "@/components/shared/EditorialKicker";
 import { MatchOddsCard } from "@/components/tippemodell/MatchOddsCard";
 import { getTippemodellDashboard } from "@/lib/tippemodell/dashboard";
-import { isOddsApiConfigured } from "@/lib/tippemodell/oddspapi";
+import { isOddsApiConfigured } from "@/lib/tippemodell/the-odds-api";
 
 export default async function TippemodellPage() {
   const apiConfigured = isOddsApiConfigured();

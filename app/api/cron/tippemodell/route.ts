@@ -26,7 +26,7 @@ import {
   isOddsApiConfigured,
   SHARP_BOOKMAKERS,
   type NormalisedOutcome,
-} from "@/lib/tippemodell/oddspapi";
+} from "@/lib/tippemodell/the-odds-api";
 import { resolveWC26FixtureId } from "@/lib/tippemodell/wc26-matcher";
 
 export const dynamic = "force-dynamic";
