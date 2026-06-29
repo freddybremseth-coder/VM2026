@@ -16,6 +16,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { fetchAndStoreResults } from "@/lib/cron/fetch-results";
 import { syncTournamentGoals } from "@/lib/cron/sync-goals";
+import { syncFixturesToDb } from "@/lib/sync-fixtures";
 import { setLastCronRun } from "@/lib/cron/store";
 import { getPhase } from "@/lib/cron/phase";
 import type { CronRunReport, CronTaskResult } from "@/lib/cron/types";
@@ -76,12 +77,25 @@ export async function GET(req: NextRequest) {
   const startedAt = new Date().toISOString();
   const t0 = performance.now();
 
+  // Propagate in-code fixture edits (kickoff corrections / postponements) to
+  // the public.fixtures table FIRST, so the lock + teammate-visibility gate
+  // use the current kickoff. Then fetch results.
+  const fixturesSync = await safeRun("sync-fixtures", async () => {
+    const r = await syncFixturesToDb();
+    return {
+      task: "sync-fixtures",
+      status: r.ok ? "ok" : "failed",
+      summary: r.ok ? `Synket ${r.upserted} kamper` : (r.error ?? "feil"),
+      durationMs: 0,
+    } as CronTaskResult;
+  });
+
   const [results, goals] = await Promise.all([
     safeRun("fetch-results", () => fetchAndStoreResults()),
     safeRun("sync-goals", () => syncTournamentGoals()),
   ]);
 
-  const tasks = [results, goals];
+  const tasks = [fixturesSync, results, goals];
   const ok = tasks.every((t) => t.status !== "failed");
   const phase = getPhase();
 
