@@ -178,19 +178,19 @@ function NotConfigured() {
             Hele infrastrukturen er på plass — database-skjema, cron-jobb,
             adapter og dashbord. Når{" "}
             <code className="px-1.5 py-0.5 bg-paper text-cream font-mono text-xs">
-              ODDS_API_KEY
+              THE_ODDS_API_KEY
             </code>{" "}
-            er satt i Vercel-prosjektet og en{" "}
+            er satt i Vercel-prosjektet (gratis nøkkel fra{" "}
             <Link
-              href="https://oddspapi.io"
+              href="https://the-odds-api.com"
               target="_blank"
               rel="noopener noreferrer"
               className="text-signal hover:text-amber underline"
             >
-              OddsPapi-konto
-            </Link>{" "}
-            er koblet inn, vil cron-en automatisk fylle tabellen og denne
-            siden viser live priser fra 370+ bookmakere per kamp.
+              the-odds-api.com
+            </Link>
+            , 500 kall/måned), vil cron-en automatisk fylle tabellen og denne
+            siden viser live priser på tvers av bookmakere per kamp.
           </p>
           <ul className="mt-3 text-[11px] text-cream/55 font-mono leading-relaxed list-disc pl-5">
             <li>Beste pris per utfall på tvers av bookmakere</li>
