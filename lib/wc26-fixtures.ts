@@ -160,7 +160,7 @@ const KNOCKOUT_FIXTURES: RawKnockoutFixture[] = [
   { id: 76, round: "R32", utc: "2026-06-29T17:00:00Z", venue: "bbva",      homeSlot: "1C", awaySlot: "2F" },
   { id: 77, round: "R32", utc: "2026-06-30T21:00:00Z", venue: "att",       homeSlot: "1I", awaySlot: "3X" },
   { id: 78, round: "R32", utc: "2026-06-30T17:00:00Z", venue: "metlife",   homeSlot: "2E", awaySlot: "2I" },
-  { id: 79, round: "R32", utc: "2026-06-30T01:00:00Z", venue: "azteca",    homeSlot: "1A", awaySlot: "3X" },
+  { id: 79, round: "R32", utc: "2026-07-01T02:00:00Z", venue: "azteca",    homeSlot: "1A", awaySlot: "3X" },
   { id: 80, round: "R32", utc: "2026-07-01T16:00:00Z", venue: "mercedes",  homeSlot: "1L", awaySlot: "3X" },
   { id: 81, round: "R32", utc: "2026-07-02T00:00:00Z", venue: "lumen",     homeSlot: "1D", awaySlot: "3X" },
   { id: 82, round: "R32", utc: "2026-07-01T20:00:00Z", venue: "levis",     homeSlot: "1G", awaySlot: "3X" },

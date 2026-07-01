@@ -83,38 +83,35 @@ function slotGroup(slot: string | undefined): GroupId | null {
 }
 
 /**
+ * The OFFICIAL best-third → R32-slot assignment (from the real WC 2026 draw).
+ * Each "3X" fixture id maps to the group whose third-placed team fills it.
+ * This replaces the earlier heuristic, which produced the wrong pairings —
+ * the draw's combination table isn't derivable from our data, but the actual
+ * result is known, so we pin it. (Verified against ESPN's R32 schedule.)
+ */
+const BEST_THIRD_GROUP_BY_FIXTURE: Record<number, GroupId> = {
+  74: "D", // Germany   vs 3D (Paraguay)
+  77: "F", // France    vs 3F (Sweden)
+  79: "E", // Mexico    vs 3E (Ecuador)
+  80: "K", // England   vs 3K (DR Congo)
+  81: "B", // USA       vs 3B (Bosnia)
+  82: "I", // Belgium   vs 3I (Senegal)
+  85: "J", // Switzerland vs 3J (Algeria)
+  87: "L", // Colombia  vs 3L (Ghana)
+};
+
+/**
  * Map of "3X" fixture id → assigned best-third team id. Empty until all groups
- * are complete (we can't rank thirds before then).
+ * are complete (the third-placed teams aren't final before then).
  */
 export function assignBestThirds(
   standings: Record<GroupId, GroupStandingRow[]>,
 ): Map<number, number> {
   const out = new Map<number, number>();
   if (!allGroupsComplete(standings)) return out;
-
-  const ranked = rankThirds(standings);
-  const qualifiers = ranked.slice(0, 8); // top 8 of 12 advance
-
-  // The 3X fixtures, in id order, each paired with a group-winner slot.
-  const txFixtures = FIXTURES.filter(
-    (f) =>
-      f.stage.kind === "knockout" &&
-      (f.homeSlot === "3X" || f.awaySlot === "3X"),
-  ).sort((a, b) => a.id - b.id);
-
-  const used = new Set<number>(); // qualifier indices used
-  for (const f of txFixtures) {
-    // The opponent side is the non-3X slot.
-    const oppSlot = f.homeSlot === "3X" ? f.awaySlot : f.homeSlot;
-    const oppGroup = slotGroup(oppSlot);
-    // Highest-ranked unused third whose group ≠ opponent's group.
-    let pick = qualifiers.findIndex(
-      (q, i) => !used.has(i) && q.groupId !== oppGroup,
-    );
-    if (pick === -1) pick = qualifiers.findIndex((_, i) => !used.has(i));
-    if (pick === -1) break;
-    used.add(pick);
-    out.set(f.id, qualifiers[pick].teamId);
+  for (const [fid, group] of Object.entries(BEST_THIRD_GROUP_BY_FIXTURE)) {
+    const third = standings[group]?.[2];
+    if (third) out.set(Number(fid), third.teamId);
   }
   return out;
 }
