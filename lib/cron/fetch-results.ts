@@ -16,8 +16,11 @@ import { FIXTURES } from "@/lib/wc26-fixtures";
 import {
   fetchEspnFixturesInWindow,
   matchEspnToInternal,
+  type ResolvedTeamsMap,
 } from "@/lib/cron/espn-fixture-resolver";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
+import { computeAllGroupStandings, type ResultRow } from "@/lib/group-standings";
+import { resolveAllKnockout } from "@/lib/knockout-resolve";
 import { getPhase } from "./phase";
 import type { CronTaskResult } from "./types";
 
@@ -76,11 +79,49 @@ export async function fetchAndStoreResults(
     };
   }
 
+  let admin: ReturnType<typeof createSupabaseAdminClient>;
+  try {
+    admin = createSupabaseAdminClient();
+  } catch (err) {
+    return {
+      task,
+      status: "failed",
+      summary: err instanceof Error ? err.message : String(err),
+      detail: { callsMade: 0 },
+      durationMs: Math.round(performance.now() - startedAt),
+    };
+  }
+
+  // Resolve knockout teams from the current standings so ties match ESPN by
+  // NAME (not just kickoff) — otherwise colliding kickoffs mis-assign or drop
+  // results (e.g. Netherlands–Morocco never got written).
+  const { data: existing } = await admin
+    .from("match_results")
+    .select("match_id, home_score, away_score, status");
+  const priorRows = ((existing as Array<{
+    match_id: number;
+    home_score: number | null;
+    away_score: number | null;
+    status: string;
+  }> | null) ?? [])
+    .filter((r) => r.home_score !== null && r.away_score !== null)
+    .map((r) => ({
+      match_id: r.match_id,
+      home_score: r.home_score as number,
+      away_score: r.away_score as number,
+      status: r.status,
+    })) as ResultRow[];
+  const standings = computeAllGroupStandings(priorRows);
+  const koTeams: ResolvedTeamsMap = resolveAllKnockout(
+    standings,
+    new Map(priorRows.map((r) => [r.match_id, r])),
+  );
+
   // One fetch per UTC day in the window — response includes goals + status.
   let resolved;
   try {
     const espn = await fetchEspnFixturesInWindow(windowStart, windowEnd);
-    resolved = matchEspnToInternal(espn, candidates);
+    resolved = matchEspnToInternal(espn, candidates, koTeams);
   } catch (err) {
     return {
       task,
@@ -100,19 +141,6 @@ export async function fetchAndStoreResults(
   }> = [];
   const skipped: number[] = [];
   const errors: Array<{ id: number; error: string }> = [];
-
-  let admin: ReturnType<typeof createSupabaseAdminClient>;
-  try {
-    admin = createSupabaseAdminClient();
-  } catch (err) {
-    return {
-      task,
-      status: "failed",
-      summary: err instanceof Error ? err.message : String(err),
-      detail: { callsMade: 1 },
-      durationMs: Math.round(performance.now() - startedAt),
-    };
-  }
 
   for (const r of resolved) {
     // Defensive: pre-kickoff fixtures have null goals — don't write (0,0).

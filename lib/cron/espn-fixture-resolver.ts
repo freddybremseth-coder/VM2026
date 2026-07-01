@@ -219,9 +219,22 @@ export async function fetchEspnFixturesInWindow(
 // ---------------------------------------------------------------------------
 // Matching: ESPN fixture ↔ internal fixture (same algorithm as AF version)
 // ---------------------------------------------------------------------------
-function internalNames(f: Fixture): { home: string | null; away: string | null } {
-  const home = f.homeId ? teamById(f.homeId)?.name ?? null : null;
-  const away = f.awayId ? teamById(f.awayId)?.name ?? null : null;
+/**
+ * Resolved-team ids per fixture id (group fixtures direct, knockout resolved
+ * from standings). Lets us name-match knockout ties — their static rows carry
+ * slots, not homeId/awayId, so without this they'd only ever match by kickoff.
+ */
+export type ResolvedTeamsMap = Map<number, { homeId: number | null; awayId: number | null }>;
+
+function internalNames(
+  f: Fixture,
+  resolved?: ResolvedTeamsMap,
+): { home: string | null; away: string | null } {
+  const r = resolved?.get(f.id);
+  const homeId = f.homeId ?? r?.homeId ?? null;
+  const awayId = f.awayId ?? r?.awayId ?? null;
+  const home = homeId ? teamById(homeId)?.name ?? null : null;
+  const away = awayId ? teamById(awayId)?.name ?? null : null;
   return {
     home: home ? normName(home) : null,
     away: away ? normName(away) : null,
@@ -236,16 +249,19 @@ const DAY_MS = 86_400_000;
  *   1. Both team names match (normalized + aliases).
  *   2. One team name matches AND kickoff is within ±6h.
  *   3. Identical kickoff timestamp with no other internal fixture sharing it.
+ * Pass `resolved` so knockout ties match by team name (pass 1/2) rather than
+ * only by kickoff (pass 3), which mis-assigns when kickoffs collide.
  */
 export function matchEspnToInternal(
   espnFixtures: EspnFixtureLite[],
   internal: Fixture[],
+  resolved?: ResolvedTeamsMap,
 ): ResolvedResult[] {
   const out: ResolvedResult[] = [];
   const usedEspn = new Set<string>();
 
   for (const fx of internal) {
-    const names = internalNames(fx);
+    const names = internalNames(fx, resolved);
     const koMs = new Date(fx.kickoff).getTime();
 
     let best: EspnFixtureLite | undefined;
