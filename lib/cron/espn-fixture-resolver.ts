@@ -84,6 +84,13 @@ export function mapEspnStatus(name: string): ResolvedResult["status"] {
     case "STATUS_END_OF_REGULATION":
     case "STATUS_END_EXTRA_TIME":
     case "STATUS_END_PENALTY_SHOOTOUT":
+    // Knockout ties decided after extra time / penalties — ESPN reports these
+    // as FINAL_AET / FINAL_PEN. Without them a penalty tie (e.g. Netherlands–
+    // Morocco) stays "scheduled" and never grades, showing "live" forever.
+    case "STATUS_FINAL_AET":
+    case "STATUS_FINAL_PEN":
+    case "STATUS_FINAL_AFTER_EXTRA_TIME":
+    case "STATUS_FINAL_AFTER_PENALTIES":
       return "finished";
     case "STATUS_HALFTIME":
       return "halftime";
@@ -94,6 +101,9 @@ export function mapEspnStatus(name: string): ResolvedResult["status"] {
     case "STATUS_PENALTY_SHOOTOUT":
       return "live";
     default:
+      // Any other terminal "FINAL"/"FT" variant → finished (defensive: better
+      // to grade a done match than leave it stuck live).
+      if (/final|full_time|fulltime|_ft\b|_end_/i.test(name)) return "finished";
       return "scheduled";
   }
 }
